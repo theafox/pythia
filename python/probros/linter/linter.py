@@ -15,6 +15,7 @@ class Linter(ast.NodeVisitor):
     def __init__(self) -> None:
         """Initialize the linter."""
         self.errors: list[str] = []
+        logging.debug(f"Initialized linter with {self.errors=}.")
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Visit and analyze a function definition.
