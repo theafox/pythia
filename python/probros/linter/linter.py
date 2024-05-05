@@ -8,7 +8,7 @@ _DECORATOR_NAME = "probabilistic_program"
 
 
 class Severity(Enum):
-    """This represents the severity of errors.
+    """This represents the severity of diagnostics.
 
     Attributes:
         WARNING: Indicates a warning-level severity.
@@ -68,32 +68,32 @@ class Linter(ast.NodeVisitor):
     annotated as such are checked, any other part of the code is ignored.
 
     Attributes:
-        errors (list[str]): A list to store found errors
+        diagnostics: A list to store found diagnostics
     """
 
     def __init__(self) -> None:
         """Initialize the linter."""
-        self.errors: list[str] = []
-        logging.debug(f"Initialized linter with {self.errors=}.")
+        self.diagnostics: list[str] = []
+        logging.debug(f"Initialized linter with {self.diagnostics=}.")
 
     def run(self, node: ast.AST) -> list[str]:
-        """Run the linter and receive any errors.
+        """Run the linter and receive any diagnostics.
 
-        This method is merely a wrapper to empty any previous errors, call
-        `visit` and empty the errors again afterwards.
+        This method is merely a wrapper to empty any previous diagnostics, call
+        `visit` and empty the diagnostics again afterwards.
 
         Args:
             node: The node on which to run the linter on.
 
         Returns:
-            A list of any errors found, formatted into a string.
+            A list of any diagnostics found, formatted into a string.
         """
 
-        self.errors = []
+        self.diagnostics = []
         self.visit(node)
-        errors = self.errors
-        self.errors = []
-        return errors
+        diagnostics = self.diagnostics
+        self.diagnostics = []
+        return diagnostics
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Hand off analyzing probabilistic programs, ignore anything else.
@@ -120,9 +120,9 @@ class Linter(ast.NodeVisitor):
             )
             pplinter = PPLinter()
             pplinter.visit(node)
-            self.errors += map(
-                lambda error: str(error),
-                pplinter.errors,
+            self.diagnostics += map(
+                lambda diagnostic: str(diagnostic),
+                pplinter.diagnostics,
             )
 
 
@@ -134,19 +134,20 @@ class PPLinter(ast.NodeVisitor):
     designed to be used as a standalone linter.
 
     Attributes:
-        errors: A list to store found errors.
+        diagnostics: A list to store found diagnostics.
     """
 
     def __init__(self) -> None:
         """Initialize the linter."""
 
-        self.errors: list[Diagnostic] = []
+        self.diagnostics: list[Diagnostic] = []
 
         # Represent whether or not this linter has entered a program.
         self._entered: bool = False
 
         logging.debug(
-            f"Initialized probabilistic program linter with {self.errors=}."
+            "Initialized probabilistic program linter"
+            f" with {self.diagnostics=}."
         )
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
@@ -167,7 +168,7 @@ class PPLinter(ast.NodeVisitor):
             self._entered = False
             return
 
-        self.errors.append(
+        self.diagnostics.append(
             Diagnostic(
                 line=node.lineno,
                 end_line=node.end_lineno if node.end_lineno else node.lineno,
@@ -189,8 +190,9 @@ def lint_code(code: str) -> list[str] | None:
         code: The Python code to be linted.
 
     Returns:
-        The errors found by the linter as strings or `None` in case of errors.
-        All errors identified by the linter and any runtime errors are logged.
+        The diagnostics found by the linter as strings or `None` in case of
+        errors. All diagnostics identified by the linter and any runtime errors
+        are logged.
     """
 
     logging.debug("Running linter on given code " + f"'{code[:25]!a}…'.")
@@ -201,13 +203,15 @@ def lint_code(code: str) -> list[str] | None:
         logging.warn("Received invalid data.")
         return None
 
-    errors = linter.run(tree)
+    diagnostics = linter.run(tree)
 
-    logging.info(f"Linter ran successfully, found {len(errors)} errors.")
-    for error in errors:
-        logging.info(error)
+    logging.info(
+        f"Linter ran successfully, found {len(diagnostics)} diagnostics."
+    )
+    for diagnostic in diagnostics:
+        logging.info(diagnostic)
 
-    return errors
+    return diagnostics
 
 
 def lint_file(filepath: str) -> list[str] | None:
@@ -220,8 +224,9 @@ def lint_file(filepath: str) -> list[str] | None:
         code: The path to the file containing the Python code to be linted.
 
     Returns:
-        The errors found by the linter as strings or `None` in case of errors.
-        All errors identified by the linter and any runtime errors are logged.
+        The diagnostics found by the linter as strings or `None` in case of
+        errors. All diagnostics identified by the linter and any runtime errors
+        are logged.
     """
 
     logging.debug(f"Reading file '{filepath}'.")
