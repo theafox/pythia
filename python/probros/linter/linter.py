@@ -21,7 +21,7 @@ class Linter(ast.NodeVisitor):
         """Visit and analyze a function definition.
 
         Args:
-            node (ast.FunctionDef): The node to be analyzed.
+            node: The node to be analyzed.
         """
         self.generic_visit(node)
 
