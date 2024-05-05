@@ -1,8 +1,63 @@
 import ast
 import logging
+from dataclasses import dataclass
+from enum import Enum
 
 # TODO: extract this dynamically from `probros` to future-proof for changes?
 _DECORATOR_NAME = "probabilistic_program"
+
+
+class Severity(Enum):
+    """This represents the severity of errors.
+
+    Attributes:
+        WARNING: Indicates a warning-level severity.
+        ERROR: Indicates a warning-level severity.
+    """
+
+    WARNING = 10
+    ERROR = 20
+
+    def __str__(self) -> str:
+        """Get the string representation of the severity.
+
+        Returns:
+            The string representation of the severity.
+        """
+
+        return str(self.name)
+
+
+@dataclass(frozen=True, kw_only=True)
+class Diagnostic:
+    """A representation of diagnostics.
+
+    Attributes:
+        line: The line number of the diagnostic.
+        end_line: The ending line number of the diagnostic.
+        column: The column number of the diagnostic.
+        end_column: The ending column number of the diagnostic.
+        message: The message of the diagnostic.
+        severity: The severity of the diagnostic.
+    """
+
+    line: int
+    end_line: int
+    column: int
+    end_column: int
+    message: str
+    severity: Severity = Severity.ERROR
+
+    def __str__(self) -> str:
+        """Get a presentable representation of this diangostic.
+
+        Returns:
+            A one-line message including the line number, column number,
+            severity, and message.
+        """
+        return (
+            f"{self.line:4d}:{self.column}:\t{self.severity}: {self.message}"
+        )
 
 
 class Linter(ast.NodeVisitor):
@@ -65,7 +120,10 @@ class Linter(ast.NodeVisitor):
             )
             pplinter = PPLinter()
             pplinter.visit(node)
-            self.errors += pplinter.errors
+            self.errors += map(
+                lambda error: str(error),
+                pplinter.errors,
+            )
 
 
 class PPLinter(ast.NodeVisitor):
@@ -76,12 +134,12 @@ class PPLinter(ast.NodeVisitor):
     designed to be used as a standalone linter.
 
     Attributes:
-        errors (list[str]): A list to store found errors
+        errors: A list to store found errors.
     """
 
     def __init__(self) -> None:
         """Initialize the linter."""
-        self.errors: list[str] = []
+        self.errors: list[Diagnostic] = []
         logging.debug(
             f"Initialized probabilistic program linter with {self.errors=}."
         )
