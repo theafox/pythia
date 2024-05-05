@@ -21,6 +21,25 @@ class Linter(ast.NodeVisitor):
         self.errors: list[str] = []
         logging.debug(f"Initialized linter with {self.errors=}.")
 
+    def run(self, node: ast.AST) -> list[str]:
+        """Run the linter and receive any errors.
+
+        This method is merely a wrapper to empty any previous errors, call
+        `visit` and empty the errors again afterwards.
+
+        Args:
+            node: The node on which to run the linter on.
+
+        Returns:
+            A list of any errors found, formatted into a string.
+        """
+
+        self.errors = []
+        self.visit(node)
+        errors = self.errors
+        self.errors = []
+        return errors
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Hand off analyzing probabilistic programs, ignore anything else.
 
@@ -87,8 +106,7 @@ def lint_code(code: str) -> list[str] | None:
         logging.warn("Received invalid data.")
         return None
 
-    linter.visit(tree)
-    errors = linter.errors
+    errors = linter.run(tree)
 
     logging.info(f"Linter ran successfully, found {len(errors)} errors.")
     for error in errors:
