@@ -1,12 +1,16 @@
 import ast
 import logging
 
+# TODO: extract this dynamically from `probros` to future-proof for changes?
+_DECORATOR_NAME = "probabilistic_program"
+
 
 class Linter(ast.NodeVisitor):
-    """A custom linter to traverse the AST tree and identify issues.
+    """A linter to validate any probabilistic programs found within the code.
 
     This linter focuses on programs implementing probabilistic programs
-    according to the specifications in `docs.ipynb`.
+    according to the specifications in `docs.ipynb`. Therefore, only functions
+    annotated as such are checked, any other part of the code is ignored.
 
     Attributes:
         errors (list[str]): A list to store found errors
@@ -18,12 +22,49 @@ class Linter(ast.NodeVisitor):
         logging.debug(f"Initialized linter with {self.errors=}.")
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        """Visit and analyze a function definition.
+        """Hand off analyzing probabilistic programs, ignore anything else.
+
+        Note that this only checks for the string of the decorator to match
+        `_DECORATOR_NAME` currently, no actual testing is done to ensure the
+        origin of the decorator. This may lead to incorrect identification of
+        functions in case other decorators share that name.
 
         Args:
             node: The node to be analyzed.
         """
-        self.generic_visit(node)
+
+        if any(
+            isinstance(decorator, ast.Attribute)
+            and decorator.attr == _DECORATOR_NAME
+            or isinstance(decorator, ast.Name)
+            and decorator.id == _DECORATOR_NAME
+            for decorator in node.decorator_list
+        ):
+            logging.debug(
+                "Found probabilistic program, calling specialized linter…"
+            )
+            pplinter = PPLinter()
+            pplinter.visit(node)
+            self.errors += pplinter.errors
+
+
+class PPLinter(ast.NodeVisitor):
+    """A linter to validate individual probabilistic programs.
+
+    This linter is geared to analyze individual probabilistic programs
+    according to the definition in `docs.ipynb`. Thus, this linter is not
+    designed to be used as a standalone linter.
+
+    Attributes:
+        errors (list[str]): A list to store found errors
+    """
+
+    def __init__(self) -> None:
+        """Initialize the linter."""
+        self.errors: list[str] = []
+        logging.debug(
+            f"Initialized probabilistic program linter with {self.errors=}."
+        )
 
 
 def lint_code(code: str) -> list[str] | None:
