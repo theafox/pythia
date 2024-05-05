@@ -139,9 +139,46 @@ class PPLinter(ast.NodeVisitor):
 
     def __init__(self) -> None:
         """Initialize the linter."""
+
         self.errors: list[Diagnostic] = []
+
+        # Represent whether or not this linter has entered a program.
+        self._entered: bool = False
+
         logging.debug(
             f"Initialized probabilistic program linter with {self.errors=}."
+        )
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        """Prohibit nested functions.
+
+        This allows the first function to pass, because, in this case, it is
+        expected to be the probabilistic program's function definition.
+
+        Severity of this diagnostic is `ERROR`.
+
+        Args:
+            node: The node to be analyzed.
+        """
+
+        if not self._entered:
+            self._entered = True
+            self.generic_visit(node)
+            self._entered = False
+            return
+
+        self.errors.append(
+            Diagnostic(
+                line=node.lineno,
+                end_line=node.end_lineno if node.end_lineno else node.lineno,
+                column=node.col_offset,
+                end_column=(
+                    node.end_col_offset
+                    if node.end_col_offset
+                    else node.col_offset
+                ),
+                message="Nested functions are not allowed",
+            )
         )
 
 
