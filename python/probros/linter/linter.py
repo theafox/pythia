@@ -79,8 +79,7 @@ def lint_code(code: str) -> list[str] | None:
         All errors identified by the linter and any runtime errors are logged.
     """
 
-    escaped_snippet = code[:25].encode("unicode_escape").decode()
-    logging.debug("Running linter on given code " + f"'{escaped_snippet}…'.")
+    logging.debug("Running linter on given code " + f"'{code[:25]!a}…'.")
     linter = Linter()
     try:
         tree = ast.parse(code)
@@ -90,7 +89,10 @@ def lint_code(code: str) -> list[str] | None:
 
     linter.visit(tree)
     errors = linter.errors
+
     logging.info(f"Linter ran successfully, found {len(errors)} errors.")
+    for error in errors:
+        logging.info(error)
 
     return errors
 
