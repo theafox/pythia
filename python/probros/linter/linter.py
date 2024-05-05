@@ -41,7 +41,8 @@ class Linter(ast.NodeVisitor):
             for decorator in node.decorator_list
         ):
             logging.debug(
-                "Found probabilistic program, calling specialized linter…"
+                f"Found probabilistic program '{node.name}',"
+                " calling specialized linter…"
             )
             pplinter = PPLinter()
             pplinter.visit(node)
