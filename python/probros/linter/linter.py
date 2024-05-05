@@ -131,6 +131,7 @@ def main() -> None:
     """
 
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -147,7 +148,23 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(format="%(message)s", level=logging.DEBUG)
+        # Use two different handlers to print the standard / debugging
+        # information. This also allows redirecting the output if required.
+        # Preprend debugging messages with `* ` to differentiate them from
+        # normal outputs.
+
+        standard = logging.StreamHandler(sys.stdout)
+        standard.addFilter(lambda record: record.levelno != logging.DEBUG)
+
+        verbose = logging.StreamHandler(sys.stdout)
+        verbose.addFilter(lambda record: record.levelno == logging.DEBUG)
+        verbose.setFormatter(logging.Formatter("* %(message)s"))
+
+        logging.basicConfig(
+            format="%(message)s",
+            level=logging.DEBUG,
+            handlers=(standard, verbose),
+        )
     else:
         logging.basicConfig(format="%(message)s", level=logging.INFO)
 
