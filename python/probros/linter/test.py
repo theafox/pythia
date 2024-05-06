@@ -15,6 +15,20 @@ def valid_probabilistic_program(data):
     return probability
 
 
+# This should raise a warning about an unidentifiable decorator.
+#
+@1 + 1
+def unverifiable_function_add_decorator():
+    pass
+
+
+# This should raise a warning about an unidentifiable decorator.
+#
+@"hello decorator!"
+def unverifiable_function_string_decorator():
+    pass
+
+
 # This should be validated, the f-string should throw an error.
 #
 @probros.probabilistic_program
