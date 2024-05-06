@@ -107,13 +107,7 @@ class Linter(ast.NodeVisitor):
             node: The node to be analyzed.
         """
 
-        if any(
-            isinstance(decorator, ast.Attribute)
-            and decorator.attr == _DECORATOR_NAME
-            or isinstance(decorator, ast.Name)
-            and decorator.id == _DECORATOR_NAME
-            for decorator in node.decorator_list
-        ):
+        if PPLinter.is_probabilistic_program(node):
             logging.debug(
                 f"Found probabilistic program '{node.name}',"
                 " calling specialized linter…"
@@ -163,9 +157,15 @@ class PPLinter(ast.NodeVisitor):
         """
 
         if not self._entered:
-            self._entered = True
-            self.generic_visit(node)
-            self._entered = False
+            if PPLinter.is_probabilistic_program(node):
+                self._entered = True
+                self.generic_visit(node)
+                self._entered = False
+            else:
+                logging.warn(
+                    "Encountered non-probabilistic program function"
+                    " on first entry."
+                )
             return
 
         self.diagnostics.append(
@@ -181,6 +181,46 @@ class PPLinter(ast.NodeVisitor):
                 message="Nested functions are not allowed",
             )
         )
+
+    @staticmethod
+    def is_probabilistic_program(node: ast.FunctionDef) -> bool:
+        """Checks whether or not this declares a probabilistic program.
+
+        Note that this only checks for the string of the decorator to match
+        `_DECORATOR_NAME` currently, no actual testing is done to ensure the
+        origin of the decorator. This may lead to incorrect identification of
+        functions in case other decorators share that name.
+
+        For clarities sake, this merely verifies if this function's signature
+        declares it as a probabilistic program, i.e. has the appropriate
+        decorator, this does not do any form or validation or analysis.
+
+        Args:
+            node: The node to check.
+
+        Returns:
+            True if this could be identified as a probabilistic program, False
+            otherwise.
+        """
+
+        result = any(
+            isinstance(decorator, ast.Attribute)
+            and decorator.attr == _DECORATOR_NAME
+            or isinstance(decorator, ast.Name)
+            and decorator.id == _DECORATOR_NAME
+            for decorator in node.decorator_list
+        )
+
+        if not result:
+            if any(
+                not isinstance(decorator, ast.Attribute)
+                and not isinstance(decorator, ast.Name)
+                for decorator in node.decorator_list
+            ):
+                logging.warn("Could not identify and thus verify decorator…")
+                logging.debug(ast.dump(node))
+
+        return result
 
 
 def lint_code(code: str) -> list[str] | None:
