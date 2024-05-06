@@ -101,7 +101,6 @@ class Linter(ast.NodeVisitor):
     def __init__(self) -> None:
         """Initialize the linter."""
         self.diagnostics: list[str] = []
-        logging.debug(f"Initialized linter with {self.diagnostics=}.")
 
     def run(self, node: ast.AST) -> list[str]:
         """Run the linter and receive any diagnostics.
@@ -117,8 +116,12 @@ class Linter(ast.NodeVisitor):
         """
 
         self.diagnostics = []
+
+        logging.debug(f"Running linter on node '{ast.dump(node)[:25]}…'.")
         self.visit(node)
         diagnostics = self.diagnostics
+        logging.debug(f"Linter finished, got {len(diagnostics)} diagnostics.")
+
         self.diagnostics = []
         return diagnostics
 
@@ -138,7 +141,7 @@ class Linter(ast.NodeVisitor):
         if is_program:
             logging.debug(
                 f"Found probabilistic program '{node.name}',"
-                " calling specialized linter…"
+                " calling specialized linter."
             )
             pplinter = PPLinter()
             pplinter.visit(node)
@@ -146,6 +149,9 @@ class Linter(ast.NodeVisitor):
         else:
             logging.debug(f"Skipping function '{node.name}'")
 
+        logging.debug(
+            f"Converting and congregating {len(diagnostics)} diagnostic(s)."
+        )
         self.diagnostics += map(
             lambda diagnostic: str(diagnostic),
             diagnostics,
@@ -171,10 +177,6 @@ class PPLinter(ast.NodeVisitor):
         # Represent whether or not this linter has entered a program.
         self._entered: bool = False
 
-        logging.debug(
-            "Initialized probabilistic program linter"
-            f" with {self.diagnostics=}."
-        )
         # Fake method overloading for static- and instance-methods.
         self.is_probabilistic_program = self._is_probabilistic_program
 
@@ -192,16 +194,18 @@ class PPLinter(ast.NodeVisitor):
 
         if not self._entered:
             if self.is_probabilistic_program(node):
+                logging.debug("Entered probabilistic program analysis.")
                 self._entered = True
                 self.generic_visit(node)
                 self._entered = False
             else:
-                logging.warn(
+                logging.warning(
                     "Encountered non-probabilistic program function"
                     " on first entry."
                 )
             return
 
+        logging.debug("Found invalidly nested function.")
         self.diagnostics.append(
             Diagnostic(
                 line=node.lineno,
@@ -340,12 +344,12 @@ def lint_code(code: str) -> list[str] | None:
         are logged.
     """
 
-    logging.debug("Running linter on given code " + f"'{code[:25]!a}…'.")
+    logging.debug(f"Running linter on given code {code[:25]!a}….")
     linter = Linter()
     try:
         tree = ast.parse(code)
     except ValueError:
-        logging.warn("Received invalid data.")
+        logging.warning("Received invalid data.")
         return None
 
     diagnostics = linter.run(tree)
