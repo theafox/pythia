@@ -1,7 +1,9 @@
+# mypy: disable-error-code="method-assign"
 import ast
 import logging
 from dataclasses import dataclass
 from enum import Enum
+from typing import Self, Tuple
 
 # TODO: extract this dynamically from `probros` to future-proof for changes?
 _DECORATOR_NAME = "probabilistic_program"
@@ -132,17 +134,22 @@ class Linter(ast.NodeVisitor):
             node: The node to be analyzed.
         """
 
-        if PPLinter.is_probabilistic_program(node):
+        is_program, diagnostics = PPLinter.check_and_verify_decorators(node)
+        if is_program:
             logging.debug(
                 f"Found probabilistic program '{node.name}',"
                 " calling specialized linter…"
             )
             pplinter = PPLinter()
             pplinter.visit(node)
-            self.diagnostics += map(
-                lambda diagnostic: str(diagnostic),
-                pplinter.diagnostics,
-            )
+            diagnostics += pplinter.diagnostics
+        else:
+            logging.debug(f"Skipping function '{node.name}'")
+
+        self.diagnostics += map(
+            lambda diagnostic: str(diagnostic),
+            diagnostics,
+        )
 
 
 class PPLinter(ast.NodeVisitor):
@@ -168,6 +175,8 @@ class PPLinter(ast.NodeVisitor):
             "Initialized probabilistic program linter"
             f" with {self.diagnostics=}."
         )
+        # Fake method overloading for static- and instance-methods.
+        self.is_probabilistic_program = self._is_probabilistic_program
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """Prohibit nested functions.
@@ -182,7 +191,7 @@ class PPLinter(ast.NodeVisitor):
         """
 
         if not self._entered:
-            if PPLinter.is_probabilistic_program(node):
+            if self.is_probabilistic_program(node):
                 self._entered = True
                 self.generic_visit(node)
                 self._entered = False
@@ -207,8 +216,60 @@ class PPLinter(ast.NodeVisitor):
             )
         )
 
+    @classmethod
+    def is_probabilistic_program(cls, node: ast.FunctionDef) -> bool:
+        """Checks whether or not this declares a probabilistic program.
+
+        Note that this only checks for the string of the decorator to match
+        `_DECORATOR_NAME` currently, no actual testing is done to ensure the
+        origin of the decorator. This may lead to incorrect identification of
+        functions in case other decorators share that name.
+
+        For clarities sake, this merely verifies if this function's signature
+        declares it as a probabilistic program, i.e. has the appropriate
+        decorator, this does not do any form or validation or analysis.
+
+        If this is called from an instantiated linter, a `WARNING` is added to
+        the diagnostics of that instance in case of an unindentifiable
+        decorator.
+
+        Args:
+            node: The node to check.
+
+        Returns:
+            True if this could be identified as a probabilistic program, False
+            otherwise.
+        """
+
+        result, _ = cls.check_and_verify_decorators(node)
+        return result
+
+    def _is_probabilistic_program(self, node: ast.FunctionDef) -> bool:
+        """Checks whether or not this declares a probabilistic program.
+
+        This adds a `WARNING` to the diagnostics in case a decorator could not
+        be identified.
+
+        Note, this method overrides the namesake method (without leading `_`)
+        in case of instantiation. Therefore, look at that method's
+        documentation for further details.
+
+        Args:
+            node: The node to check.
+
+        Returns:
+            True if this could be identified as a probabilistic program, False
+            otherwise.
+        """
+
+        result, diagnostics = self.check_and_verify_decorators(node)
+        self.diagnostics + diagnostics
+        return result
+
     @staticmethod
-    def is_probabilistic_program(node: ast.FunctionDef) -> bool:
+    def check_and_verify_decorators(
+        node: ast.FunctionDef,
+    ) -> Tuple[bool, list[Diagnostic]]:
         """Checks whether or not this declares a probabilistic program.
 
         Note that this only checks for the string of the decorator to match
@@ -224,8 +285,10 @@ class PPLinter(ast.NodeVisitor):
             node: The node to check.
 
         Returns:
-            True if this could be identified as a probabilistic program, False
-            otherwise.
+            `(True, [])` if this could be identified as a probabilistic
+            program, `(False, <Diagnostics>)` otherwise. Where `<Diagnostics>`
+            may be a non-empty list with `WARNING`s about any unidentifiable
+            decorator.
         """
 
         result = any(
@@ -235,17 +298,34 @@ class PPLinter(ast.NodeVisitor):
             and decorator.id == _DECORATOR_NAME
             for decorator in node.decorator_list
         )
+        diagnostics = []
 
         if not result:
-            if any(
-                not isinstance(decorator, ast.Attribute)
-                and not isinstance(decorator, ast.Name)
-                for decorator in node.decorator_list
-            ):
-                logging.warn("Could not identify and thus verify decorator…")
-                logging.debug(ast.dump(node))
+            unverified = list(
+                filter(
+                    lambda decorator: not isinstance(decorator, ast.Attribute)
+                    and not isinstance(decorator, ast.Name),
+                    node.decorator_list,
+                )
+            )
+            if unverified:
+                logging.warning(
+                    "Could not verify at least one decorator"
+                    f" of '{node.name}'…"
+                )
+            for decorator in unverified:
+                logging.debug(
+                    f"Could not verify decorator: {ast.dump(decorator)}"
+                )
+                diagnostics.append(
+                    Diagnostic.from_node(
+                        decorator,
+                        "Could not verify decorator.",
+                        severity=Severity.WARNING,
+                    )
+                )
 
-        return result
+        return (result, diagnostics)
 
 
 def lint_code(code: str) -> list[str] | None:
