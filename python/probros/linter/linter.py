@@ -59,6 +59,31 @@ class Diagnostic:
             f"{self.line:4d}:{self.column}:\t{self.severity}: {self.message}"
         )
 
+    @classmethod
+    def from_node(
+        cls,
+        node: ast.AST,
+        message: str,
+        severity: Severity = Severity.ERROR,
+    ) -> Self:
+        return cls(
+            line=node.lineno,
+            end_line=(
+                node.end_lineno
+                if node.end_lineno and node.end_lineno >= node.lineno
+                else node.lineno
+            ),
+            column=node.col_offset,
+            end_column=(
+                node.end_col_offset
+                if node.end_col_offset
+                and node.end_col_offset >= node.col_offset
+                else node.col_offset
+            ),
+            message=message,
+            severity=severity,
+        )
+
 
 class Linter(ast.NodeVisitor):
     """A linter to validate any probabilistic programs found within the code.
