@@ -1,9 +1,11 @@
 # mypy: disable-error-code="method-assign"
+import abc
 import ast
 import logging
+import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Self, Tuple
+from typing import Callable, Self, Tuple
 
 # TODO: extract this dynamically from `probros` to future-proof for changes?
 _DECORATOR_NAME = "probabilistic_program"
@@ -87,98 +89,164 @@ class Diagnostic:
         )
 
 
-class Linter(ast.NodeVisitor):
-    """A linter to validate any probabilistic programs found within the code.
-
-    This linter focuses on programs implementing probabilistic programs
-    according to the specifications in `docs.ipynb`. Therefore, only functions
-    annotated as such are checked, any other part of the code is ignored.
+class BaseLinter(abc.ABC, ast.NodeVisitor):
+    """A base class for linters to validate some code.
 
     Attributes:
-        diagnostics: A list to store found diagnostics
+        diagnostics: A list to store diagnostics.
     """
 
-    def __init__(self) -> None:
-        """Initialize the linter."""
-        self.diagnostics: list[str] = []
-
-    def run(self, node: ast.AST) -> list[str]:
-        """Run the linter and receive any diagnostics.
-
-        This method is merely a wrapper to empty any previous diagnostics, call
-        `visit` and empty the diagnostics again afterwards.
+    @abc.abstractmethod
+    def __init__(self, **kwargs) -> None:
+        """Abstract initialization method.
 
         Args:
-            node: The node on which to run the linter on.
-
-        Returns:
-            A list of any diagnostics found, formatted into a string.
+            **kwargs: Any further arguments, those will be handed to the
+                initialization method of any super classes.
         """
 
+        self.diagnostics: list[Diagnostic] = []
+        super().__init__(**kwargs)
+
+    def run(self, target: ast.AST | str) -> list[Diagnostic]:
+        """Run the linter and receive any diagnostics.
+
+        In case `node` is given as a string, (i) attempt to interpret it as a
+        file-path to read and lint the file, if this fails, (ii) try to lint
+        the string itself.
+
+        Args:
+            target: The file or code on which to run the linter on.
+
+        Returns:
+            A list of any diagnostics found.
+        """
+
+        if isinstance(target, str):
+            # (i) attempt to interpret `target` as a file-path…
+            logging.debug(
+                f"Received {target[:25]!a}… as a string,"
+                " try interpreting it as a file-path."
+            )
+            if os.path.isfile(target):
+                logging.debug(
+                    f"Identified {target[:25]!a}… as a file,"
+                    " reading the contents."
+                )
+                try:
+                    with open(target, "r") as file:
+                        target = file.read()
+                except IOError as error:
+                    logging.debug(
+                        f"Failed to read {target[:25]!a}… as a file: {error}"
+                    )
+
+            # (ii) attempt to parse `target` as code…
+            logging.debug(f"Parsing {target[:25]!a}… as code.")
+            try:
+                target = ast.parse(target)
+            except ValueError as error:
+                logging.fatal(
+                    f"Failed to parse {str(target)[:25]!a}… as code,"
+                    f" aborting {self.__class__.__name__}: {error}"
+                )
+                return []
+
+        logging.debug(
+            f"Running {self.__class__.__name__} on"
+            f" node {ast.dump(target)[:25]}…."
+        )
+
         self.diagnostics = []
+        self.visit(target)
 
-        logging.debug(f"Running linter on node '{ast.dump(node)[:25]}…'.")
-        self.visit(node)
+        logging.debug(
+            f"{self.__class__.__name__} finished,"
+            f" got {len(self.diagnostics)} diagnostics."
+        )
+
         diagnostics = self.diagnostics
-        logging.debug(f"Linter finished, got {len(diagnostics)} diagnostics.")
-
         self.diagnostics = []
         return diagnostics
+
+
+class Linter(BaseLinter):
+    """A linter to validate any probabilistic programs found.
+
+    Attributes:
+        decorator_verifier: A function to verify if a given node satisfies the
+            conditions to count as a "probabilistic program".
+        specialized_linter: The linter to use for identified probabilistic
+            programs.
+    """
+
+    def __init__(
+        self,
+        decorator_verifier: Callable[
+            [ast.FunctionDef],
+            Tuple[bool, list[Diagnostic]],
+        ],
+        probabilistic_program_linter: BaseLinter,
+        **kwargs,
+    ) -> None:
+        """Initialize the linter.
+
+        Args:
+            decorator_verifier: Function to verify if a given function node
+                constitutes as a "probabilistic program".
+            probabilistic_program_linter: Linter to analyze individual
+                probabilistic programs.
+            **kwargs: Any further arguments, those will be handed to the
+                initialization method of any super classes.
+        """
+
+        self.decorator_verifier = decorator_verifier
+        self.specialized_linter = probabilistic_program_linter
+        super().__init__(**kwargs)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Hand off analyzing probabilistic programs, ignore anything else.
 
-        Note that this only checks for the string of the decorator to match
-        `_DECORATOR_NAME` currently, no actual testing is done to ensure the
-        origin of the decorator. This may lead to incorrect identification of
-        functions in case other decorators share that name.
-
         Args:
-            node: The node to be analyzed.
+            node: The function node to be analyzed.
         """
 
-        is_program, diagnostics = PPLinter.check_and_verify_decorators(node)
+        is_program, diagnostics = self.decorator_verifier(node)
         if is_program:
             logging.debug(
                 f"Found probabilistic program '{node.name}',"
                 " calling specialized linter."
             )
-            pplinter = PPLinter()
-            pplinter.visit(node)
-            diagnostics += pplinter.diagnostics
+            diagnostics += self.specialized_linter.run(node)
         else:
             logging.debug(f"Skipping function '{node.name}'")
 
-        logging.debug(
-            f"Converting and congregating {len(diagnostics)} diagnostic(s)."
-        )
-        self.diagnostics += map(
-            lambda diagnostic: str(diagnostic),
-            diagnostics,
-        )
+        logging.debug(f"Collecting {len(diagnostics)} diagnostic(s).")
+        self.diagnostics += diagnostics
 
 
-class PPLinter(ast.NodeVisitor):
+class PPLinter(BaseLinter):
     """A linter to validate individual probabilistic programs.
 
-    This linter is geared to analyze individual probabilistic programs
-    according to the definition in `docs.ipynb`. Thus, this linter is not
-    designed to be used as a standalone linter.
-
-    Attributes:
-        diagnostics: A list to store found diagnostics.
+    This linter is geared to analyze individual probabilistic programs.
+    Thus, this linter is not designed to be used as a standalone linter.
     """
 
-    def __init__(self) -> None:
-        """Initialize the linter."""
+    def __init__(self, **kwargs) -> None:
+        """Initialize the linter.
 
-        self.diagnostics: list[Diagnostic] = []
+        Args:
+            **kwargs: Any further arguments, those will be handed to the
+                initialization method of any super classes.
+        """
 
         # Represent whether or not this linter has entered a program.
         self._entered: bool = False
 
         # Fake method overloading for static- and instance-methods.
         self.is_probabilistic_program = self._is_probabilistic_program
+
+        super().__init__(**kwargs)
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """Prohibit nested functions.
@@ -332,61 +400,27 @@ class PPLinter(ast.NodeVisitor):
         return (result, diagnostics)
 
 
-def lint_code(code: str) -> list[str] | None:
-    """Lint the provided python code.
+def lint(target: str) -> list[Diagnostic]:
+    """Lint the provided file or python code.
 
-    Args:
-        code: The Python code to be linted.
-
-    Returns:
-        The diagnostics found by the linter as strings or `None` in case of
-        errors. All diagnostics identified by the linter and any runtime errors
-        are logged.
-    """
-
-    logging.debug(f"Running linter on given code {code[:25]!a}….")
-    linter = Linter()
-    try:
-        tree = ast.parse(code)
-    except ValueError:
-        logging.warning("Received invalid data.")
-        return None
-
-    diagnostics = linter.run(tree)
-
-    logging.info(
-        f"Linter ran successfully, found {len(diagnostics)} diagnostics."
-    )
-    for diagnostic in diagnostics:
-        logging.info(diagnostic)
-
-    return diagnostics
-
-
-def lint_file(filepath: str) -> list[str] | None:
-    """Lint the provided file.
+    This function (i) attempts to interpret `target` as a file-path to read and
+    lint the according file, if this fails, it tries to (ii) lint the string
+    itself.
 
     This currently reads the whole file into memory and parses it afterwards.
     Therefore, this may cause problems with very large files.
 
     Args:
-        code: The path to the file containing the Python code to be linted.
+        target: The file-path or code to be linted.
 
     Returns:
-        The diagnostics found by the linter as strings or `None` in case of
-        errors. All diagnostics identified by the linter and any runtime errors
-        are logged.
+        The diagnostics found by the linter. All diagnostics identified by the
+        linter and any runtime errors are logged.
     """
 
-    logging.debug(f"Reading file '{filepath}'.")
-    try:
-        with open(filepath, "r") as file:
-            code = file.read()
-    except IOError as error:
-        logging.fatal(f"Failed to open file '{filepath}': {error}")
-        return None
-
-    return lint_code(code)
+    linter = Linter(PPLinter.check_and_verify_decorators, PPLinter())
+    diagnostics = linter.run(target)
+    return diagnostics
 
 
 def main() -> None:
@@ -394,10 +428,10 @@ def main() -> None:
 
     This uses `argparse` to decypher any arguments. Valid arguments are:
     - `-v` / `--verbose` to print debugging messages, and
-    - either a filepath as a positional argument, or
-    - `-c` / `--code` with the code to analyze.
-      The filepath and `-c`/`--code` are mutually exclusive but one is
-      required.
+    - either a filepath or code as a positional argument.
+
+    The positional argument is (i) interpreted as a file-path, if this fails,
+    (ii) the argument itself is parsed and linted.
     """
 
     import argparse
@@ -410,11 +444,11 @@ def main() -> None:
         action="store_true",
         help="Print verbose messages",
     )
-    code_origin = parser.add_mutually_exclusive_group(required=True)
-    code_origin.add_argument(
-        "filepath", help="File to run the linter on", type=str, nargs="?"
+    parser.add_argument(
+        "target",
+        help="File or code to run the linter on",
+        type=str,
     )
-    code_origin.add_argument("-c", "--code", help="The code to lint", type=str)
     args = parser.parse_args()
 
     if args.verbose:
@@ -438,12 +472,12 @@ def main() -> None:
     else:
         logging.basicConfig(format="%(message)s", level=logging.INFO)
 
-    if args.filepath and not args.code:
-        lint_file(args.filepath)
-    elif args.code and not args.filepath:
-        lint_code(args.code)
-    else:
-        raise RuntimeError("Reached unreachable code.")
+    diagnostics = lint(args.target)
+    hints = list(map(lambda diagnostic: str(diagnostic), diagnostics))
+
+    logging.info(f"Linter ran successfully, received {len(hints)} hints.")
+    for hint in hints:
+        logging.info(str(hint))
 
 
 if __name__ == "__main__":
