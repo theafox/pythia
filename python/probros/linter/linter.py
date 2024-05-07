@@ -10,10 +10,12 @@ class Linter(BaseLinter):
     """A linter to validate any probabilistic programs found.
 
     Attributes:
-        decorator_verifier: A function to verify if a given node satisfies the
-            conditions to count as a "probabilistic program".
         specialized_linter: The linter to use for identified probabilistic
             programs.
+        is_probabilistic_program: A function which checks whether or not a
+            function node could be identified as a probabilistic program.
+        analyze_decorator: A function which analyzes if any decorators of a
+            function node could not be recognized.
     """
 
     def __init__(
@@ -28,10 +30,12 @@ class Linter(BaseLinter):
         """Initialize the linter.
 
         Args:
-            decorator_verifier: Function to verify if a given function node
-                constitutes as a "probabilistic program".
             probabilistic_program_linter: Linter to analyze individual
                 probabilistic programs.
+            is_probabilistic_program: A function which checks whether or not a
+                function node could be identified as a probabilistic program.
+            analyze_decorator: A function which analyzes if any decorators of a
+                function node could not be recognized.
             **kwargs: Any further arguments, those will be handed to the
                 initialization method of any super classes.
         """
@@ -120,7 +124,7 @@ def main() -> None:
     if args.verbose:
         # Use two different handlers to print the standard / debugging
         # information. This also allows redirecting the output if required.
-        # Preprend debugging messages with `* ` to differentiate them from
+        # Prepend debugging messages with `* ` to differentiate them from
         # normal outputs.
 
         standard = log.StreamHandler(sys.stdout)
