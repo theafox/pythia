@@ -1,3 +1,39 @@
+"""A linter for probabilistic programs.
+
+TODO: add specifications!
+
+Example:
+    This script may also be used as a CLI tool to lint files according to those
+    rules. When used as a CLI tool, a `-v`/`--verbose` flag may be provided for
+    extensive logging messages. And one positional argument must be provided
+    which either points to a file or, if the path is not valid or the file
+    could not be opened, the argument is interpreted as code instead.
+
+        $ python3 linter.py -v test.py
+        * Received 'test.py'… as a string, try interpreting it as a file-path.
+        * Identified 'test.py'… as a file, reading the contents.
+        * Parsing 'import probros\n\n\n# This s'… as code.
+        …
+
+        $ python3 linter.py test.py
+        Linter ran successfully, received 3 hints.
+          51:4: ERROR: Nested functions are not allowed
+          …
+
+Attributes:
+    Linter: This class represents the linter for probabilistic programs used
+        by `lint` and `main`. This class inherits from `ast.NodeVisitor` and
+        has a `run` function for convenient usage.
+    lint: A function which represents the linting functionality. The argument,
+        similar to the CLI functionality, first tries interpreting this as a
+        file-path, if unsuccessful, the argument is parsed as code instead.
+    main: This function includes the setup for the CLI functionality.
+
+Meta-Information:
+    Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
+    Version: 0.1.0
+"""
+
 import ast
 import logging as log
 from typing import Callable
