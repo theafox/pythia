@@ -1,6 +1,6 @@
 import ast
 import logging as log
-from typing import Callable, Tuple
+from typing import Callable
 
 from base_linter import BaseLinter, Diagnostic
 from pplinter import PPLinter
@@ -18,11 +18,11 @@ class Linter(BaseLinter):
 
     def __init__(
         self,
-        decorator_verifier: Callable[
-            [ast.FunctionDef],
-            Tuple[bool, list[Diagnostic]],
-        ],
         probabilistic_program_linter: BaseLinter,
+        is_probabilistic_program: Callable[[ast.FunctionDef], bool],
+        analyze_decorator: Callable[
+            [ast.FunctionDef], list[Diagnostic]
+        ] = lambda *args, **kwargs: [],
         **kwargs,
     ) -> None:
         """Initialize the linter.
@@ -36,8 +36,9 @@ class Linter(BaseLinter):
                 initialization method of any super classes.
         """
 
-        self.decorator_verifier = decorator_verifier
         self.specialized_linter = probabilistic_program_linter
+        self.is_admissible = is_probabilistic_program
+        self.analyze_decorator = analyze_decorator
         super().__init__(**kwargs)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
@@ -47,8 +48,8 @@ class Linter(BaseLinter):
             node: The function node to be analyzed.
         """
 
-        is_program, diagnostics = self.decorator_verifier(node)
-        if is_program:
+        diagnostics = self.analyze_decorator(node)
+        if self.is_admissible(node):
             log.debug(
                 f"Found probabilistic program '{node.name}',"
                 " calling specialized linter."
@@ -79,7 +80,11 @@ def lint(target: str) -> list[Diagnostic]:
         linter and any runtime errors are logged.
     """
 
-    linter = Linter(PPLinter.check_and_verify_decorators, PPLinter())
+    linter = Linter(
+        PPLinter(),
+        PPLinter.is_probabilistic_program,
+        PPLinter.analyze_decorators,
+    )
     diagnostics = linter.run(target)
     return diagnostics
 

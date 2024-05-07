@@ -1,4 +1,3 @@
-# mypy: disable-error-code="method-assign"
 import ast
 import logging as log
 from typing import Tuple
@@ -27,9 +26,6 @@ class PPLinter(BaseLinter):
         # Represent whether or not this linter has entered a program.
         self._entered: bool = False
 
-        # Fake method overloading for static- and instance-methods.
-        self.is_probabilistic_program = self._is_probabilistic_program
-
         super().__init__(**kwargs)
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
@@ -45,6 +41,7 @@ class PPLinter(BaseLinter):
         """
 
         if not self._entered:
+            self.diagnostics += self.analyze_decorators(node)
             if self.is_probabilistic_program(node):
                 log.debug("Entered probabilistic program analysis.")
                 self._entered = True
@@ -85,98 +82,94 @@ class PPLinter(BaseLinter):
         declares it as a probabilistic program, i.e. has the appropriate
         decorator, this does not do any form or validation or analysis.
 
-        If this is called from an instantiated linter, a `WARNING` is added to
-        the diagnostics of that instance in case of an unindentifiable
-        decorator.
-
         Args:
-            node: The node to check.
+            node: The function node to check.
 
         Returns:
             True if this could be identified as a probabilistic program, False
             otherwise.
         """
 
-        result, _ = cls.check_and_verify_decorators(node)
-        return result
+        is_probabilistic_program, _ = cls._check_analyze_decorators(node)
+        return is_probabilistic_program
 
-    def _is_probabilistic_program(self, node: ast.FunctionDef) -> bool:
-        """Checks whether or not this declares a probabilistic program.
+    @classmethod
+    def analyze_decorators(cls, node: ast.FunctionDef) -> list[Diagnostic]:
+        """Analyze the decorators of a function.
 
-        This adds a `WARNING` to the diagnostics in case a decorator could not
-        be identified.
-
-        Note, this method overrides the namesake method (without leading `_`)
-        in case of instantiation. Therefore, look at that method's
-        documentation for further details.
+        Only decorators of type `Name` and `Attribute` will be recognized, any
+        others receive a diagnostic.
 
         Args:
-            node: The node to check.
+            node: The function node to analyze.
 
         Returns:
-            True if this could be identified as a probabilistic program, False
-            otherwise.
+            A list of diagnostics for all unrecognized decorators.
         """
 
-        result, diagnostics = self.check_and_verify_decorators(node)
-        self.diagnostics + diagnostics
-        return result
+        _, diagnostics = cls._check_analyze_decorators(node)
+        return diagnostics
 
     @staticmethod
-    def check_and_verify_decorators(
+    def _check_analyze_decorators(
         node: ast.FunctionDef,
     ) -> Tuple[bool, list[Diagnostic]]:
-        """Checks whether or not this declares a probabilistic program.
+        """Check whether `node` is a probabilistic program and has unrecognized
+        decorators.
 
         Note that this only checks for the string of the decorator to match
         `_DECORATOR_NAME` currently, no actual testing is done to ensure the
         origin of the decorator. This may lead to incorrect identification of
         functions in case other decorators share that name.
 
-        For clarities sake, this merely verifies if this function's signature
-        declares it as a probabilistic program, i.e. has the appropriate
-        decorator, this does not do any form or validation or analysis.
+        Only decorators of type `Name` and `Attribute` will be recognized, any
+        others receive a diagnostic.
+
+        Both functionalities are consolidated into this "private" function,
+        because both require consistent definition of what decorators can be
+        recognized.
 
         Args:
-            node: The node to check.
+            node: The function node to check and analyze.
 
         Returns:
-            `(True, [])` if this could be identified as a probabilistic
-            program, `(False, <Diagnostics>)` otherwise. Where `<Diagnostics>`
-            may be a non-empty list with `WARNING`s about any unidentifiable
-            decorator.
+            A tuple, whose first element indicates whether or not the function
+            could be identified as a probabilistic program. The second element
+            may contain any `WARNING`s about unidentifiable decorators.
         """
 
-        result = any(
+        # check…
+        is_probabilistic_program: bool = any(
             isinstance(decorator, ast.Attribute)
             and decorator.attr == _DECORATOR_NAME
             or isinstance(decorator, ast.Name)
             and decorator.id == _DECORATOR_NAME
             for decorator in node.decorator_list
         )
-        diagnostics = []
 
-        if not result:
-            unverified = list(
-                filter(
-                    lambda decorator: not isinstance(decorator, ast.Attribute)
-                    and not isinstance(decorator, ast.Name),
-                    node.decorator_list,
+        # analyze…
+        unrecognized: list[ast.expr] = list(
+            filter(
+                lambda decorator: not isinstance(decorator, ast.Attribute)
+                and not isinstance(decorator, ast.Name),
+                node.decorator_list,
+            )
+        )
+
+        if unrecognized:
+            log.warning(
+                f"Could not verify at least one decorator of '{node.name}'…"
+            )
+
+        diagnostics: list[Diagnostic] = []
+        for decorator in unrecognized:
+            log.debug(f"Could not verify decorator: {ast.dump(decorator)}")
+            diagnostics.append(
+                Diagnostic.from_node(
+                    decorator,
+                    "Could not verify decorator.",
+                    severity=Severity.WARNING,
                 )
             )
-            if unverified:
-                log.warning(
-                    "Could not verify at least one decorator"
-                    f" of '{node.name}'…"
-                )
-            for decorator in unverified:
-                log.debug(f"Could not verify decorator: {ast.dump(decorator)}")
-                diagnostics.append(
-                    Diagnostic.from_node(
-                        decorator,
-                        "Could not verify decorator.",
-                        severity=Severity.WARNING,
-                    )
-                )
 
-        return (result, diagnostics)
+        return (is_probabilistic_program, diagnostics)
