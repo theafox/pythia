@@ -90,7 +90,11 @@ class PPLinter(BaseLinter):
             otherwise.
         """
 
+        # Only enable logging for the explicit analysis call, disable it here.
+        logger: log.Logger = log.getLogger()
+        logger.disabled = True
         is_probabilistic_program, _ = cls._check_analyze_decorators(node)
+        logger.disabled = False
         return is_probabilistic_program
 
     @classmethod
