@@ -23,10 +23,10 @@ class PPLinter(BaseLinter):
                 initialization method of any super classes.
         """
 
+        super().__init__(**kwargs)
+
         # Represent whether or not this linter has entered a program.
         self._entered: bool = False
-
-        super().__init__(**kwargs)
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """Prohibit nested functions.

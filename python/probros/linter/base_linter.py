@@ -101,8 +101,8 @@ class BaseLinter(ABC, ast.NodeVisitor):
                 initialization method of any super classes.
         """
 
-        self.diagnostics: list[Diagnostic] = []
         super().__init__(**kwargs)
+        self.diagnostics: list[Diagnostic] = []
 
     def run(self, target: ast.AST | str) -> list[Diagnostic]:
         """Run the linter and receive any diagnostics.

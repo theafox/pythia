@@ -76,10 +76,10 @@ class Linter(BaseLinter):
                 initialization method of any super classes.
         """
 
+        super().__init__(**kwargs)
         self.specialized_linter = probabilistic_program_linter
         self.is_admissible = is_probabilistic_program
         self.analyze_decorator = analyze_decorator
-        super().__init__(**kwargs)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Hand off analyzing probabilistic programs, ignore anything else.
