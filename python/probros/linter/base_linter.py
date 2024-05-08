@@ -55,9 +55,7 @@ class Diagnostic:
             A one-line message including the line number, column number,
             severity, and message.
         """
-        return (
-            f"{self.line:4d}:{self.column}:\t{self.severity}: {self.message}"
-        )
+        return f"{self.line:4d}:{self.column}: {self.severity}: {self.message}"
 
     @classmethod
     def from_node(
