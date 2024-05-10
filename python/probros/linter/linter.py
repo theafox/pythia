@@ -247,8 +247,8 @@ def _analyze_probabilistic_program_entry_point(
     Only decorators of type `Name` and `Attribute` will be recognized, any
     others receive a diagnostic.
 
-    This additionally checks for any decorators on classes to warn users that
-    their usage is intended for functions only.
+    This additionally checks for any decorators on classes and asynchronous
+    functions to warn users that their usage is intended for functions only.
 
     Args:
         node: The function node to analyze.
@@ -257,7 +257,10 @@ def _analyze_probabilistic_program_entry_point(
         A list of diagnostics for all unrecognized decorators.
     """
 
-    if isinstance(node, ast.ClassDef) and any(
+    if (
+        isinstance(node, ast.ClassDef)
+        or isinstance(node, ast.AsyncFunctionDef)
+    ) and any(
         isinstance(decorator, ast.Attribute)
         and decorator.attr == _DECORATOR_NAME
         or isinstance(decorator, ast.Name)
