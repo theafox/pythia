@@ -1,3 +1,4 @@
+# type: ignore
 import probros
 
 
@@ -49,7 +50,7 @@ def invalid_probabilistic_program_nested(data):
 
     @probros.probabilistic_program
     def invalidly_nested_probabilistic_program():
-        pass
+        return f"This will {'not'} be checked!"
 
     return probability
 
@@ -75,6 +76,52 @@ def unchecked_function():
 
     VAR += "\nand nested functions"
     return unchecked_nested_function(VAR)
+
+
+# This class method should be validated.
+#
+class ClassContainingProbabilisticProgram:
+    @probros.probabilistic_program
+    def valid_probabilistic_program_in_class(self):
+        return
+
+    @probros.probabilistic_program
+    def invalid_probabilistic_program_in_class_fstring(self):
+        return f"{'This is not valid!'}"
+
+
+# This should be validated, the nested class should throw an error.
+@probros.probabilistic_program
+def invalid_probabilistic_program_nested_class():
+    class invalidly_nested_class:
+        pass
+
+
+# This probabilistic_program nested inside of another function should be
+# validated.
+#
+def outer_function():
+    @probros.probabilistic_program
+    def valid_probabilistic_program_in_function():
+        return
+
+    @probros.probabilistic_program
+    def invalid_probabilistic_program_in_function_fstring():
+        return f"{'This is not valid!'}"
+
+
+# Give information that this is not the intended use-case.
+#
+@probros.probabilistic_program
+class class_decorator:
+    pass
+
+
+# Give information that this is not the intended use-case.
+#
+@probros.probabilistic_program
+async def invalid_probabilistic_program_async():
+    pass
 
 
 # This should not be validated.
