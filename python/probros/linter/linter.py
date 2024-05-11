@@ -7,9 +7,11 @@ Example:
     specifications. When used as a CLI tool, a `-q`/`--quiet` or
     `-v`/`--verbose` flag may be provided to specify the verbosity of the
     logging output. The former restricts it to fatal messages, while the latter
-    shows everything logged. Additionally, either one positional argument must
-    be provided, a file-path, or the code directly via the `-c`/`--code` flag.
-    (View these options using the `-h`/`--help` flag.)
+    shows everything logged. To format the output as JSON, the `--json` flag
+    may be provided. (This may include more details than the standard output.)
+    Additionally, either one positional argument must be provided, a file-path,
+    or the code directly via the `-c`/`--code` flag. (View these options using
+    the `-h`/`--help` flag.)
 
         $ python3 linter.py test.py
         Linter ran successfully, received 3 hints.
@@ -339,13 +341,16 @@ def main() -> None:
     """Parse CLI arguments and execute the linter.
 
     This uses `argparse` to decypher any arguments. Valid arguments are:
-    - `-v` / `--verbose` to print debugging messages, and
+    - either `-v` / `--verbose` to print debugging messages or
     - `-q` / `--quiet` to suppress anyything but fatal errors and the results,
+    - `--json` to format the output as JSON, and
     - either a filepath as a positional argument, or code usig `-c`/`--code`.
     """
 
     import argparse
     import sys
+    from dataclasses import asdict
+    from json import dumps
 
     parser = argparse.ArgumentParser()
     verbosity = parser.add_mutually_exclusive_group()
@@ -369,6 +374,11 @@ def main() -> None:
         nargs="?",
     )
     code_origin.add_argument("-c", "--code", help="The code to lint", type=str)
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output the results in JSON format",
+    )
     args = parser.parse_args()
 
     if args.quiet:
@@ -404,9 +414,23 @@ def main() -> None:
         return
 
     log.info(f"Linter ran successfully, got {len(diagnostics)} diagnostic(s).")
-    hints = map(lambda diagnostic: str(diagnostic), diagnostics)
-    for hint in hints:
-        print(hint)
+    if args.json:
+        print(
+            dumps(
+                {
+                    "diagnostics": list(
+                        map(
+                            lambda diagnostic: asdict(diagnostic),
+                            diagnostics,
+                        )
+                    )
+                },
+                default=str,
+            )
+        )
+    else:
+        # Print as one block.
+        print("\n".join(str(diagnostic) for diagnostic in diagnostics))
 
 
 if __name__ == "__main__":
