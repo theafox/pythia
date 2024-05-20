@@ -47,6 +47,21 @@ def invalid_probabilistic_program_fstring(data):
     return probability
 
 
+# This should be validated, the deconstruction should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_deconstructor(data):
+    mean, stddev = 2, 0.3
+    probability = probros.Normal(mean, stddev)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+    return probability
+
+
 # This should be validated, the nested function should throw an error.
 #
 @probros.probabilistic_program
