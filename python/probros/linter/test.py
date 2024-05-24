@@ -173,6 +173,23 @@ def outer_function():
         return probability
 
 
+# This should be validated, the delete statement should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_delete(data):
+    probability = probros.Uniform(0, 1)
+    sum = 0
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+        sum += data[i]
+    del probability
+    return sum
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

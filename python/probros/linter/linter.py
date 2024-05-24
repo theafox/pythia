@@ -321,6 +321,7 @@ def default_probabilistic_program_linter() -> Linter:
         {
             rules.NoNestedFunctionsRule,
             rules.NoNestedClassesRule,
+            rules.NoDeleteStatementRule,
             rules.NoFstringRule,
             rules.NoDeconstructorRule,
             rules.NoChainedAssignmentRule,
