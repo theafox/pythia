@@ -62,8 +62,7 @@ class NoDeconstructorRule(BaseRule):
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         # Deconstruction can only occur on `Assign`, `AnnAssign` (annotated
-        # assign), and `AugAssign` (augmented assign) cannot use
-        # deconstructors.
+        # assign) and `AugAssign` (augmented assign) cannot use deconstructors.
         return (
             Diagnostic.from_node(node, message=cls.message)
             if isinstance(node, ast.Assign)
