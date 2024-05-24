@@ -190,6 +190,17 @@ def invalid_probabilistic_program_delete(data):
     return sum
 
 
+# This should be validated, type aliasing should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_type_aliasing():
+    type Probabilities = list[probros.Beta]
+    probability: Probabilities = []
+    for i in range(0, 5):
+        probability.append(probros.Beta(0.1, 0.5))
+    return probability
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

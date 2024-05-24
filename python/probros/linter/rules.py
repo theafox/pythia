@@ -54,6 +54,19 @@ class NoDeleteStatementRule(BaseRule):
         )
 
 
+class NoTypeAliasRule(BaseRule):
+
+    message = "Type aliasing is prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.TypeAlias)
+            else None
+        )
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"
