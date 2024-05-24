@@ -67,6 +67,31 @@ class NoTypeAliasRule(BaseRule):
         )
 
 
+class NoAsyncRule(BaseRule):
+
+    message = "Asynchrony is prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        match node:
+            case (
+                ast.AsyncFunctionDef()
+                | ast.AsyncFor()  # should be redundant
+                | ast.AsyncWith()  # --"--
+                | ast.Await()  # --"--
+            ):
+                return Diagnostic.from_node(node, message=cls.message)
+            case (
+                ast.ListComp(generators=generators)
+                | ast.SetComp(generators=generators)
+                | ast.DictComp(generators=generators)
+                | ast.GeneratorExp(generators=generators)
+            ) if any(generator.is_async for generator in generators):
+                return Diagnostic.from_node(node, message=cls.message)
+            case _:
+                return None
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"

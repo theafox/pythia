@@ -201,6 +201,44 @@ def invalid_probabilistic_program_type_aliasing():
     return probability
 
 
+# This should be validated, asynchrony should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_for(data):
+    probability = probros.Gamma(0.2, 0.9)
+    if probability < 0.5:
+        return False
+    else:
+        async for i in range(0, len(data)):
+            probros.observe(
+                data[i],
+                probros.IndexedAddress("data", i),
+                probability,
+            )
+        return True
+
+
+# This should be validated, asynchrony should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_await(data):
+    probabilities = (
+        await invalid_probabilistic_program_asynchronous_generator()
+    )
+    return (
+        True
+        if any(probability > 0.9 for probability in probabilities)
+        else False
+    )
+
+
+# This should be validated, asynchrony should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_generator():
+    return [probros.Normal(n, n * 0.1) async for n in range(10)]
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
