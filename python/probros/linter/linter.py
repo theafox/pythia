@@ -334,6 +334,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoImportRule,
             rules.NoGlobalOrNonlocalDeclarationRule,
             rules.NoPassRule,
+            rules.RestrictForLoopRule,
         },
         _is_probabilistic_program_entry_point,
         _analyze_probabilistic_program_entry_point,

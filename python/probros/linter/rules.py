@@ -227,3 +227,18 @@ class NoPassRule(BaseRule):
             if isinstance(node, ast.Pass)
             else None
         )
+
+
+class RestrictForLoopRule(BaseRule):
+
+    message = "For-loops may only use `range`"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not isinstance(node, ast.For):
+            return None
+        match node.iter:
+            case ast.Call(func=ast.Name(id="range")):
+                return None
+            case _:
+                return Diagnostic.from_node(node.iter, message=cls.message)

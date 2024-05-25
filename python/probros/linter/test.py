@@ -239,6 +239,32 @@ def invalid_probabilistic_program_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
 
 
+# This should be validated, for-loops not using `range` should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_for_iterable(data):
+    for point in data:
+        if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
+            return "outside X and Y"
+        elif point.x < 0 or point.x > 100:
+            return "outside X"
+        elif point.y < 0 or point.y > 100:
+            return "outside Y"
+        else:
+            return "inside X and Y"
+
+
+# This should be validated, for-loops not using `range` should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_for_constant(data):
+    probability = probros.Beta(2, 2)
+    step = 0
+    for character in "this shouldn't work either!":
+        probros.observe(data[step], character, probability)
+        step += 1
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
