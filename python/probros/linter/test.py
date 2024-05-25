@@ -239,6 +239,34 @@ def invalid_probabilistic_program_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
 
 
+# This should be validated, with-statements should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_with_file(filepath):
+    with open(filepath) as file:
+        data = file.readall()
+    probability = probros.Uniform(0, 1)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+
+# This should be validated, with-statements should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_with_variables(data):
+    with probros.Uniform(0, 1) as probability:
+        for i in range(0, len(data)):
+            probros.observe(
+                data[i],
+                probros.IndexedAddress("data", i),
+                probability,
+            )
+
+
 # This should be validated, for-loops not using `range` should throw an error.
 #
 @probros.probabilistic_program
