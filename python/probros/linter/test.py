@@ -293,6 +293,29 @@ def invalid_probabilistic_program_for_constant(data):
         step += 1
 
 
+# This should be validated, the walrus operator should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_walrus_operator(data):
+    details = {
+        "data": (data := data),
+        "length": (length := data),
+        "sum": (zum := data),
+        "mean": zum / length,
+    }
+
+    probability = probros.Uniform(0, 1)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+    details["distribution"] = probability
+    return details
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
