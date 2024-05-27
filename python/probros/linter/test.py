@@ -333,6 +333,13 @@ def invalid_probabilistic_program_bitwise_operator(a, b, c, d):
     return result
 
 
+# This should be validated, the bitwise complement `~` should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_bitwise_complement(n):
+    return ~n
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

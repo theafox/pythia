@@ -47,6 +47,27 @@ class RestrictBinaryOperatorsRule(BaseRule):
         )
 
 
+class RestrictUnaryOperatorsRule(BaseRule):
+
+    # Prohibit the bitwise complement operator `~`.
+    message = "Unary operators may only be of: +, -, not"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not isinstance(node, ast.UnaryOp):
+            return None
+        match node.op:
+            case ast.UAdd() | ast.USub() | ast.Not():
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.BinOp)
+            else None
+        )
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"
