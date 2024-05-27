@@ -63,6 +63,22 @@ class Diagnostic:
         message: str,
         severity: Severity = Severity.ERROR,
     ) -> Self:
+        """Create a diagnostic from an AST node.
+
+        The line, column, line end, and column end are extracted from the node.
+        In case the line/column end is not given, they are set to equal the
+        start line/column.
+
+        Args:
+            node: The node from which to extract the positional information.
+            message: The message for this diagnostic instance.
+            severity: The severity level for this diagnostic instance.
+                (defaults to `Severity.ERROR`)
+
+        Returns:
+            A diagnostic instance with the positional information from the node
+            and the provided message as the message.
+        """
         return cls(
             line=node.lineno,
             end_line=(
