@@ -385,6 +385,22 @@ def invalid_probabilistic_program_dictionary(data):
     return details
 
 
+# This should be validated, sets should be prohibited.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_set(data):
+    reduced = set()
+    for i in range(0, len(data)):
+        reduced.add(data[i])
+    probability = probros.Uniform(0, 1)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

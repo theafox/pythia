@@ -107,6 +107,19 @@ class NoDictionaryRule(BaseRule):
                 return None
 
 
+class NoSetRule(BaseRule):
+
+    message = "Sets are prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        match node:
+            case ast.Set() | ast.Call(func=ast.Name(id="set")):
+                return Diagnostic.from_node(node, message=cls.message)
+            case _:
+                return None
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"

@@ -341,6 +341,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoLambdaRule,
             rules.NoInlineIfRule,
             rules.NoDictionaryRule,
+            rules.NoSetRule,
             rules.NoFstringRule,
         },
         _is_probabilistic_program_entry_point,
