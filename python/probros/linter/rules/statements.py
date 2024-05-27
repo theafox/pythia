@@ -140,7 +140,7 @@ class RestrictForLoopRule(BaseRule):
 
 class NoWithStatementRule(BaseRule):
 
-    message = "With-statements are prohibited"
+    message = "With statements are prohibited"
 
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
