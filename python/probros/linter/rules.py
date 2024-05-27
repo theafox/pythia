@@ -22,8 +22,7 @@ class NoNestedFunctionsRule(BaseRule):
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.FunctionDef)
-            or isinstance(node, ast.AsyncFunctionDef)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
             else None
         )
 
@@ -113,8 +112,7 @@ class NoFstringRule(BaseRule):
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.FormattedValue)
-            or isinstance(node, ast.JoinedStr)
+            if isinstance(node, (ast.FormattedValue, ast.JoinedStr))
             else None
         )
 
@@ -131,7 +129,7 @@ class NoDeconstructorRule(BaseRule):
             Diagnostic.from_node(node, message=cls.message)
             if isinstance(node, ast.Assign)
             and any(
-                isinstance(target, ast.Tuple) or isinstance(target, ast.List)
+                isinstance(target, (ast.Tuple, ast.List))
                 for target in node.targets
             )
             else None
@@ -185,7 +183,7 @@ class NoTryExceptRule(BaseRule):
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.Try) or isinstance(node, ast.TryStar)
+            if isinstance(node, (ast.Try, ast.TryStar))
             else None
         )
 
@@ -211,7 +209,7 @@ class NoImportRule(BaseRule):
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom)
+            if isinstance(node, (ast.Import, ast.ImportFrom))
             else None
         )
 
@@ -224,7 +222,7 @@ class NoGlobalOrNonlocalDeclarationRule(BaseRule):
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.Global) or isinstance(node, ast.Nonlocal)
+            if isinstance(node, (ast.Global, ast.Nonlocal))
             else None
         )
 
