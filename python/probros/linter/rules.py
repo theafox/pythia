@@ -14,6 +14,9 @@ class BaseRule(ABC):
         raise NotImplementedError("Subclasses must implement this.")
 
 
+# Prohibit nested definitions and imports. ####################################
+
+
 class NoNestedFunctionsRule(BaseRule):
 
     message = "Nested functions are prohibited"
@@ -40,6 +43,35 @@ class NoNestedClassesRule(BaseRule):
         )
 
 
+class NoImportRule(BaseRule):
+
+    message = "Importing is prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, (ast.Import, ast.ImportFrom))
+            else None
+        )
+
+
+class NoGlobalOrNonlocalDeclarationRule(BaseRule):
+
+    message = "Declaring global variables is prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, (ast.Global, ast.Nonlocal))
+            else None
+        )
+
+
+# Restrict variable manipulations. ############################################
+
+
 class NoDeleteStatementRule(BaseRule):
 
     message = "Delete statements are prohibited"
@@ -62,57 +94,6 @@ class NoTypeAliasRule(BaseRule):
         return (
             Diagnostic.from_node(node, message=cls.message)
             if isinstance(node, ast.TypeAlias)
-            else None
-        )
-
-
-class NoAsyncRule(BaseRule):
-
-    message = "Asynchrony is prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        match node:
-            case (
-                ast.AsyncFunctionDef()
-                | ast.AsyncFor()  # should be redundant
-                | ast.AsyncWith()  # --"--
-                | ast.Await()  # --"--
-            ):
-                return Diagnostic.from_node(node, message=cls.message)
-            case (
-                ast.ListComp(generators=generators)
-                | ast.SetComp(generators=generators)
-                | ast.DictComp(generators=generators)
-                | ast.GeneratorExp(generators=generators)
-            ) if any(generator.is_async for generator in generators):
-                return Diagnostic.from_node(node, message=cls.message)
-            case _:
-                return None
-
-
-class NoWithStatementRule(BaseRule):
-
-    message = "With-statements are prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.With) and isinstance(node, ast.AsyncWith)
-            else None
-        )
-
-
-class NoFstringRule(BaseRule):
-
-    message = "F-Strings are prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, (ast.FormattedValue, ast.JoinedStr))
             else None
         )
 
@@ -149,6 +130,37 @@ class NoChainedAssignmentRule(BaseRule):
         )
 
 
+# Restrict control flow constructs. ###########################################
+
+
+class RestrictForLoopRule(BaseRule):
+
+    message = "For-loops may only use `range`"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not isinstance(node, (ast.For, ast.AsyncFor)):
+            return None
+        match node.iter:
+            case ast.Call(func=ast.Name(id="range")):
+                return None
+            case _:
+                return Diagnostic.from_node(node.iter, message=cls.message)
+
+
+class NoWithStatementRule(BaseRule):
+
+    message = "With-statements are prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, (ast.With, ast.AsyncWith))
+            else None
+        )
+
+
 class NoMatchRule(BaseRule):
 
     message = "The match control-flow construct is prohibited"
@@ -160,6 +172,47 @@ class NoMatchRule(BaseRule):
             if isinstance(node, ast.Match)
             else None
         )
+
+
+class NoAsyncRule(BaseRule):
+
+    message = "Asynchrony is prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        match node:
+            case (
+                ast.AsyncFunctionDef()
+                | ast.AsyncFor()  # should be redundant
+                | ast.AsyncWith()  # --"--
+                | ast.Await()  # --"--
+            ):
+                return Diagnostic.from_node(node, message=cls.message)
+            case (
+                ast.ListComp(generators=generators)
+                | ast.SetComp(generators=generators)
+                | ast.DictComp(generators=generators)
+                | ast.GeneratorExp(generators=generators)
+            ) if any(generator.is_async for generator in generators):
+                return Diagnostic.from_node(node, message=cls.message)
+            case _:
+                return None
+
+
+class NoPassRule(BaseRule):
+
+    message = "Pass statements are prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.Pass)
+            else None
+        )
+
+
+# Prohibit exception handling. ################################################
 
 
 class NoRaiseExceptionRule(BaseRule):
@@ -201,55 +254,17 @@ class NoAssertRule(BaseRule):
         )
 
 
-class NoImportRule(BaseRule):
-
-    message = "Importing is prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, (ast.Import, ast.ImportFrom))
-            else None
-        )
+# Miscellaneous. ##############################################################
 
 
-class NoGlobalOrNonlocalDeclarationRule(BaseRule):
+class NoFstringRule(BaseRule):
 
-    message = "Declaring global variables is prohibited"
+    message = "F-Strings are prohibited"
 
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, (ast.Global, ast.Nonlocal))
+            if isinstance(node, (ast.FormattedValue, ast.JoinedStr))
             else None
         )
-
-
-class NoPassRule(BaseRule):
-
-    message = "Pass statements are prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.Pass)
-            else None
-        )
-
-
-class RestrictForLoopRule(BaseRule):
-
-    message = "For-loops may only use `range`"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not isinstance(node, ast.For):
-            return None
-        match node.iter:
-            case ast.Call(func=ast.Name(id="range")):
-                return None
-            case _:
-                return Diagnostic.from_node(node.iter, message=cls.message)
