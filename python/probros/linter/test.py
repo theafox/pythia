@@ -354,6 +354,23 @@ def invalid_probabilistic_program_lambda(data):
         )
 
 
+# This should be validated, the inline if expression should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_inline_if(probability):
+    probability = 0 if probability < 0 else probability
+    i = 0
+    while True:
+        sample = probros.sample(
+            probros.IndexedAddress("data", i),
+            probros.Bernoulli(probability),
+        )
+        if sample == 1:
+            break
+        i += 1
+    return i
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

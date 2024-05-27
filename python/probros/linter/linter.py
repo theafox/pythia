@@ -339,6 +339,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.RestrictBinaryOperatorsRule,
             rules.RestrictUnaryOperatorsRule,
             rules.NoLambdaRule,
+            rules.NoInlineIfRule,
             rules.NoFstringRule,
         },
         _is_probabilistic_program_entry_point,
