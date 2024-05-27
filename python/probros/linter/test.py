@@ -340,6 +340,20 @@ def invalid_probabilistic_program_bitwise_complement(n):
     return ~n
 
 
+# This should be validated, the lambda expression should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_lambda(data):
+    data = filter(lambda point: point >= 0, data)
+    probability = probros.Gamma(0.1, 0.5)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
