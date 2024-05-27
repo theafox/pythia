@@ -1,18 +1,8 @@
 import ast
-from abc import ABC, abstractmethod
 
 from diagnostic import Diagnostic
 
-
-class BaseRule(ABC):
-
-    message: str
-
-    @classmethod
-    @abstractmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        raise NotImplementedError("Subclasses must implement this.")
-
+from .base_rule import BaseRule
 
 # Prohibit nested definitions and imports. ####################################
 
@@ -250,21 +240,5 @@ class NoAssertRule(BaseRule):
         return (
             Diagnostic.from_node(node, message=cls.message)
             if isinstance(node, ast.Assert)
-            else None
-        )
-
-
-# Miscellaneous. ##############################################################
-
-
-class NoFstringRule(BaseRule):
-
-    message = "F-Strings are prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, (ast.FormattedValue, ast.JoinedStr))
             else None
         )
