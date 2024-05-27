@@ -94,6 +94,19 @@ class NoInlineIfRule(BaseRule):
         )
 
 
+class NoDictionaryRule(BaseRule):
+
+    message = "Dictionaries are prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        match node:
+            case ast.Dict() | ast.Call(func=ast.Name(id="dict")):
+                return Diagnostic.from_node(node, message=cls.message)
+            case _:
+                return None
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"

@@ -297,23 +297,14 @@ def invalid_probabilistic_program_for_constant(data):
 #
 @probros.probabilistic_program
 def invalid_probabilistic_program_walrus_operator(data):
-    details = {
-        "data": (data := data),
-        "length": (length := data),
-        "sum": (zum := data),
-        "mean": zum / length,
-    }
-
-    probability = probros.Uniform(0, 1)
-    for i in range(0, len(data)):
-        probros.observe(
-            data[i],
-            probros.IndexedAddress("data", i),
-            probability,
-        )
-
-    details["distribution"] = probability
-    return details
+    if (length := len(data)) > 10:
+        probability = probros.Uniform(0, 1)
+        for i in range(0, length):
+            probros.observe(
+                data[i],
+                probros.IndexedAddress("data", i),
+                probability,
+            )
 
 
 # This should be validated, the shift operators should throw an error.
@@ -369,6 +360,29 @@ def invalid_probabilistic_program_inline_if(probability):
             break
         i += 1
     return i
+
+
+# This should be validated, the walrus operator should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_dictionary(data):
+    details = {
+        "data": (data := data),
+        "length": (length := data),
+        "sum": (zum := data),
+        "mean": zum / length,
+    }
+
+    probability = probros.Uniform(0, 1)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+    details["distribution"] = probability
+    return details
 
 
 # This may give information that this is not the intended use-case.
