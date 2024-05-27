@@ -18,6 +18,35 @@ class NoWalrusOperatorRule(BaseRule):
         )
 
 
+class RestrictBinaryOperatorsRule(BaseRule):
+
+    # Prohibit shift and bitwise operators.
+    message = "Binary operators may only be of: +, -, *, /, //, %, **"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not isinstance(node, ast.BinOp):
+            return None
+        match node.op:
+            case (
+                ast.Add()
+                | ast.Sub()
+                | ast.Mult()
+                | ast.Div()
+                | ast.FloorDiv()
+                | ast.Mod()
+                | ast.Pow()
+            ):
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.BinOp)
+            else None
+        )
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"

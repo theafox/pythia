@@ -316,6 +316,23 @@ def invalid_probabilistic_program_walrus_operator(data):
     return details
 
 
+# This should be validated, the shift operators should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_shift_operator(n):
+    return 1 << n
+
+
+# This should be validated, the shift operators should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_bitwise_operator(a, b, c, d):
+    result = a & b
+    result = result | c
+    result = result ^ d
+    return result
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
