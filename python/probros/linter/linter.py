@@ -348,6 +348,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoAsynchronousExpressionRule,
             rules.NoYieldRule,
             rules.NoFstringRule,
+            rules.NoStarredRule,
         },
         _is_probabilistic_program_entry_point,
         _analyze_probabilistic_program_entry_point,

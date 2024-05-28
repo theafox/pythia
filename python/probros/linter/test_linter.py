@@ -659,6 +659,27 @@ def invalid_probabilistic_program_yield_from(data):
     assert diagnostics[0].message == rules.NoYieldRule.message
 
 
+def test_prohibited_starred(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_starred(data):
+    zum = sum(*data)
+    for i in range(0, len(data)):
+        data[i] /= zum
+    probability = probros.Dirac(0.25)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoStarredRule.message
+
+
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program

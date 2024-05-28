@@ -449,6 +449,22 @@ def invalid_probabilistic_program_yield_from(data):
     yield from invalid_probabilistic_program_yield(data)
 
 
+# This should be validated, the starred variable should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_starred(data):
+    zum = sum(*data)
+    for i in range(0, len(data)):
+        data[i] /= zum
+    probability = probros.Dirac(0.25)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
