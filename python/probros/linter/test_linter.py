@@ -731,7 +731,7 @@ def invalid_probabilistic_program_attribute_assign(data):
     assert diagnostics[0].message == rules.NoAttributeAssignRule.message
 
 
-def test_prohibited_multiple_subscript_assign(default_linter: Linter):
+def test_prohibited_multiple_subscript(default_linter: Linter):
     code = """
 @probros.probabilistic_program
 def invalid_probabilistic_program_subscript(data):
@@ -747,9 +747,7 @@ def invalid_probabilistic_program_subscript(data):
     diagnostics = default_linter.lint_code(code)
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.NoMultipleSubscriptAssignRule.message
-    )
+    assert diagnostics[0].message == rules.NoMultipleSubscriptRule.message
 
 
 def test_unrecommended_use_case_class(default_linter: Linter):

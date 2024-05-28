@@ -139,29 +139,6 @@ class NoAttributeAssignRule(BaseRule):
                 return None
 
 
-class NoMultipleSubscriptAssignRule(BaseRule):
-
-    message = "Subscripts may not be written to"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        match node:
-            case ast.Assign(targets=targets) if any(
-                isinstance(target, ast.Subscript)
-                and isinstance(target.slice, (ast.List, ast.Tuple))
-                for target in targets
-            ):
-                return Diagnostic.from_node(node, message=cls.message)
-            case ast.AnnAssign(
-                target=ast.Subscript(slice=slice)
-            ) | ast.AugAssign(target=ast.Subscript(slice=slice)) if isinstance(
-                slice, (ast.List, ast.Tuple)
-            ):
-                return Diagnostic.from_node(node, message=cls.message)
-            case _:
-                return None
-
-
 # Restrict control flow constructs. ###########################################
 
 
