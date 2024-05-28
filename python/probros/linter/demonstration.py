@@ -225,11 +225,10 @@ def invalid_probabilistic_program_asynchronous_await(data):
     probabilities = (
         await invalid_probabilistic_program_asynchronous_generator()
     )
-    return (
-        True
-        if any(probability > 0.9 for probability in probabilities)
-        else False
-    )
+    for i in range(0, len(probabilities)):
+        if probabilities[i] > 0.9:
+            return True
+    return False
 
 
 # This should be validated, asynchrony should throw an error.
