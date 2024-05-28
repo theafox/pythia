@@ -218,26 +218,6 @@ def invalid_probabilistic_program_asynchronous_for(data):
         return True
 
 
-# This should be validated, asynchrony should throw an error.
-#
-@probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_await(data):
-    probabilities = (
-        await invalid_probabilistic_program_asynchronous_generator()
-    )
-    for i in range(0, len(probabilities)):
-        if probabilities[i] > 0.9:
-            return True
-    return False
-
-
-# This should be validated, asynchrony should throw an error.
-#
-@probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_generator():
-    return [probros.Normal(n, n * 0.1) async for n in range(10)]
-
-
 # This should be validated, with-statements should throw an error.
 #
 @probros.probabilistic_program
@@ -426,6 +406,26 @@ def invalid_probabilistic_program_dictionary_comprehension():
 @probros.probabilistic_program
 def invalid_probabilistic_program_generator():
     return sum(2**n for n in range(10))
+
+
+# This should be validated, asynchrony should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_await(data):
+    probabilities = (
+        await invalid_probabilistic_program_asynchronous_generator()
+    )
+    for i in range(0, len(probabilities)):
+        if probabilities[i] > 0.9:
+            return True
+    return False
+
+
+# This should be validated, asynchrony should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_generator():
+    return [probros.Normal(n, n * 0.1) async for n in range(10)]
 
 
 # This may give information that this is not the intended use-case.

@@ -303,46 +303,7 @@ def invalid_probabilistic_program_asynchronous_for(data):
     diagnostics = default_linter.lint_code(code)
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoAsyncRule.message
-
-
-def test_prohibited_asynchronous_await(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_await(data):
-    probabilities = (
-        await invalid_probabilistic_program_asynchronous_generator()
-    )
-    for i in range(0, len(probabilities)):
-        if probabilities[i] > 0.9:
-            return True
-    return False
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoAsyncRule.message
-
-
-def test_prohibited_asynchronous_generator(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_generator():
-    return [probros.Normal(n, n * 0.1) async for n in range(10)]
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    assert any(
-        diagnostic.message == rules.NoAsyncRule.message
-        for diagnostic in diagnostics
-    )
-    assert any(
-        diagnostic.message == rules.NoComprehensionAndGeneratorRule.message
-        for diagnostic in diagnostics
-    )
+    assert diagnostics[0].message == rules.NoAsynchronousStatementRule.message
 
 
 def test_prohibited_with_file(default_linter: Linter):
@@ -625,6 +586,45 @@ def invalid_probabilistic_program_generator():
     assert diagnostics[0].severity == Severity.ERROR
     assert (
         diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
+    )
+
+
+def test_prohibited_asynchronous_await(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_await(data):
+    probabilities = (
+        await invalid_probabilistic_program_asynchronous_generator()
+    )
+    for i in range(0, len(probabilities)):
+        if probabilities[i] > 0.9:
+            return True
+    return False
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoAsynchronousExpressionRule.message
+
+
+def test_prohibited_asynchronous_generator(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_asynchronous_generator():
+    return [probros.Normal(n, n * 0.1) async for n in range(10)]
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoAsynchronousExpressionRule.message
+        for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoComprehensionAndGeneratorRule.message
+        for diagnostic in diagnostics
     )
 
 
