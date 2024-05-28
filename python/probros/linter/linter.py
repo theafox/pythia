@@ -282,8 +282,10 @@ def _analyze_probabilistic_program_entry_point(
 
     unrecognized: list[ast.expr] = list(
         filter(
-            lambda decorator: not isinstance(decorator, ast.Attribute)
-            and not isinstance(decorator, ast.Name),
+            lambda decorator: not isinstance(
+                decorator,
+                (ast.Attribute, ast.Name, ast.Call),
+            ),
             node.decorator_list,
         )
     )
