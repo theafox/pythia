@@ -2,7 +2,7 @@ import ast
 
 from diagnostic import Diagnostic
 
-from .base_rule import BaseRule
+from .base import BaseRule
 
 
 class NoWalrusOperatorRule(BaseRule):

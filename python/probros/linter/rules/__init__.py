@@ -1,3 +1,3 @@
-from .base_rule import *
+from .base import *
 from .expressions import *
 from .statements import *
