@@ -680,6 +680,44 @@ def invalid_probabilistic_program_starred(data):
     assert diagnostics[0].message == rules.NoStarredRule.message
 
 
+def test_prohibited_slice(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_slice(data):
+    data = data[0:100]
+    probability = probros.Dirac(0.25)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+    return probros.sample(
+        probros.IndexedAddress("data", len(data)),
+        probability,
+    )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoSliceRule.message
+
+
+def test_valid_probabilistic_program_array_assign(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_array_assign(data):
+    details = list()
+    details[0] = data
+    details[1] = sum(data)
+    details[2] = len(data)
+    details[3] = details[1] / details[2]
+    return details
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program

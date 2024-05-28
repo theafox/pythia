@@ -465,6 +465,36 @@ def invalid_probabilistic_program_starred(data):
         )
 
 
+# This should be validated, the slice should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_slice(data):
+    data = data[0:100]
+    probability = probros.Dirac(0.25)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+    return probros.sample(
+        probros.IndexedAddress("data", len(data)),
+        probability,
+    )
+
+
+# This should be validated, this should not throw an error.
+#
+@probros.probabilistic_program
+def valid_probabilistic_program_array_assign(data):
+    details = list()
+    details[0] = data
+    details[1] = sum(data)
+    details[2] = len(data)
+    details[3] = details[1] / details[2]
+    return details
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
