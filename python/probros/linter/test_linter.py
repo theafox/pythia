@@ -67,13 +67,23 @@ def test_prohibited_fstring(default_linter: Linter):
 def invalid_probabilistic_program_fstring(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
-        probros.observe(data[i], f"flip[{i}]", probros.Bernoulli(probability))
+        address = f"flip[{i}]"
+        probros.observe(data[i], address, probros.Bernoulli(probability))
     return probability
 """
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoFstringRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoFstringRule.message
+        for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.RestrictObserveCallRule.message
+        for diagnostic in diagnostics
+    )
 
 
 def test_prohibited_deconstructor(default_linter: Linter):
@@ -233,17 +243,27 @@ def outer_function():
     def invalid_probabilistic_program_in_function_fstring(data: list[float]):
         probability = probros.Poisson(0.2)
         for i in range(0, len(data)):
+            address = f"data[{i}]"
             probros.observe(
                 data[i],
-                f"data[{i}]",
+                address,
                 probability,
             )
         return probability
 """
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoFstringRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoFstringRule.message
+        for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.RestrictObserveCallRule.message
+        for diagnostic in diagnostics
+    )
 
 
 def test_prohibited_delete(default_linter: Linter):
@@ -748,6 +768,41 @@ def invalid_probabilistic_program_subscript(data):
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
     assert diagnostics[0].message == rules.NoMultipleSubscriptRule.message
+
+
+def test_restricted_observe_call_address_number(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_number_address(data):
+    probability = probros.sample("p", probros.Uniform(0, 1))
+    for i in range(0, len(data)):
+        probros.observe(data[i], 123, probros.Bernoulli(probability))
+    return probability
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.RestrictObserveCallRule.message
+
+
+def test_restricted_observe_call_address_variable(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_variable_address(data: list[float]):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        address = probros.IndexedAddress("data", i)
+        probros.observe(
+            data[i],
+            address,
+            probability,
+        )
+    return probability
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.RestrictObserveCallRule.message
 
 
 def test_unrecommended_use_case_class(default_linter: Linter):

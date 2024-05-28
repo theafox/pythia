@@ -43,7 +43,8 @@ def unverifiable_function_string_decorator_probabilistic_program():
 def invalid_probabilistic_program_fstring(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
-        probros.observe(data[i], f"flip[{i}]", probros.Bernoulli(probability))
+        address = f"flip[{i}]"
+        probros.observe(data[i], address, probros.Bernoulli(probability))
     return probability
 
 
@@ -165,9 +166,10 @@ def outer_function():
     def invalid_probabilistic_program_in_function_fstring(data: list[float]):
         probability = probros.Poisson(0.2)
         for i in range(0, len(data)):
+            address = f"data[{i}]"
             probros.observe(
                 data[i],
-                f"data[{i}]",
+                address,
                 probability,
             )
         return probability
@@ -515,6 +517,31 @@ def invalid_probabilistic_program_subscript(data):
             probros.IndexedAddress("data", i),
             probability,
         )
+
+
+# This should be validated, the observe-call should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_number_address(data):
+    probability = probros.sample("p", probros.Uniform(0, 1))
+    for i in range(0, len(data)):
+        probros.observe(data[i], 123, probros.Bernoulli(probability))
+    return probability
+
+
+# This should be validated, the observe-call should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_variable_address(data: list[float]):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        address = probros.IndexedAddress("data", i)
+        probros.observe(
+            data[i],
+            address,
+            probability,
+        )
+    return probability
 
 
 # This may give information that this is not the intended use-case.
