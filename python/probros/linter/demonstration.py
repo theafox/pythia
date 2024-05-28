@@ -495,6 +495,28 @@ def valid_probabilistic_program_array_assign(data):
     return details
 
 
+# This should be validated, the attribute assign should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_attribute_assign(data):
+    data.sum = sum(data)
+    return data.sum
+
+
+# This should be validated, the subscript assign should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_subscript(data):
+    data[0, -1] = data[-1], data[0]
+    probability = probros.Dirac(0.25)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

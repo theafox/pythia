@@ -718,6 +718,40 @@ def valid_probabilistic_program_array_assign(data):
     assert not diagnostics
 
 
+def test_prohibited_attribute_assign(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_attribute_assign(data):
+    data.sum = sum(data)
+    return data.sum
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoAttributeAssignRule.message
+
+
+def test_prohibited_multiple_subscript_assign(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_subscript(data):
+    data[0, -1] = data[-1], data[0]
+    probability = probros.Dirac(0.25)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.NoMultipleSubscriptAssignRule.message
+    )
+
+
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program
