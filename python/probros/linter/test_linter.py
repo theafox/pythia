@@ -331,9 +331,18 @@ def invalid_probabilistic_program_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
 """
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoAsyncRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoAsyncRule.message
+        for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoComprehensionAndGeneratorRule.message
+        for diagnostic in diagnostics
+    )
 
 
 def test_prohibited_with_file(default_linter: Linter):
@@ -561,6 +570,62 @@ def invalid_probabilistic_program_set(data):
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
     assert diagnostics[0].message == rules.NoSetRule.message
+
+
+def test_prohibited_comprehension_list(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_list_comprehension():
+    return [2**n for n in range(10)]
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
+    )
+
+
+def test_prohibited_comprehension_set(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_set_comprehension():
+    return {2**n for n in range(10)}
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
+    )
+
+
+def test_prohibited_comprehension_dictionary(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_dictionary_comprehension():
+    return {n: 2**n for n in range(10)}
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
+    )
+
+
+def test_prohibited_generator(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_generator():
+    return sum(2**n for n in range(10))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
+    )
 
 
 def test_unrecommended_use_case_class(default_linter: Linter):

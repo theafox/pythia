@@ -400,6 +400,34 @@ def invalid_probabilistic_program_set(data):
         )
 
 
+# This should be validated, comprehensions and generators should throw an
+# error.
+@probros.probabilistic_program
+def invalid_probabilistic_program_list_comprehension():
+    return [2**n for n in range(10)]
+
+
+# This should be validated, comprehensions and generators should throw an
+# error.
+@probros.probabilistic_program
+def invalid_probabilistic_program_set_comprehension():
+    return {2**n for n in range(10)}
+
+
+# This should be validated, comprehensions and generators should throw an
+# error.
+@probros.probabilistic_program
+def invalid_probabilistic_program_dictionary_comprehension():
+    return {n: 2**n for n in range(10)}
+
+
+# This should be validated, comprehensions and generators should throw an
+# error.
+@probros.probabilistic_program
+def invalid_probabilistic_program_generator():
+    return sum(2**n for n in range(10))
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
