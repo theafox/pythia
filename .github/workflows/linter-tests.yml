@@ -1,0 +1,26 @@
+name: Probros Linter Test-Cases
+
+on: ["push", "pull_request"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install dependencies
+      # TODO: separate into `requirements.txt` file,
+      # the current `python/requirements_core.txt` are outdated.
+      run: |
+        pip install numpy scipy tqdm pytest
+    - name: Run the tests with pytest
+      run: |
+        pytest python/probros/linter/
