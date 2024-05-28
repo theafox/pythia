@@ -628,6 +628,37 @@ def invalid_probabilistic_program_asynchronous_generator():
     )
 
 
+def test_prohibited_yield(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_yield(data):
+    probability = probros.Uniform(0, 1)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+        yield data[i]
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoYieldRule.message
+
+
+def test_prohibited_yield_from(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_yield_from(data):
+    yield from invalid_probabilistic_program_yield(data)
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoYieldRule.message
+
+
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program

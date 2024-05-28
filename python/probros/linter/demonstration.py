@@ -428,6 +428,27 @@ def invalid_probabilistic_program_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
 
 
+# This should be validated, yield expressions should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_yield(data):
+    probability = probros.Uniform(0, 1)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probability,
+        )
+        yield data[i]
+
+
+# This should be validated, yield expressions should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_yield_from(data):
+    yield from invalid_probabilistic_program_yield(data)
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
