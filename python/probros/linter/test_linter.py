@@ -161,9 +161,6 @@ def unchecked_function():
 def test_valid_probabilistic_class_method(default_linter: Linter):
     code = """
 class ClassContainingProbabilisticProgram:
-
-    # This should be validated, no errors should occur.
-    #
     @probros.probabilistic_program
     def valid_probabilistic_program_in_class(self):
         count: int = 0
@@ -184,9 +181,6 @@ class ClassContainingProbabilisticProgram:
 def test_prohibited_fstring_in_class_method(default_linter: Linter):
     code = """
 class ClassContainingProbabilisticProgram:
-
-    # This should be validated, the f-string should throw an error.
-    #
     @probros.probabilistic_program
     def invalid_probabilistic_program_in_class_fstring(self):
         count: int = 0
