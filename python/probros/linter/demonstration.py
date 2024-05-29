@@ -130,7 +130,8 @@ class ClassContainingProbabilisticProgram:
     def invalid_probabilistic_program_in_class_fstring(self):
         count: int = 0
         for i in range(0, self.length):
-            probability = probros.sample(f"this[{i}]", probros.Uniform(0, 1))
+            address = f"this[{i}]"
+            probability = probros.sample(address, probros.Uniform(0, 1))
             if probability < 0.1:
                 return
             else:
@@ -604,6 +605,40 @@ def invalid_probabilistic_program_observe_missing_positional(
             address=probros.IndexedAddress("data", i),
         )
     return probability
+
+
+# This should be validated, no errors should occur.
+#
+@probros.probabilistic_program
+def valid_probabilistic_program_sample(data: list[float]):
+    return sample("p", probros.Dirac(True))
+
+
+# This should be validated, the sample call should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_sample_incorrect_address_number(
+    data: list[float],
+):
+    return probros.sample(123, probros.Dirac(True))
+
+
+# This should be validated, the sample call should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_sample_missing_argument(
+    data: list[float],
+):
+    return probros.sample("p")
+
+
+# This should be validated, the sample call should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_sample_keyword_argument(
+    data: list[float],
+):
+    return probros.sample("p", distribution=probros.Uniform(0, 1))
 
 
 # This may give information that this is not the intended use-case.

@@ -185,16 +185,26 @@ class ClassContainingProbabilisticProgram:
     def invalid_probabilistic_program_in_class_fstring(self):
         count: int = 0
         for i in range(0, self.length):
-            probability = probros.sample(f"this[{i}]", probros.Uniform(0, 1))
+            address = f"this[{i}]"
+            probability = probros.sample(address, probros.Uniform(0, 1))
             if probability < 0.1:
                 return
             else:
                 count += 1
 """
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoFstringRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.NoFstringRule.message
+        for diagnostic in diagnostics
+    )
+    assert any(
+        diagnostic.message == rules.RestrictSampleCallStructureRule.message
+        for diagnostic in diagnostics
+    )
 
 
 def test_prohibited_nested_class(default_linter: Linter):
@@ -890,6 +900,68 @@ def invalid_probabilistic_program_observe_missing_positional(
     assert (
         diagnostics[0].message
         == rules.RestrictObserveCallStructureRule.message
+    )
+
+
+def test_restricted_sample_structure(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_sample(data: list[float]):
+    return sample("p", probros.Dirac(True))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_sample_structure_incorrect_address_number(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_sample_incorrect_address_number(
+    data: list[float],
+):
+    return probros.sample(123, probros.Dirac(True))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
+    )
+
+
+def test_restricted_sample_structure_missing_argument(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_sample_missing_argument(
+    data: list[float],
+):
+    return probros.sample("p")
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
+    )
+
+
+def test_restricted_sample_structure_incorrect_keyword_argument(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_sample_keyword_argument(
+    data: list[float],
+):
+    return probros.sample("p", distribution=probros.Uniform(0, 1))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
     )
 
 

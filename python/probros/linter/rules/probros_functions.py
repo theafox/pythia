@@ -5,6 +5,39 @@ from diagnostic import Diagnostic
 from .base import BaseRule
 
 
+class RestrictSampleCallStructureRule(BaseRule):
+
+    _NAME = "sample"
+    _ADDRESS_CALL = "IndexedAddress"
+
+    message = f"Usage: `{_NAME}(<str | {_ADDRESS_CALL}(...)>, <distribution>)`"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        match node:
+            case ast.Call(
+                func=(ast.Name(id=cls._NAME) | ast.Attribute(attr=cls._NAME)),
+                args=[
+                    ast.Constant(value=str())
+                    | ast.Call(
+                        func=(
+                            ast.Name(id=cls._ADDRESS_CALL)
+                            | ast.Attribute(attr=cls._ADDRESS_CALL)
+                        )
+                    ),
+                    _,
+                ],
+                keywords=[],
+            ):
+                return None
+            case ast.Call(
+                func=(ast.Name(id=cls._NAME) | ast.Attribute(attr=cls._NAME))
+            ):
+                return Diagnostic.from_node(node, message=cls.message)
+            case _:
+                return None
+
+
 class RestrictObserveCallStructureRule(BaseRule):
 
     _NAME = "observe"
