@@ -544,6 +544,68 @@ def invalid_probabilistic_program_observe_variable_address(data: list[float]):
     return probability
 
 
+# This should be validated, no errors should occur.
+#
+@probros.probabilistic_program
+def valid_probabilistic_program_observe_keyword_arguments(data: list[float]):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            distribution=probability,
+            address=probros.IndexedAddress("data", i),
+        )
+    return probability
+
+
+# This should be validated, no errors should occur.
+#
+@probros.probabilistic_program
+def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            distribution=probability,
+        )
+    return probability
+
+
+# This should be validated, the incorrect observation argument order should
+# throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_keyword_arguments_ordering(
+    data: list[float],
+):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            address=probros.IndexedAddress("data", i),
+        )
+    return probability
+
+
+# This should be validated, the missing positional observation argument should
+# throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_missing_positional(
+    data: list[float],
+):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            value=data[i],
+            distribution=probability,
+            address=probros.IndexedAddress("data", i),
+        )
+    return probability
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

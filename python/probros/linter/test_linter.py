@@ -81,7 +81,7 @@ def invalid_probabilistic_program_fstring(data):
         for diagnostic in diagnostics
     )
     assert any(
-        diagnostic.message == rules.RestrictObserveCallRule.message
+        diagnostic.message == rules.RestrictObserveCallStructureRule.message
         for diagnostic in diagnostics
     )
 
@@ -261,7 +261,7 @@ def outer_function():
         for diagnostic in diagnostics
     )
     assert any(
-        diagnostic.message == rules.RestrictObserveCallRule.message
+        diagnostic.message == rules.RestrictObserveCallStructureRule.message
         for diagnostic in diagnostics
     )
 
@@ -782,7 +782,10 @@ def invalid_probabilistic_program_observe_number_address(data):
     diagnostics = default_linter.lint_code(code)
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.RestrictObserveCallRule.message
+    assert (
+        diagnostics[0].message
+        == rules.RestrictObserveCallStructureRule.message
+    )
 
 
 def test_restricted_observe_call_address_variable(default_linter: Linter):
@@ -802,7 +805,98 @@ def invalid_probabilistic_program_observe_variable_address(data: list[float]):
     diagnostics = default_linter.lint_code(code)
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.RestrictObserveCallRule.message
+    assert (
+        diagnostics[0].message
+        == rules.RestrictObserveCallStructureRule.message
+    )
+
+
+def test_restrict_observe_structure_two_keyword_arguments(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_observe_keyword_arguments(data: list[float]):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            distribution=probability,
+            address=probros.IndexedAddress("data", i),
+        )
+    return probability
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restrict_observe_structure_one_keyword_argument(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            distribution=probability,
+        )
+    return probability
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restrict_observe_structure_incorrect_ordering(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_keyword_arguments_ordering(
+    data: list[float],
+):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            address=probros.IndexedAddress("data", i),
+        )
+    return probability
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message
+        == rules.RestrictObserveCallStructureRule.message
+    )
+
+
+def test_restrict_observe_structure_missing_positional(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_observe_missing_positional(
+    data: list[float],
+):
+    probability = probros.Poisson(0.2)
+    for i in range(0, len(data)):
+        probros.observe(
+            value=data[i],
+            distribution=probability,
+            address=probros.IndexedAddress("data", i),
+        )
+    return probability
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message
+        == rules.RestrictObserveCallStructureRule.message
+    )
 
 
 def test_unrecommended_use_case_class(default_linter: Linter):

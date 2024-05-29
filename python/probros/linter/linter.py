@@ -352,7 +352,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoStarredRule,
             rules.NoSliceRule,
             rules.NoMultipleSubscriptRule,
-            rules.RestrictObserveCallRule,
+            rules.RestrictObserveCallStructureRule,
         },
         _is_probabilistic_program_entry_point,
         _analyze_probabilistic_program_entry_point,
