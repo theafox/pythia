@@ -268,10 +268,9 @@ def invalid_probabilistic_program_for_iterable(data):
 #
 @probros.probabilistic_program
 def invalid_probabilistic_program_for_constant(data):
-    probability = probros.Beta(2, 2)
     step = 0
-    for character in "this shouldn't work either!":
-        probros.observe(data[step], character, probability)
+    for _ in "this shouldn't work either!":
+        probros.observe(data[step], "hi!", probros.Uniform(0, 1))
         step += 1
 
 

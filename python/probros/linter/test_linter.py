@@ -392,10 +392,9 @@ def test_restricted_for_constant(default_linter: Linter):
     code = """
 @probros.probabilistic_program
 def invalid_probabilistic_program_for_constant(data):
-    probability = probros.Beta(2, 2)
     step = 0
-    for character in "this shouldn't work either!":
-        probros.observe(data[step], character, probability)
+    for _ in "this shouldn't work either!":
+        probros.observe(data[step], "hi!", probros.Uniform(0, 1))
         step += 1
 """
     diagnostics = default_linter.lint_code(code)
