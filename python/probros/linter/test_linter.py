@@ -1,3 +1,25 @@
+"""This contains tests for the probabilistic programming linter using `pytest`.
+
+The tests validate the functionality of the linter to ensure proper
+functionality, i.e. it correctly identifies and flags invalid code patterns in
+probabilistic programs. Each test case checks specific rules. They all parse
+the code as a string and match the resulting diagnostics against whats
+expected.
+
+This test-file and the test-cases are intended to be used with `pytest`. Its
+fixture feature is used to parse a default probabilistic program to each
+test-case.
+
+The names of the test-cases follow the following pattern:
+```
+    test_(prohibited|restrict(ed)?)_<the rule name>_<any sub-test-cases>
+```
+
+Fixtures:
+    - default_linter: A `pytest` fixture that provides a default instance of
+        the probabilistic program linter.
+"""
+
 # type: ignore
 import pytest
 import rules
