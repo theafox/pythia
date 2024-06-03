@@ -3,14 +3,18 @@ import ast
 from diagnostic import Diagnostic
 
 from .base import BaseRule
-from .utils import Address, is_function_called
+from .utils import Address, Distribution, is_function_called
 
 
 class RestrictSampleCallStructureRule(BaseRule):
 
     _NAME = "sample"
 
-    message = f"Usage: `{_NAME}(<{Address.representation()}>, <distribution>)`"
+    message = (
+        f"Usage: `{_NAME}("
+        f"<{Address.representation()}>"
+        f", <{Distribution.representation()}>)`"
+    )
 
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
@@ -20,10 +24,12 @@ class RestrictSampleCallStructureRule(BaseRule):
             case ast.Call(
                 args=[
                     address,
-                    _,  # TODO: restrict distributions
+                    distribution,
                 ],
                 keywords=[],
-            ) if Address.is_address(address):
+            ) if Address.is_address(address) and Distribution.is_distribution(
+                distribution
+            ):
                 return None
             case _:
                 return Diagnostic.from_node(node, message=cls.message)
@@ -32,13 +38,13 @@ class RestrictSampleCallStructureRule(BaseRule):
 class RestrictObserveCallStructureRule(BaseRule):
 
     _NAME = "observe"
-    _SECOND_ARGUMENT = "address"
-    _THIRD_ARGUMENT = "distribution"
+    _ADDRESS = "address"
+    _DISTRIBUTION = "distribution"
 
     message = (
         f"Usage: `{_NAME}(<data>"
-        f"[, [{_SECOND_ARGUMENT}=]<{Address.representation()}>"
-        f"[, [{_THIRD_ARGUMENT}=]<distribution>]])`"
+        f"[, [{_ADDRESS}=]<{Address.representation()}>"
+        f"[, [{_DISTRIBUTION}=]<{Distribution.representation()}>]])`"
     )
 
     @classmethod
@@ -46,13 +52,24 @@ class RestrictObserveCallStructureRule(BaseRule):
         if not is_function_called(node, cls._NAME):
             return None
         match node:
-            # No address given.
+            # Only `data`.
+            case ast.Call(args=[_], keywords=[]):  # any expression as data
+                return None
+            # Only `address`.
             case ast.Call(
                 args=[_],  # any expression as data
-                keywords=([] | [ast.keyword(arg=cls._THIRD_ARGUMENT)]),
-            ):
+                keywords=[ast.keyword(arg=cls._ADDRESS, value=address)],
+            ) if Address.is_address(address):
                 return None
-            # Address given.
+            # Only `distribution`.
+            case ast.Call(
+                args=[_],  # any expression as data
+                keywords=[
+                    ast.keyword(arg=cls._DISTRIBUTION, value=distribution)
+                ],
+            ) if Distribution.is_distribution(distribution):
+                return None
+            # All is given.
             case (
                 # One positional argument.
                 ast.Call(
@@ -60,21 +77,21 @@ class RestrictObserveCallStructureRule(BaseRule):
                     keywords=(
                         [
                             ast.keyword(
-                                arg=cls._SECOND_ARGUMENT,
-                                value=address,
-                            )
-                        ]
-                        | [
-                            ast.keyword(
-                                arg=cls._SECOND_ARGUMENT,
+                                arg=cls._ADDRESS,
                                 value=address,
                             ),
-                            ast.keyword(arg=cls._THIRD_ARGUMENT),
+                            ast.keyword(
+                                arg=cls._DISTRIBUTION,
+                                value=distribution,
+                            ),
                         ]
                         | [
-                            ast.keyword(arg=cls._THIRD_ARGUMENT),
                             ast.keyword(
-                                arg=cls._SECOND_ARGUMENT,
+                                arg=cls._DISTRIBUTION,
+                                value=distribution,
+                            ),
+                            ast.keyword(
+                                arg=cls._ADDRESS,
                                 value=address,
                             ),
                         ]
@@ -87,8 +104,10 @@ class RestrictObserveCallStructureRule(BaseRule):
                         address,
                     ],
                     keywords=(
-                        []  # the third remaining arguments is optional
-                        | [ast.keyword(arg=cls._THIRD_ARGUMENT)]
+                        ast.keyword(
+                            arg=cls._DISTRIBUTION,
+                            value=distribution,
+                        ),
                     ),
                 )
                 # Three positional arguments.
@@ -96,11 +115,13 @@ class RestrictObserveCallStructureRule(BaseRule):
                     args=[
                         _,  # any expression as data
                         address,
-                        _,  # any of the distributions
+                        distribution,
                     ],
                     keywords=[],
                 )
-            ) if Address.is_address(address):
+            ) if Address.is_address(address) and Distribution.is_distribution(
+                distribution
+            ):
                 return None
             case _:
                 return Diagnostic.from_node(node, message=cls.message)
