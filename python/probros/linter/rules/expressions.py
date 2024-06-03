@@ -1,3 +1,9 @@
+""" This module contains rules for validating expression nodes.
+
+Each rule is implemented as a class inheriting from `BaseRule`. Therefore, view
+the documentation of that class in case of changes or additions.
+"""
+
 import ast
 
 from diagnostic import Diagnostic
