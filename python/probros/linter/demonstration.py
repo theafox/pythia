@@ -53,14 +53,12 @@ def invalid_probabilistic_program_fstring(data):
 @probros.probabilistic_program
 def invalid_probabilistic_program_deconstructor(data):
     mean, stddev = 2, 0.3
-    probability = probros.Normal(mean, stddev)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Normal(mean, stddev),
         )
-    return probability
 
 
 # This should be validated, the nested function should throw an error.
@@ -154,43 +152,37 @@ def invalid_probabilistic_program_nested_class():
 def outer_function():
     @probros.probabilistic_program
     def valid_probabilistic_program_in_function(data: list[int]):
-        probability = probros.Poisson(0.7)
         for i in range(0, len(data)):
             probros.observe(
                 data[i],
-                probability.IndexedAddress("data", i),
-                probability,
+                probros.IndexedAddress("data", i),
+                probros.Poisson(0.7),
             )
-        return probability
 
     @probros.probabilistic_program
     def invalid_probabilistic_program_in_function_fstring(data: list[float]):
-        probability = probros.Poisson(0.2)
         for i in range(0, len(data)):
             address = f"data[{i}]"
             probros.observe(
                 data[i],
                 address,
-                probability,
+                probros.Poisson(0.2),
             )
-        return probability
 
 
 # This should be validated, the delete statement should throw an error.
 #
 @probros.probabilistic_program
 def invalid_probabilistic_program_delete(data):
-    probability = probros.Uniform(0, 1)
     sum = 0
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Uniform(0, 1),
         )
         sum += data[i]
-    del probability
-    return sum
+    del sum
 
 
 # This should be validated, type aliasing should throw an error.
@@ -216,7 +208,7 @@ def invalid_probabilistic_program_asynchronous_for(data):
             probros.observe(
                 data[i],
                 probros.IndexedAddress("data", i),
-                probability,
+                probros.Gamma(0.2, 0.9),
             )
         return True
 
@@ -227,25 +219,24 @@ def invalid_probabilistic_program_asynchronous_for(data):
 def invalid_probabilistic_program_with_file(filepath):
     with open(filepath) as file:
         data = file.readall()
-    probability = probros.Uniform(0, 1)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Uniform(0, 1),
         )
 
 
 # This should be validated, with-statements should throw an error.
 #
 @probros.probabilistic_program
-def invalid_probabilistic_program_with_variables(data):
-    with probros.Uniform(0, 1) as probability:
+def invalid_probabilistic_program_with_variables(generator):
+    with generator() as data:
         for i in range(0, len(data)):
             probros.observe(
                 data[i],
                 probros.IndexedAddress("data", i),
-                probability,
+                probros.Uniform(0, 1),
             )
 
 
@@ -279,12 +270,11 @@ def invalid_probabilistic_program_for_constant(data):
 @probros.probabilistic_program
 def invalid_probabilistic_program_walrus_operator(data):
     if (length := len(data)) > 10:
-        probability = probros.Uniform(0, 1)
         for i in range(0, length):
             probros.observe(
                 data[i],
                 probros.IndexedAddress("data", i),
-                probability,
+                probros.Uniform(0, 1),
             )
 
 
@@ -317,12 +307,11 @@ def invalid_probabilistic_program_bitwise_complement(n):
 @probros.probabilistic_program
 def invalid_probabilistic_program_lambda(data):
     data = filter(lambda point: point >= 0, data)
-    probability = probros.Gamma(0.1, 0.5)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Gamma(0.1, 0.5),
         )
 
 
@@ -354,15 +343,14 @@ def invalid_probabilistic_program_dictionary(data):
         "mean": zum / length,
     }
 
-    probability = probros.Uniform(0, 1)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Uniform(0, 1),
         )
 
-    details["distribution"] = probability
+    details["remark"] = "hello world!"
     return details
 
 
@@ -373,12 +361,11 @@ def invalid_probabilistic_program_set(data):
     reduced = set()
     for i in range(0, len(data)):
         reduced.add(data[i])
-    probability = probros.Uniform(0, 1)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Uniform(0, 1),
         )
 
 
@@ -434,12 +421,11 @@ def invalid_probabilistic_program_asynchronous_generator():
 #
 @probros.probabilistic_program
 def invalid_probabilistic_program_yield(data):
-    probability = probros.Uniform(0, 1)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Uniform(0, 1),
         )
         yield data[i]
 
@@ -458,12 +444,11 @@ def invalid_probabilistic_program_starred(data):
     zum = sum(*data)
     for i in range(0, len(data)):
         data[i] /= zum
-    probability = probros.Dirac(0.25)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Dirac(0.25),
         )
 
 
@@ -472,16 +457,15 @@ def invalid_probabilistic_program_starred(data):
 @probros.probabilistic_program
 def invalid_probabilistic_program_slice(data):
     data = data[0:100]
-    probability = probros.Dirac(0.25)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Dirac(0.25),
         )
     return probros.sample(
         probros.IndexedAddress("data", len(data)),
-        probability,
+        probros.Dirac(0.25),
     )
 
 
@@ -510,12 +494,11 @@ def invalid_probabilistic_program_attribute_assign(data):
 @probros.probabilistic_program
 def invalid_probabilistic_program_subscript(data):
     data[0, -1] = data[-1], data[0]
-    probability = probros.Dirac(0.25)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probability,
+            probros.Dirac(0.25),
         )
 
 
@@ -533,43 +516,37 @@ def invalid_probabilistic_program_observe_number_address(data):
 #
 @probros.probabilistic_program
 def invalid_probabilistic_program_observe_variable_address(data: list[float]):
-    probability = probros.Poisson(0.2)
     for i in range(0, len(data)):
         address = probros.IndexedAddress("data", i)
         probros.observe(
             data[i],
             address,
-            probability,
+            probros.Poisson(0.2),
         )
-    return probability
 
 
 # This should be validated, no errors should occur.
 #
 @probros.probabilistic_program
 def valid_probabilistic_program_observe_keyword_arguments(data: list[float]):
-    probability = probros.Poisson(0.2)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
-            distribution=probability,
+            distribution=probros.Poisson(0.2),
             address=probros.IndexedAddress("data", i),
         )
-    return probability
 
 
 # This should be validated, no errors should occur.
 #
 @probros.probabilistic_program
 def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
-    probability = probros.Poisson(0.2)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            distribution=probability,
+            distribution=probros.Poisson(0.2),
         )
-    return probability
 
 
 # This should be validated, the incorrect observation argument order should
@@ -579,14 +556,12 @@ def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
 def invalid_probabilistic_program_observe_keyword_arguments_ordering(
     data: list[float],
 ):
-    probability = probros.Poisson(0.2)
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
             address=probros.IndexedAddress("data", i),
         )
-    return probability
 
 
 # This should be validated, the missing positional observation argument should
@@ -596,14 +571,12 @@ def invalid_probabilistic_program_observe_keyword_arguments_ordering(
 def invalid_probabilistic_program_observe_missing_positional(
     data: list[float],
 ):
-    probability = probros.Poisson(0.2)
     for i in range(0, len(data)):
         probros.observe(
             value=data[i],
-            distribution=probability,
+            distribution=probros.Poisson(0.2),
             address=probros.IndexedAddress("data", i),
         )
-    return probability
 
 
 # This should be validated, no errors should occur.
