@@ -613,6 +613,53 @@ def invalid_probabilistic_program_sample_keyword_argument(
     return probros.sample("p", distribution=probros.Uniform(0, 1))
 
 
+# This should be validated, no errors should occur.
+#
+@probros.probabilistic_program
+def valid_probabilistic_program_broadcast_statement(data):
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress(data, i),
+            probros.Broadcasted(probros.Normal(0, 1)),
+        )
+
+
+# This should be validated, the invalid `Broadcasted` call should throw an
+# error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_broadcast_statement_constant():
+    for i in range(0, 100):
+        probros.sample(
+            probros.IndexedAddress("i", i),
+            probros.Broadcasted(probros.Normal(0, 1), 12),
+        )
+
+
+# This should be validated, no errors should occur.
+#
+@probros.probabilistic_program
+def valid_probabilistic_program_iid_statement(data):
+    for i in range(0, 100):
+        probros.sample(
+            probros.IndexedAddress("i", i),
+            probros.IID(probros.Normal(0, 1), 12),
+        )
+
+
+# This should be validated, the invalid `IID` call should throw an error.
+#
+@probros.probabilistic_program
+def invalid_probabilistic_program_iid_statement_missing_constant(data):
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress(data, i),
+            probros.IID(probros.Normal(0, 1)),
+        )
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program

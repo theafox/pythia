@@ -959,6 +959,77 @@ def invalid_probabilistic_program_sample_keyword_argument(
     )
 
 
+def test_restricted_observe_valide_broadcasted(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_broadcast_statement(data):
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress(data, i),
+            probros.Broadcasted(probros.Normal(0, 1)),
+        )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_sample_incorrect_broadcasted_arguments(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_broadcast_statement_constant():
+    for i in range(0, 100):
+        probros.sample(
+            probros.IndexedAddress("i", i),
+            probros.Broadcasted(probros.Normal(0, 1), 12),
+        )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
+    )
+
+
+def test_restricted_sample_valid_iid(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_iid_statement(data):
+    for i in range(0, 100):
+        probros.sample(
+            probros.IndexedAddress("i", i),
+            probros.IID(probros.Normal(0, 1), 12),
+        )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_observe_incorrect_iid_missing_argument(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_iid_statement_missing_constant(data):
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress(data, i),
+            probros.IID(probros.Normal(0, 1)),
+        )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message
+        == rules.RestrictObserveCallStructureRule.message
+    )
+
+
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program
