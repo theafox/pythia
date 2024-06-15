@@ -451,7 +451,7 @@ def main() -> None:
                 default=str,
             )
         )
-    else:
+    elif diagnostics:
         # Print as one block.
         print("\n".join(str(diagnostic) for diagnostic in diagnostics))
 
