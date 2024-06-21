@@ -1030,6 +1030,81 @@ def invalid_probabilistic_program_iid_statement_missing_constant(data):
     )
 
 
+def test_restricted_indexed_address(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_indexed_address(data):
+    return probros.sample(
+        probros.IndexedAddress(":)", 21),
+        probros.Normal(0, 1),
+    )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_indexed_address_nested(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_nested_indexed_address(data):
+    return probros.sample(
+        probros.IndexedAddress(
+            probros.IndexedAddress(
+                probros.IndexedAddress(
+                    "nesting!",
+                    12,
+                ),
+                1290478,
+            ),
+            21,
+        ),
+        probros.Normal(0, 1),
+    )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_indexed_address_missing_address(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_invalid_indexed_address_call_no_address(
+    data,
+):
+    return probros.sample(probros.IndexedAddress(21), probros.Normal(0, 1))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message
+        == rules.RestrictIndexedAddressCallStructureRule.message
+    )
+
+
+def test_restricted_indexed_address_missing_number(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_invalid_indexed_address_call_no_number(data):
+    return probros.sample(probros.IndexedAddress("i"), probros.Normal(0, 1))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message
+        == rules.RestrictIndexedAddressCallStructureRule.message
+    )
+
+
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program

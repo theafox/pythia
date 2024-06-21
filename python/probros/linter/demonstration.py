@@ -660,6 +660,43 @@ def invalid_probabilistic_program_iid_statement_missing_constant(data):
         )
 
 
+@probros.probabilistic_program
+def valid_probabilistic_program_indexed_address(data):
+    return probros.sample(
+        probros.IndexedAddress(":)", 21),
+        probros.Normal(0, 1),
+    )
+
+
+@probros.probabilistic_program
+def valid_probabilistic_program_nested_indexed_address(data):
+    return probros.sample(
+        probros.IndexedAddress(
+            probros.IndexedAddress(
+                probros.IndexedAddress(
+                    "nesting!",
+                    12,
+                ),
+                1290478,
+            ),
+            21,
+        ),
+        probros.Normal(0, 1),
+    )
+
+
+@probros.probabilistic_program
+def invalid_probabilistic_program_invalid_indexed_address_call_no_address(
+    data,
+):
+    return probros.sample(probros.IndexedAddress(21), probros.Normal(0, 1))
+
+
+@probros.probabilistic_program
+def invalid_probabilistic_program_invalid_indexed_address_call_no_number(data):
+    return probros.sample(probros.IndexedAddress("i"), probros.Normal(0, 1))
+
+
 # This may give information that this is not the intended use-case.
 #
 @probros.probabilistic_program
