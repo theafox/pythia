@@ -966,7 +966,7 @@ def valid_probabilistic_program_broadcast_statement(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
-            probros.IndexedAddress(data, i),
+            probros.IndexedAddress("data", i),
             probros.Broadcasted(probros.Normal(0, 1)),
         )
 """
