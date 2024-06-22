@@ -192,7 +192,7 @@ def invalid_probabilistic_program_type_aliasing():
     type Probabilities = list[probros.Beta]
     probability: Probabilities = []
     for i in range(0, 5):
-        probability.append(probros.Beta(0.1, 0.5))
+        probability += probros.Beta(0.1, 0.5)
     return probability
 
 
@@ -489,6 +489,30 @@ def invalid_probabilistic_program_attribute_assign(data):
     return data.sum
 
 
+@probros.probabilistic_program
+def valid_probabilistic_program_standalone_expression_observe_call():
+    probros.observe(
+        12,
+        "standalone_observe_call",
+        probros.Uniform(0, 1),
+    )
+
+
+@probros.probabilistic_program
+def valid_probabilistic_program_standalone_expression_factor_call():
+    probros.factor(0.0124)
+
+
+@probros.probabilistic_program
+def invalid_probabilistic_program_standalone_expression_function_call(n):
+    initialize_context()
+
+
+@probros.probabilistic_program
+def invalid_probabilistic_program_standalone_expression_calculation(n):
+    1 + 2**3 / 4 // 5
+
+
 # This should be validated, the subscript assign should throw an error.
 #
 @probros.probabilistic_program
@@ -631,7 +655,7 @@ def valid_probabilistic_program_broadcast_statement(data):
 @probros.probabilistic_program
 def invalid_probabilistic_program_broadcast_statement_constant():
     for i in range(0, 100):
-        probros.sample(
+        _ = probros.sample(
             probros.IndexedAddress("i", i),
             probros.Broadcasted(probros.Normal(0, 1), 12),
         )
@@ -642,7 +666,7 @@ def invalid_probabilistic_program_broadcast_statement_constant():
 @probros.probabilistic_program
 def valid_probabilistic_program_iid_statement(data):
     for i in range(0, 100):
-        probros.sample(
+        _ = probros.sample(
             probros.IndexedAddress("i", i),
             probros.IID(probros.Normal(0, 1), 12),
         )

@@ -313,7 +313,7 @@ def invalid_probabilistic_program_type_aliasing():
     type Probabilities = list[probros.Beta]
     probability: Probabilities = []
     for i in range(0, 5):
-        probability.append(probros.Beta(0.1, 0.5))
+        probability += probros.Beta(0.1, 0.5)
     return probability
 """
     diagnostics = default_linter.lint_code(code)
@@ -560,9 +560,15 @@ def invalid_probabilistic_program_set(data):
         )
 """
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoSetRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert all(
+        expected.message
+        in map(lambda diagnostic: diagnostic.message, diagnostics)
+        for expected in {rules.NoSetRule, rules.NoStandaloneExpressionRule}
+    )
 
 
 def test_prohibited_comprehension_list(default_linter: Linter):
@@ -672,10 +678,17 @@ def invalid_probabilistic_program_yield(data):
         )
         yield data[i]
 """
+    default_linter.extensive_diagnosis = True
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoYieldRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert all(
+        expected.message
+        in map(lambda diagnostic: diagnostic.message, diagnostics)
+        for expected in {rules.NoYieldRule, rules.NoStandaloneExpressionRule}
+    )
 
 
 def test_prohibited_yield_from(default_linter: Linter):
@@ -684,10 +697,17 @@ def test_prohibited_yield_from(default_linter: Linter):
 def invalid_probabilistic_program_yield_from(data):
     yield from invalid_probabilistic_program_yield(data)
 """
+    default_linter.extensive_diagnosis = True
     diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoYieldRule.message
+    assert len(diagnostics) == 2
+    assert all(
+        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
+    )
+    assert all(
+        expected.message
+        in map(lambda diagnostic: diagnostic.message, diagnostics)
+        for expected in {rules.NoYieldRule, rules.NoStandaloneExpressionRule}
+    )
 
 
 def test_prohibited_starred(default_linter: Linter):
@@ -758,6 +778,60 @@ def invalid_probabilistic_program_attribute_assign(data):
     assert len(diagnostics) == 1
     assert diagnostics[0].severity == Severity.ERROR
     assert diagnostics[0].message == rules.NoAttributeAssignRule.message
+
+
+def test_prohibited_standalone_expression_allowed_observe(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_standalone_expression_observe_call():
+    probros.observe(
+        12,
+        "standalone_observe_call",
+        probros.Uniform(0, 1),
+    )
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_prohibited_standalone_expression_allowed_factor(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_standalone_expression_factor_call():
+    probros.factor(0.0124)
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_prohibited_standalone_expression_function_call(
+    default_linter: Linter,
+):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_standalone_expression_function_call(n):
+    initialize_context()
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoStandaloneExpressionRule.message
+
+
+def test_prohibited_standalone_expression_calculations(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_standalone_expression_calculation(n):
+    1 + 2**3 / 4 // 5
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert diagnostics[0].message == rules.NoStandaloneExpressionRule.message
 
 
 def test_prohibited_multiple_subscript(default_linter: Linter):
@@ -981,7 +1055,7 @@ def test_restricted_sample_incorrect_broadcasted_arguments(
 @probros.probabilistic_program
 def invalid_probabilistic_program_broadcast_statement_constant():
     for i in range(0, 100):
-        probros.sample(
+        _ = probros.sample(
             probros.IndexedAddress("i", i),
             probros.Broadcasted(probros.Normal(0, 1), 12),
         )
@@ -999,7 +1073,7 @@ def test_restricted_sample_valid_iid(default_linter: Linter):
 @probros.probabilistic_program
 def valid_probabilistic_program_iid_statement(data):
     for i in range(0, 100):
-        probros.sample(
+        _ = probros.sample(
             probros.IndexedAddress("i", i),
             probros.IID(probros.Normal(0, 1), 12),
         )

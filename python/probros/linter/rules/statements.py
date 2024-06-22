@@ -9,6 +9,7 @@ import ast
 from diagnostic import Diagnostic
 
 from .base import BaseRule
+from .utils import is_function_called
 
 # Prohibit nested definitions and imports. ####################################
 
@@ -146,6 +147,25 @@ class NoAttributeAssignRule(BaseRule):
 
 
 # Restrict control flow constructs. ###########################################
+
+
+class NoStandaloneExpressionRule(BaseRule):
+
+    message = "Expressions may not appear as statements"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not isinstance(node, ast.Expr):
+            return None
+        match node:
+            # NOTE: retrieve this elsewhere to future-proof for changes?
+            case ast.Expr(value=value) if any(
+                is_function_called(value, name)
+                for name in {"observe", "factor"}
+            ):
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)
 
 
 class RestrictForLoopRule(BaseRule):
