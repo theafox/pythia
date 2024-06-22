@@ -74,6 +74,8 @@ class Linter(ast.NodeVisitor):
         rules: The rules to apply to code of interest.
         is_entry_point: A function to identify entry-points.
         analyze_entry_point: A function to analyze the entry-point itself.
+        extensive_diagnosis: Whether to continue searching for diagnostics
+            after one was already found.
         diagnostics: The list of currently found diagnostics.
     """
 
@@ -84,6 +86,7 @@ class Linter(ast.NodeVisitor):
         analyze_entry_point: Callable[
             [ast.AST], Iterable[Diagnostic]
         ] = lambda *args, **kwargs: [],
+        extensive_diagnosis: bool = False,
         **kwargs,
     ):
         """Initialize the linter.
@@ -92,6 +95,8 @@ class Linter(ast.NodeVisitor):
             rules: The rules to apply to code of interest.
             is_entry_point: A function to identify entry-points.
             analyze_entry_point: A function to analyze the entry-point itself.
+            extensive_diagnosis: Whether to continue searching for diagnostics
+                after one was already found.
             **kwargs: Any additional key-word-arguments will be handed to the
                 super-class initialization.
         """
@@ -101,6 +106,7 @@ class Linter(ast.NodeVisitor):
         self.rules = rules
         self.is_entry_point = is_entry_point
         self.analyze_entry_point = analyze_entry_point
+        self.extensive_diagnosis = extensive_diagnosis
 
         self.diagnostics: list[Diagnostic] = []
         self._entered: bool = False
@@ -141,8 +147,9 @@ class Linter(ast.NodeVisitor):
                 f" {*diagnostics, }"
             )
             self.diagnostics += diagnostics
-        else:
-            # Only enter further into nodes which do _not_ violate any rules.
+        if not diagnostics or self.extensive_diagnosis:
+            # Only enter further into nodes which do _not_ violate any rules
+            # (or in case extensive diagnosis is requested).
             super().generic_visit(node)
 
     def lint(self, tree: ast.AST) -> list[Diagnostic]:
@@ -390,6 +397,13 @@ def main() -> None:
         action="store_true",
         help="Only print the results",
     )
+    parser.add_argument(
+        "-e",
+        "--extensive-diagnosis",
+        action="store_true",
+        help="Continue searching for diagnostics after one was already found",
+        dest="extensive_diagnosis",
+    )
     code_origin = parser.add_mutually_exclusive_group(required=True)
     code_origin.add_argument(
         "filepath",
@@ -429,6 +443,7 @@ def main() -> None:
         log.basicConfig(format="%(message)s", level=log.INFO)
 
     linter: Linter = default_probabilistic_program_linter()
+    linter.extensive_diagnosis = args.extensive_diagnosis
     diagnostics: list[Diagnostic] = []
     if args.filepath:
         diagnostics += linter.lint_file(args.filepath)
