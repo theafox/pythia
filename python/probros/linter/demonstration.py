@@ -637,6 +637,26 @@ def invalid_probabilistic_program_sample_keyword_argument(
     return probros.sample("p", distribution=probros.Uniform(0, 1))
 
 
+@probros.probabilistic_program
+def valid_probabilistic_program_factor_string_address():
+    probros.factor(0.001, address="data")
+
+
+@probros.probabilistic_program
+def valid_probabilistic_program_factor_indexed_address():
+    probros.factor(0.001, probros.IndexedAddress("data", 0))
+
+
+@probros.probabilistic_program
+def invalid_probabilistic_program_factor_missing_expression():
+    probros.factor()
+
+
+@probros.probabilistic_program
+def invalid_probabilistic_program_factor_additional_arguments():
+    probros.factor(0.123, "address", probros.Beta(0.1, 0.2))
+
+
 # This should be validated, no errors should occur.
 #
 @probros.probabilistic_program

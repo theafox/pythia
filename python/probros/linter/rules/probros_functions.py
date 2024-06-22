@@ -133,6 +133,37 @@ class RestrictObserveCallStructureRule(BaseRule):
                 return Diagnostic.from_node(node, message=cls.message)
 
 
+class RestrictFactorCallStructureRule(BaseRule):
+
+    _NAME = "factor"
+    _ADDRESS = "address"
+
+    message = (
+        f"Usage: `{_NAME}(<data>"
+        f"[, [{_ADDRESS}=]<{Address.representation()}>])"
+    )
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not is_function_called(node, cls._NAME):
+            return None
+        match node:
+            # No address given.
+            case ast.Call(args=[_], keywords=[]):
+                return None
+            # Address given.
+            case ast.Call(
+                args=[_, address],
+                keywords=[],
+            ) | ast.Call(
+                args=[_],
+                keywords=[ast.keyword(arg=cls._ADDRESS, value=address)],
+            ) if Address.is_address(address):
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)
+
+
 class RestrictIndexedAddressCallStructureRule(BaseRule):
 
     _NAME = "IndexedAddress"

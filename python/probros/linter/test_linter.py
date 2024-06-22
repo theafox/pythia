@@ -1007,6 +1007,54 @@ def invalid_probabilistic_program_sample_keyword_argument(
     )
 
 
+def test_restricted_factor_valid_keyword(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_factor_string_address():
+    probros.factor(0.001, address="data")
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_factor_valid_indexed_address(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def valid_probabilistic_program_factor_indexed_address():
+    probros.factor(0.001, probros.IndexedAddress("data", 0))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert not diagnostics
+
+
+def test_restricted_observe_missing_expression(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_factor_missing_expression():
+    probros.factor()
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.RestrictFactorCallStructureRule.message
+    )
+
+
+def test_restricted_observe_additional_argument(default_linter: Linter):
+    code = """
+@probros.probabilistic_program
+def invalid_probabilistic_program_factor_additional_arguments():
+    probros.factor(0.123, "address", probros.Beta(0.1, 0.2))
+"""
+    diagnostics = default_linter.lint_code(code)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity == Severity.ERROR
+    assert (
+        diagnostics[0].message == rules.RestrictFactorCallStructureRule.message
+    )
+
+
 def test_restricted_observe_valide_broadcasted(default_linter: Linter):
     code = """
 @probros.probabilistic_program
