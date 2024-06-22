@@ -201,8 +201,8 @@ class Linter(ast.NodeVisitor):
         """Lint the file located at the provided file-path.
 
         In case of errors while or because of reading the file, exit the
-        program with code `_READ_ERROR_CODE`. And in case of or because of
-        parsing the code, with code `_PARSE_ERROR_CODE`.
+        program with code `_READ_ERROR_CODE`. And in case of errors while or
+        because of parsing the code, with code `_PARSE_ERROR_CODE`.
 
         Args:
             path: The file-path pointing to the file on which to run the
