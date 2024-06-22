@@ -183,7 +183,7 @@ class NoFstringRule(BaseRule):
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
             Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, (ast.FormattedValue, ast.JoinedStr))
+            if isinstance(node, ast.JoinedStr)
             else None
         )
 
