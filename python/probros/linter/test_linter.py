@@ -98,14 +98,9 @@ def invalid_probabilistic_program_fstring(data):
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert any(
-        diagnostic.message == rules.NoFstringRule.message
-        for diagnostic in diagnostics
-    )
-    assert any(
-        diagnostic.message == rules.RestrictObserveCallStructureRule.message
-        for diagnostic in diagnostics
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoFstringRule.message in messages
+    assert rules.RestrictObserveCallStructureRule.message in messages
 
 
 def test_prohibited_deconstructor(default_linter: Linter):
@@ -217,14 +212,9 @@ class ClassContainingProbabilisticProgram:
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert any(
-        diagnostic.message == rules.NoFstringRule.message
-        for diagnostic in diagnostics
-    )
-    assert any(
-        diagnostic.message == rules.RestrictSampleCallStructureRule.message
-        for diagnostic in diagnostics
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoFstringRule.message in messages
+    assert rules.RestrictSampleCallStructureRule.message in messages
 
 
 def test_prohibited_nested_class(default_linter: Linter):
@@ -276,14 +266,9 @@ def outer_function():
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert any(
-        diagnostic.message == rules.NoFstringRule.message
-        for diagnostic in diagnostics
-    )
-    assert any(
-        diagnostic.message == rules.RestrictObserveCallStructureRule.message
-        for diagnostic in diagnostics
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoFstringRule.message in messages
+    assert rules.RestrictObserveCallStructureRule.message in messages
 
 
 def test_prohibited_delete(default_linter: Linter):
@@ -564,11 +549,9 @@ def invalid_probabilistic_program_set(data):
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert all(
-        expected.message
-        in map(lambda diagnostic: diagnostic.message, diagnostics)
-        for expected in {rules.NoSetRule, rules.NoStandaloneExpressionRule}
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoSetRule.message in messages
+    assert rules.NoStandaloneExpressionRule.message in messages
 
 
 def test_prohibited_comprehension_list(default_linter: Linter):
@@ -656,14 +639,9 @@ def invalid_probabilistic_program_asynchronous_generator():
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert any(
-        diagnostic.message == rules.NoAsynchronousExpressionRule.message
-        for diagnostic in diagnostics
-    )
-    assert any(
-        diagnostic.message == rules.NoComprehensionAndGeneratorRule.message
-        for diagnostic in diagnostics
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoAsynchronousExpressionRule.message in messages
+    assert rules.NoComprehensionAndGeneratorRule.message in messages
 
 
 def test_prohibited_yield(default_linter: Linter):
@@ -684,11 +662,9 @@ def invalid_probabilistic_program_yield(data):
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert all(
-        expected.message
-        in map(lambda diagnostic: diagnostic.message, diagnostics)
-        for expected in {rules.NoYieldRule, rules.NoStandaloneExpressionRule}
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoYieldRule.message in messages
+    assert rules.NoStandaloneExpressionRule.message in messages
 
 
 def test_prohibited_yield_from(default_linter: Linter):
@@ -703,11 +679,9 @@ def invalid_probabilistic_program_yield_from(data):
     assert all(
         diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
     )
-    assert all(
-        expected.message
-        in map(lambda diagnostic: diagnostic.message, diagnostics)
-        for expected in {rules.NoYieldRule, rules.NoStandaloneExpressionRule}
-    )
+    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
+    assert rules.NoYieldRule.message in messages
+    assert rules.NoStandaloneExpressionRule.message in messages
 
 
 def test_prohibited_starred(default_linter: Linter):
