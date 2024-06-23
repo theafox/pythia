@@ -2,10 +2,8 @@
 import probros
 
 
-# This should be validated, no errors should occur.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program(data):
+def test_valid_probabilistic_program(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         probros.observe(
@@ -16,31 +14,23 @@ def valid_probabilistic_program(data):
     return probability
 
 
-# This should raise a warning about an unidentifiable decorator.
-#
 @1 + 1
-def unverifiable_function_add_decorator():
+def test_unrecognized_decorator_addition():
     pass
 
 
-# This should raise a warning about an unidentifiable decorator.
-#
 @"hello decorator!"
-def unverifiable_function_string_decorator():
+def test_unrecognized_decorator_string():
     pass
 
 
-# This should raise a warning about an unidentifiable decorator.
-#
 @"probabilistic_program"
-def unverifiable_function_string_decorator_probabilistic_program():
+def test_unrecognized_decorator_matching_string():
     pass
 
 
-# This should be validated, the f-string should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_fstring(data):
+def test_prohibited_fstring(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         address = f"flip[{i}]"
@@ -48,10 +38,8 @@ def invalid_probabilistic_program_fstring(data):
     return probability
 
 
-# This should be validated, the deconstruction should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_deconstructor(data):
+def test_prohibited_deconstructor(data):
     mean, stddev = 2, 0.3
     for i in range(0, len(data)):
         probros.observe(
@@ -61,12 +49,10 @@ def invalid_probabilistic_program_deconstructor(data):
         )
 
 
-# This should be validated, the nested function should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_nested(data):
+def test_prohibited_nested_function(data):
     @probros.probabilistic_program
-    def invalidly_nested_probabilistic_program():
+    def test_prohibited_nested_function_nested():
         probability = probros.sample("p", probros.Uniform(0, 1))
         for i in range(0, len(data)):
             probros.observe(
@@ -76,12 +62,10 @@ def invalid_probabilistic_program_nested(data):
             )
         return probability
 
-    return invalidly_nested_probabilistic_program()
+    return test_prohibited_nested_function_nested()
 
 
-# This should not be validated.
-#
-def unchecked_duplicate_decorator(func):
+def test_unchecked_code_decorator_definition(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
         func(*args, **kwargs)
@@ -89,28 +73,20 @@ def unchecked_duplicate_decorator(func):
     return wrapper
 
 
-# This should not be validated.
-#
 @unchecked_duplicate_decorator
-def unchecked_function():
+def test_unchecked_code_different_decorator_usage():
     VAR = f"This should {'allow'} anything!"
 
-    def unchecked_nested_function(arg: str) -> str:
+    def test_unchecked_code_different_decorator_usage_nested_function(arg):
         return f"{arg=} including f-strings"
 
-    VAR += "\nand nested functions"
-    return unchecked_nested_function(VAR)
+    VAR += "\\nand nested functions"
+    return test_unchecked_code_different_decorator_usage_nested_function(VAR)
 
 
-# Class methods which are annotated as probabilistic programs should be
-# validated.
-#
-class ClassContainingProbabilisticProgram:
-
-    # This should be validated, no errors should occur.
-    #
+class TestValidProbabilisticClassMethodOuter:
     @probros.probabilistic_program
-    def valid_probabilistic_program_in_class(self):
+    def test_valid_probabilistic_class_method(self):
         count: int = 0
         for i in range(0, self.length):
             probability = probros.sample(
@@ -122,10 +98,10 @@ class ClassContainingProbabilisticProgram:
             else:
                 count += 1
 
-    # This should be validated, the f-string should throw an error.
-    #
+
+class TestProhibitedFstringInClassMethod:
     @probros.probabilistic_program
-    def invalid_probabilistic_program_in_class_fstring(self):
+    def test_prohibited_fstring_in_class_method(self):
         count: int = 0
         for i in range(0, self.length):
             address = f"this[{i}]"
@@ -136,22 +112,17 @@ class ClassContainingProbabilisticProgram:
                 count += 1
 
 
-# This should be validated, the nested class should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_nested_class():
-    class InvalidlyNestedClass:
+def test_prohibited_nested_class():
+    class TestProhibitedNestedClassNested:
         pi = 3
 
-    return InvalidNestedClass.pi
+    return TestProhibitedNestedClassNested.pi
 
 
-# This probabilistic_program nested inside of another function should be
-# validated.
-#
-def outer_function():
+def test_valid_probabilistic_program_in_function_outer():
     @probros.probabilistic_program
-    def valid_probabilistic_program_in_function(data: list[int]):
+    def test_valid_probabilistic_program_in_function(data: list[int]):
         for i in range(0, len(data)):
             probros.observe(
                 data[i],
@@ -159,8 +130,10 @@ def outer_function():
                 probros.Poisson(0.7),
             )
 
+
+def test_prohibited_fstring_in_function_outer():
     @probros.probabilistic_program
-    def invalid_probabilistic_program_in_function_fstring(data: list[float]):
+    def test_prohibited_fstring_in_function(data: list[float]):
         for i in range(0, len(data)):
             address = f"data[{i}]"
             probros.observe(
@@ -170,10 +143,8 @@ def outer_function():
             )
 
 
-# This should be validated, the delete statement should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_delete(data):
+def test_prohibited_delete(data):
     sum = 0
     for i in range(0, len(data)):
         probros.observe(
@@ -185,10 +156,8 @@ def invalid_probabilistic_program_delete(data):
     del sum
 
 
-# This should be validated, type aliasing should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_type_aliasing():
+def test_prohibited_type_aliasing():
     type Probabilities = list[probros.Beta]
     probability: Probabilities = []
     for i in range(0, 5):
@@ -196,10 +165,8 @@ def invalid_probabilistic_program_type_aliasing():
     return probability
 
 
-# This should be validated, asynchrony should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_for(data):
+def test_prohibited_asynchronous_for(data):
     probability = probros.Gamma(0.2, 0.9)
     if probability < 0.5:
         return False
@@ -213,10 +180,8 @@ def invalid_probabilistic_program_asynchronous_for(data):
         return True
 
 
-# This should be validated, with-statements should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_with_file(filepath):
+def test_prohibited_with_file(filepath):
     with open(filepath) as file:
         data = file.readall()
     for i in range(0, len(data)):
@@ -227,10 +192,8 @@ def invalid_probabilistic_program_with_file(filepath):
         )
 
 
-# This should be validated, with-statements should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_with_variables(generator):
+def test_prohibited_with_variables(generator):
     with generator() as data:
         for i in range(0, len(data)):
             probros.observe(
@@ -240,10 +203,8 @@ def invalid_probabilistic_program_with_variables(generator):
             )
 
 
-# This should be validated, for-loops not using `range` should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_for_iterable(data):
+def test_restricted_for_iterable(data):
     for point in data:
         if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
             return "outside X and Y"
@@ -255,20 +216,16 @@ def invalid_probabilistic_program_for_iterable(data):
             return "inside X and Y"
 
 
-# This should be validated, for-loops not using `range` should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_for_constant(data):
+def test_restricted_for_constant(data):
     step = 0
     for _ in "this shouldn't work either!":
         probros.observe(data[step], "hi!", probros.Uniform(0, 1))
         step += 1
 
 
-# This should be validated, the walrus operator should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_walrus_operator(data):
+def test_prohibited_walrus(data):
     if (length := len(data)) > 10:
         for i in range(0, length):
             probros.observe(
@@ -278,34 +235,26 @@ def invalid_probabilistic_program_walrus_operator(data):
             )
 
 
-# This should be validated, the shift operators should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_shift_operator(n):
+def test_restricted_binary_operators_shift(n):
     return 1 << n
 
 
-# This should be validated, the shift operators should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_bitwise_operator(a, b, c, d):
+def test_restricted_binary_operators_bitwise(a, b, c, d):
     result = a & b
     result = result | c
     result = result ^ d
     return result
 
 
-# This should be validated, the bitwise complement `~` should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_bitwise_complement(n):
+def test_restricted_unary_operator_bitwise(n):
     return ~n
 
 
-# This should be validated, the lambda expression should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_lambda(data):
+def test_prohibited_lambda(data):
     data = filter(lambda point: point >= 0, data)
     for i in range(0, len(data)):
         probros.observe(
@@ -315,10 +264,8 @@ def invalid_probabilistic_program_lambda(data):
         )
 
 
-# This should be validated, the inline if expression should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_inline_if(probability):
+def test_prohibited_inline_if(probability):
     probability = 0 if probability < 0 else probability
     i = 0
     while True:
@@ -332,10 +279,8 @@ def invalid_probabilistic_program_inline_if(probability):
     return i
 
 
-# This should be validated, the walrus operator should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_dictionary(data):
+def test_prohibited_dictionary(data):
     details = {
         "data": (data := data),
         "length": (length := data),
@@ -354,10 +299,8 @@ def invalid_probabilistic_program_dictionary(data):
     return details
 
 
-# This should be validated, sets should be prohibited.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_set(data):
+def test_prohibited_set(data):
     reduced = set()
     for i in range(0, len(data)):
         reduced.add(data[i])
@@ -369,58 +312,42 @@ def invalid_probabilistic_program_set(data):
         )
 
 
-# This should be validated, comprehensions and generators should throw an
-# error.
 @probros.probabilistic_program
-def invalid_probabilistic_program_list_comprehension():
+def test_prohibited_comprehension_list():
     return [2**n for n in range(10)]
 
 
-# This should be validated, comprehensions and generators should throw an
-# error.
 @probros.probabilistic_program
-def invalid_probabilistic_program_set_comprehension():
+def test_prohibited_comprehension_set():
     return {2**n for n in range(10)}
 
 
-# This should be validated, comprehensions and generators should throw an
-# error.
 @probros.probabilistic_program
-def invalid_probabilistic_program_dictionary_comprehension():
+def test_prohibited_comprehension_dictionary():
     return {n: 2**n for n in range(10)}
 
 
-# This should be validated, comprehensions and generators should throw an
-# error.
 @probros.probabilistic_program
-def invalid_probabilistic_program_generator():
+def test_prohibited_generator():
     return sum(2**n for n in range(10))
 
 
-# This should be validated, asynchrony should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_await(data):
-    probabilities = (
-        await invalid_probabilistic_program_asynchronous_generator()
-    )
+def test_prohibited_asynchronous_await(data):
+    probabilities = await test_prohibited_asynchronous_generator()
     for i in range(0, len(probabilities)):
         if probabilities[i] > 0.9:
             return True
     return False
 
 
-# This should be validated, asynchrony should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_generator():
+def test_prohibited_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
 
 
-# This should be validated, yield expressions should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_yield(data):
+def test_prohibited_yield(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -430,17 +357,13 @@ def invalid_probabilistic_program_yield(data):
         yield data[i]
 
 
-# This should be validated, yield expressions should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_yield_from(data):
-    yield from invalid_probabilistic_program_yield(data)
+def test_prohibited_yield_from(data):
+    yield from test_prohibited_yield(data)
 
 
-# This should be validated, the starred variable should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_starred(data):
+def test_prohibited_starred(data):
     zum = sum(*data)
     for i in range(0, len(data)):
         data[i] /= zum
@@ -452,10 +375,8 @@ def invalid_probabilistic_program_starred(data):
         )
 
 
-# This should be validated, the slice should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_slice(data):
+def test_prohibited_slice(data):
     data = data[0:100]
     for i in range(0, len(data)):
         probros.observe(
@@ -469,10 +390,8 @@ def invalid_probabilistic_program_slice(data):
     )
 
 
-# This should be validated, this should not throw an error.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program_array_assign(data):
+def test_valid_probabilistic_program_array_assign(data):
     details = list()
     details[0] = data
     details[1] = sum(data)
@@ -481,16 +400,14 @@ def valid_probabilistic_program_array_assign(data):
     return details
 
 
-# This should be validated, the attribute assign should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_attribute_assign(data):
+def test_prohibited_attribute_assign(data):
     data.sum = sum(data)
     return data.sum
 
 
 @probros.probabilistic_program
-def valid_probabilistic_program_standalone_expression_observe_call():
+def test_prohibited_standalone_expression_allowed_observe():
     probros.observe(
         12,
         "standalone_observe_call",
@@ -499,24 +416,22 @@ def valid_probabilistic_program_standalone_expression_observe_call():
 
 
 @probros.probabilistic_program
-def valid_probabilistic_program_standalone_expression_factor_call():
+def test_prohibited_standalone_expression_allowed_factor():
     probros.factor(0.0124)
 
 
 @probros.probabilistic_program
-def invalid_probabilistic_program_standalone_expression_function_call(n):
+def test_prohibited_standalone_expression_function_call(n):
     initialize_context()
 
 
 @probros.probabilistic_program
-def invalid_probabilistic_program_standalone_expression_calculation(n):
+def test_prohibited_standalone_expression_calculations(n):
     1 + 2**3 / 4 // 5
 
 
-# This should be validated, the subscript assign should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_subscript(data):
+def test_prohibited_multiple_subscript(data):
     data[0, -1] = data[-1], data[0]
     for i in range(0, len(data)):
         probros.observe(
@@ -526,20 +441,16 @@ def invalid_probabilistic_program_subscript(data):
         )
 
 
-# This should be validated, the observe-call should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_number_address(data):
+def test_restricted_observe_call_address_number(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         probros.observe(data[i], 123, probros.Bernoulli(probability))
     return probability
 
 
-# This should be validated, the observe-call should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_variable_address(data: list[float]):
+def test_restricted_observe_call_address_variable(data: list[float]):
     for i in range(0, len(data)):
         address = probros.IndexedAddress("data", i)
         probros.observe(
@@ -549,10 +460,8 @@ def invalid_probabilistic_program_observe_variable_address(data: list[float]):
         )
 
 
-# This should be validated, no errors should occur.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program_observe_keyword_arguments(data: list[float]):
+def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -561,10 +470,8 @@ def valid_probabilistic_program_observe_keyword_arguments(data: list[float]):
         )
 
 
-# This should be validated, no errors should occur.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
+def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -573,11 +480,8 @@ def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
         )
 
 
-# This should be validated, the incorrect observation argument order should
-# throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_keyword_arguments_ordering(
+def test_restrict_observe_structure_incorrect_ordering(
     data: list[float],
 ):
     for i in range(0, len(data)):
@@ -588,11 +492,8 @@ def invalid_probabilistic_program_observe_keyword_arguments_ordering(
         )
 
 
-# This should be validated, the missing positional observation argument should
-# throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_missing_positional(
+def test_restrict_observe_structure_missing_positional(
     data: list[float],
 ):
     for i in range(0, len(data)):
@@ -603,64 +504,54 @@ def invalid_probabilistic_program_observe_missing_positional(
         )
 
 
-# This should be validated, no errors should occur.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program_sample(data: list[float]):
-    return sample("p", probros.Dirac(True))
+def test_restricted_sample_structure(data: list[float]):
+    return probros.sample("p", probros.Dirac(True))
 
 
-# This should be validated, the sample call should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_sample_incorrect_address_number(
+def test_restricted_sample_structure_incorrect_address_number(
     data: list[float],
 ):
     return probros.sample(123, probros.Dirac(True))
 
 
-# This should be validated, the sample call should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_sample_missing_argument(
+def test_restricted_sample_structure_missing_argument(
     data: list[float],
 ):
     return probros.sample("p")
 
 
-# This should be validated, the sample call should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_sample_keyword_argument(
+def test_restricted_sample_structure_incorrect_keyword_argument(
     data: list[float],
 ):
     return probros.sample("p", distribution=probros.Uniform(0, 1))
 
 
 @probros.probabilistic_program
-def valid_probabilistic_program_factor_string_address():
+def test_restricted_factor_valid_keyword():
     probros.factor(0.001, address="data")
 
 
 @probros.probabilistic_program
-def valid_probabilistic_program_factor_indexed_address():
+def test_restricted_factor_valid_indexed_address():
     probros.factor(0.001, probros.IndexedAddress("data", 0))
 
 
 @probros.probabilistic_program
-def invalid_probabilistic_program_factor_missing_expression():
+def test_restricted_observe_missing_expression():
     probros.factor()
 
 
 @probros.probabilistic_program
-def invalid_probabilistic_program_factor_additional_arguments():
+def test_restricted_observe_additional_argument():
     probros.factor(0.123, "address", probros.Beta(0.1, 0.2))
 
 
-# This should be validated, no errors should occur.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program_broadcast_statement(data):
+def test_restricted_observe_valide_broadcasted(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -669,11 +560,8 @@ def valid_probabilistic_program_broadcast_statement(data):
         )
 
 
-# This should be validated, the invalid `Broadcasted` call should throw an
-# error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_broadcast_statement_constant():
+def test_restricted_sample_incorrect_broadcasted_arguments():
     for i in range(0, 100):
         _ = probros.sample(
             probros.IndexedAddress("i", i),
@@ -681,10 +569,8 @@ def invalid_probabilistic_program_broadcast_statement_constant():
         )
 
 
-# This should be validated, no errors should occur.
-#
 @probros.probabilistic_program
-def valid_probabilistic_program_iid_statement(data):
+def test_restricted_sample_valid_iid(data):
     for i in range(0, 100):
         _ = probros.sample(
             probros.IndexedAddress("i", i),
@@ -692,10 +578,8 @@ def valid_probabilistic_program_iid_statement(data):
         )
 
 
-# This should be validated, the invalid `IID` call should throw an error.
-#
 @probros.probabilistic_program
-def invalid_probabilistic_program_iid_statement_missing_constant(data):
+def test_restricted_observe_incorrect_iid_missing_argument(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -705,7 +589,7 @@ def invalid_probabilistic_program_iid_statement_missing_constant(data):
 
 
 @probros.probabilistic_program
-def valid_probabilistic_program_indexed_address(data):
+def test_restricted_indexed_address(data):
     return probros.sample(
         probros.IndexedAddress(":)", 21),
         probros.Normal(0, 1),
@@ -713,7 +597,7 @@ def valid_probabilistic_program_indexed_address(data):
 
 
 @probros.probabilistic_program
-def valid_probabilistic_program_nested_indexed_address(data):
+def test_restricted_indexed_address_nested(data):
     return probros.sample(
         probros.IndexedAddress(
             probros.IndexedAddress(
@@ -730,33 +614,27 @@ def valid_probabilistic_program_nested_indexed_address(data):
 
 
 @probros.probabilistic_program
-def invalid_probabilistic_program_invalid_indexed_address_call_no_address(
+def test_restricted_indexed_address_missing_address(
     data,
 ):
     return probros.sample(probros.IndexedAddress(21), probros.Normal(0, 1))
 
 
 @probros.probabilistic_program
-def invalid_probabilistic_program_invalid_indexed_address_call_no_number(data):
+def test_restricted_indexed_address_missing_number(data):
     return probros.sample(probros.IndexedAddress("i"), probros.Normal(0, 1))
 
 
-# This may give information that this is not the intended use-case.
-#
 @probros.probabilistic_program
-class UnrecommendedProbabilisticProgramDecoratorOnClass:
+class TestUnrecommendedUseCaseClass:
     pass
 
 
-# This may give information that this is not the intended use-case.
-#
 @probros.probabilistic_program
-async def unrecommended_probabilistic_program_decorator_on_async_function():
+async def test_unrecommended_use_case_async_function():
     return "some promise"
 
 
-# Nothing of the following should be be validated.
-#
 message = "This file is not intended for execution"
 
 if __name__ == f"__{'main'}__":

@@ -36,7 +36,7 @@ def default_linter() -> Linter:
 def test_valid_probabilistic_program(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program(data):
+def test_valid_probabilistic_program(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         probros.observe(
@@ -53,7 +53,7 @@ def valid_probabilistic_program(data):
 def test_unrecognized_decorator_addition(default_linter: Linter):
     code = """
 @1 + 1
-def unverifiable_function_add_decorator():
+def test_unrecognized_decorator_addition():
     pass
 """
     diagnostics = default_linter.lint_code(code)
@@ -64,7 +64,7 @@ def unverifiable_function_add_decorator():
 def test_unrecognized_decorator_string(default_linter: Linter):
     code = """
 @"hello decorator!"
-def unverifiable_function_string_decorator():
+def test_unrecognized_decorator_string():
     pass
 """
     diagnostics = default_linter.lint_code(code)
@@ -75,7 +75,7 @@ def unverifiable_function_string_decorator():
 def test_unrecognized_decorator_matching_string(default_linter: Linter):
     code = """
 @"probabilistic_program"
-def unverifiable_function_string_decorator_probabilistic_program():
+def test_unrecognized_decorator_matching_string():
     pass
 """
     diagnostics = default_linter.lint_code(code)
@@ -86,7 +86,7 @@ def unverifiable_function_string_decorator_probabilistic_program():
 def test_prohibited_fstring(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_fstring(data):
+def test_prohibited_fstring(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         address = f"flip[{i}]"
@@ -106,7 +106,7 @@ def invalid_probabilistic_program_fstring(data):
 def test_prohibited_deconstructor(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_deconstructor(data):
+def test_prohibited_deconstructor(data):
     mean, stddev = 2, 0.3
     for i in range(0, len(data)):
         probros.observe(
@@ -124,9 +124,9 @@ def invalid_probabilistic_program_deconstructor(data):
 def test_prohibited_nested_function(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_nested(data):
+def test_prohibited_nested_function(data):
     @probros.probabilistic_program
-    def invalidly_nested_probabilistic_program():
+    def test_prohibited_nested_function_nested():
         probability = probros.sample("p", probros.Uniform(0, 1))
         for i in range(0, len(data)):
             probros.observe(
@@ -136,7 +136,7 @@ def invalid_probabilistic_program_nested(data):
             )
         return probability
 
-    return invalidly_nested_probabilistic_program()
+    return test_prohibited_nested_function_nested()
 """
     diagnostics = default_linter.lint_code(code)
     assert len(diagnostics) == 1
@@ -146,7 +146,7 @@ def invalid_probabilistic_program_nested(data):
 
 def test_unchecked_code_decorator_definition(default_linter: Linter):
     code = """
-def unchecked_duplicate_decorator(func):
+def test_unchecked_code_decorator_definition(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
         func(*args, **kwargs)
@@ -160,14 +160,14 @@ def unchecked_duplicate_decorator(func):
 def test_unchecked_code_different_decorator_usage(default_linter: Linter):
     code = """
 @unchecked_duplicate_decorator
-def unchecked_function():
+def test_unchecked_code_different_decorator_usage():
     VAR = f"This should {'allow'} anything!"
 
-    def unchecked_nested_function(arg: str) -> str:
+    def test_unchecked_code_different_decorator_usage_nested_function(arg):
         return f"{arg=} including f-strings"
 
     VAR += "\\nand nested functions"
-    return unchecked_nested_function(VAR)
+    return test_unchecked_code_different_decorator_usage_nested_function(VAR)
 """
     diagnostics = default_linter.lint_code(code)
     assert not diagnostics
@@ -175,9 +175,9 @@ def unchecked_function():
 
 def test_valid_probabilistic_class_method(default_linter: Linter):
     code = """
-class ClassContainingProbabilisticProgram:
+class TestValidProbabilisticClassMethodOuter:
     @probros.probabilistic_program
-    def valid_probabilistic_program_in_class(self):
+    def test_valid_probabilistic_class_method(self):
         count: int = 0
         for i in range(0, self.length):
             probability = probros.sample(
@@ -195,9 +195,9 @@ class ClassContainingProbabilisticProgram:
 
 def test_prohibited_fstring_in_class_method(default_linter: Linter):
     code = """
-class ClassContainingProbabilisticProgram:
+class TestProhibitedFstringInClassMethod:
     @probros.probabilistic_program
-    def invalid_probabilistic_program_in_class_fstring(self):
+    def test_prohibited_fstring_in_class_method(self):
         count: int = 0
         for i in range(0, self.length):
             address = f"this[{i}]"
@@ -220,11 +220,11 @@ class ClassContainingProbabilisticProgram:
 def test_prohibited_nested_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_nested_class():
-    class InvalidlyNestedClass:
+def test_prohibited_nested_class():
+    class TestProhibitedNestedClassNested:
         pi = 3
 
-    return InvalidNestedClass.pi
+    return TestProhibitedNestedClassNested.pi
 """
     diagnostics = default_linter.lint_code(code)
     assert len(diagnostics) == 1
@@ -234,9 +234,9 @@ def invalid_probabilistic_program_nested_class():
 
 def test_valid_probabilistic_program_in_function(default_linter: Linter):
     code = """
-def outer_function():
+def test_valid_probabilistic_program_in_function_outer():
     @probros.probabilistic_program
-    def valid_probabilistic_program_in_function(data: list[int]):
+    def test_valid_probabilistic_program_in_function(data: list[int]):
         for i in range(0, len(data)):
             probros.observe(
                 data[i],
@@ -250,9 +250,9 @@ def outer_function():
 
 def test_prohibited_fstring_in_function(default_linter: Linter):
     code = """
-def outer_function():
+def test_prohibited_fstring_in_function_outer():
     @probros.probabilistic_program
-    def invalid_probabilistic_program_in_function_fstring(data: list[float]):
+    def test_prohibited_fstring_in_function(data: list[float]):
         for i in range(0, len(data)):
             address = f"data[{i}]"
             probros.observe(
@@ -274,7 +274,7 @@ def outer_function():
 def test_prohibited_delete(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_delete(data):
+def test_prohibited_delete(data):
     sum = 0
     for i in range(0, len(data)):
         probros.observe(
@@ -294,7 +294,7 @@ def invalid_probabilistic_program_delete(data):
 def test_prohibited_type_aliasing(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_type_aliasing():
+def test_prohibited_type_aliasing():
     type Probabilities = list[probros.Beta]
     probability: Probabilities = []
     for i in range(0, 5):
@@ -310,7 +310,7 @@ def invalid_probabilistic_program_type_aliasing():
 def test_prohibited_asynchronous_for(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_for(data):
+def test_prohibited_asynchronous_for(data):
     probability = probros.Gamma(0.2, 0.9)
     if probability < 0.5:
         return False
@@ -332,7 +332,7 @@ def invalid_probabilistic_program_asynchronous_for(data):
 def test_prohibited_with_file(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_with_file(filepath):
+def test_prohibited_with_file(filepath):
     with open(filepath) as file:
         data = file.readall()
     for i in range(0, len(data)):
@@ -351,7 +351,7 @@ def invalid_probabilistic_program_with_file(filepath):
 def test_prohibited_with_variables(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_with_variables(generator):
+def test_prohibited_with_variables(generator):
     with generator() as data:
         for i in range(0, len(data)):
             probros.observe(
@@ -369,7 +369,7 @@ def invalid_probabilistic_program_with_variables(generator):
 def test_restricted_for_iterable(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_for_iterable(data):
+def test_restricted_for_iterable(data):
     for point in data:
         if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
             return "outside X and Y"
@@ -389,7 +389,7 @@ def invalid_probabilistic_program_for_iterable(data):
 def test_restricted_for_constant(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_for_constant(data):
+def test_restricted_for_constant(data):
     step = 0
     for _ in "this shouldn't work either!":
         probros.observe(data[step], "hi!", probros.Uniform(0, 1))
@@ -404,7 +404,7 @@ def invalid_probabilistic_program_for_constant(data):
 def test_prohibited_walrus(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_walrus_operator(data):
+def test_prohibited_walrus(data):
     if (length := len(data)) > 10:
         for i in range(0, length):
             probros.observe(
@@ -422,7 +422,7 @@ def invalid_probabilistic_program_walrus_operator(data):
 def test_restricted_binary_operators_shift(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_shift_operator(n):
+def test_restricted_binary_operators_shift(n):
     return 1 << n
 """
     diagnostics = default_linter.lint_code(code)
@@ -434,7 +434,7 @@ def invalid_probabilistic_program_shift_operator(n):
 def test_restricted_binary_operators_bitwise(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_bitwise_operator(a, b, c, d):
+def test_restricted_binary_operators_bitwise(a, b, c, d):
     result = a & b
     result = result | c
     result = result ^ d
@@ -454,7 +454,7 @@ def invalid_probabilistic_program_bitwise_operator(a, b, c, d):
 def test_restricted_unary_operator_bitwise(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_bitwise_complement(n):
+def test_restricted_unary_operator_bitwise(n):
     return ~n
 """
     diagnostics = default_linter.lint_code(code)
@@ -466,7 +466,7 @@ def invalid_probabilistic_program_bitwise_complement(n):
 def test_prohibited_lambda(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_lambda(data):
+def test_prohibited_lambda(data):
     data = filter(lambda point: point >= 0, data)
     for i in range(0, len(data)):
         probros.observe(
@@ -484,7 +484,7 @@ def invalid_probabilistic_program_lambda(data):
 def test_prohibited_inline_if(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_inline_if(probability):
+def test_prohibited_inline_if(probability):
     probability = 0 if probability < 0 else probability
     i = 0
     while True:
@@ -506,7 +506,7 @@ def invalid_probabilistic_program_inline_if(probability):
 def test_prohibited_dictionary(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_dictionary(data):
+def test_prohibited_dictionary(data):
     details = {
         "data": (data := data),
         "length": (length := data),
@@ -533,7 +533,7 @@ def invalid_probabilistic_program_dictionary(data):
 def test_prohibited_set(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_set(data):
+def test_prohibited_set(data):
     reduced = set()
     for i in range(0, len(data)):
         reduced.add(data[i])
@@ -557,7 +557,7 @@ def invalid_probabilistic_program_set(data):
 def test_prohibited_comprehension_list(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_list_comprehension():
+def test_prohibited_comprehension_list():
     return [2**n for n in range(10)]
 """
     diagnostics = default_linter.lint_code(code)
@@ -571,7 +571,7 @@ def invalid_probabilistic_program_list_comprehension():
 def test_prohibited_comprehension_set(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_set_comprehension():
+def test_prohibited_comprehension_set():
     return {2**n for n in range(10)}
 """
     diagnostics = default_linter.lint_code(code)
@@ -585,7 +585,7 @@ def invalid_probabilistic_program_set_comprehension():
 def test_prohibited_comprehension_dictionary(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_dictionary_comprehension():
+def test_prohibited_comprehension_dictionary():
     return {n: 2**n for n in range(10)}
 """
     diagnostics = default_linter.lint_code(code)
@@ -599,7 +599,7 @@ def invalid_probabilistic_program_dictionary_comprehension():
 def test_prohibited_generator(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_generator():
+def test_prohibited_generator():
     return sum(2**n for n in range(10))
 """
     diagnostics = default_linter.lint_code(code)
@@ -613,10 +613,8 @@ def invalid_probabilistic_program_generator():
 def test_prohibited_asynchronous_await(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_await(data):
-    probabilities = (
-        await invalid_probabilistic_program_asynchronous_generator()
-    )
+def test_prohibited_asynchronous_await(data):
+    probabilities = await test_prohibited_asynchronous_generator()
     for i in range(0, len(probabilities)):
         if probabilities[i] > 0.9:
             return True
@@ -631,7 +629,7 @@ def invalid_probabilistic_program_asynchronous_await(data):
 def test_prohibited_asynchronous_generator(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_asynchronous_generator():
+def test_prohibited_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
 """
     diagnostics = default_linter.lint_code(code)
@@ -647,7 +645,7 @@ def invalid_probabilistic_program_asynchronous_generator():
 def test_prohibited_yield(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_yield(data):
+def test_prohibited_yield(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -670,8 +668,8 @@ def invalid_probabilistic_program_yield(data):
 def test_prohibited_yield_from(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_yield_from(data):
-    yield from invalid_probabilistic_program_yield(data)
+def test_prohibited_yield_from(data):
+    yield from test_prohibited_yield(data)
 """
     default_linter.extensive_diagnosis = True
     diagnostics = default_linter.lint_code(code)
@@ -687,7 +685,7 @@ def invalid_probabilistic_program_yield_from(data):
 def test_prohibited_starred(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_starred(data):
+def test_prohibited_starred(data):
     zum = sum(*data)
     for i in range(0, len(data)):
         data[i] /= zum
@@ -707,7 +705,7 @@ def invalid_probabilistic_program_starred(data):
 def test_prohibited_slice(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_slice(data):
+def test_prohibited_slice(data):
     data = data[0:100]
     for i in range(0, len(data)):
         probros.observe(
@@ -729,7 +727,7 @@ def invalid_probabilistic_program_slice(data):
 def test_valid_probabilistic_program_array_assign(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_array_assign(data):
+def test_valid_probabilistic_program_array_assign(data):
     details = list()
     details[0] = data
     details[1] = sum(data)
@@ -744,7 +742,7 @@ def valid_probabilistic_program_array_assign(data):
 def test_prohibited_attribute_assign(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_attribute_assign(data):
+def test_prohibited_attribute_assign(data):
     data.sum = sum(data)
     return data.sum
 """
@@ -759,7 +757,7 @@ def test_prohibited_standalone_expression_allowed_observe(
 ):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_standalone_expression_observe_call():
+def test_prohibited_standalone_expression_allowed_observe():
     probros.observe(
         12,
         "standalone_observe_call",
@@ -775,7 +773,7 @@ def test_prohibited_standalone_expression_allowed_factor(
 ):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_standalone_expression_factor_call():
+def test_prohibited_standalone_expression_allowed_factor():
     probros.factor(0.0124)
 """
     diagnostics = default_linter.lint_code(code)
@@ -787,7 +785,7 @@ def test_prohibited_standalone_expression_function_call(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_standalone_expression_function_call(n):
+def test_prohibited_standalone_expression_function_call(n):
     initialize_context()
 """
     diagnostics = default_linter.lint_code(code)
@@ -799,7 +797,7 @@ def invalid_probabilistic_program_standalone_expression_function_call(n):
 def test_prohibited_standalone_expression_calculations(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_standalone_expression_calculation(n):
+def test_prohibited_standalone_expression_calculations(n):
     1 + 2**3 / 4 // 5
 """
     diagnostics = default_linter.lint_code(code)
@@ -811,7 +809,7 @@ def invalid_probabilistic_program_standalone_expression_calculation(n):
 def test_prohibited_multiple_subscript(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_subscript(data):
+def test_prohibited_multiple_subscript(data):
     data[0, -1] = data[-1], data[0]
     for i in range(0, len(data)):
         probros.observe(
@@ -829,7 +827,7 @@ def invalid_probabilistic_program_subscript(data):
 def test_restricted_observe_call_address_number(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_number_address(data):
+def test_restricted_observe_call_address_number(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         probros.observe(data[i], 123, probros.Bernoulli(probability))
@@ -847,7 +845,7 @@ def invalid_probabilistic_program_observe_number_address(data):
 def test_restricted_observe_call_address_variable(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_variable_address(data: list[float]):
+def test_restricted_observe_call_address_variable(data: list[float]):
     for i in range(0, len(data)):
         address = probros.IndexedAddress("data", i)
         probros.observe(
@@ -870,7 +868,7 @@ def test_restrict_observe_structure_two_keyword_arguments(
 ):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_observe_keyword_arguments(data: list[float]):
+def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -887,7 +885,7 @@ def test_restrict_observe_structure_one_keyword_argument(
 ):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
+def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -902,7 +900,7 @@ def valid_probabilistic_program_observe_keyword_argument(data: list[float]):
 def test_restrict_observe_structure_incorrect_ordering(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_keyword_arguments_ordering(
+def test_restrict_observe_structure_incorrect_ordering(
     data: list[float],
 ):
     for i in range(0, len(data)):
@@ -926,7 +924,7 @@ def test_restrict_observe_structure_missing_positional(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_observe_missing_positional(
+def test_restrict_observe_structure_missing_positional(
     data: list[float],
 ):
     for i in range(0, len(data)):
@@ -948,8 +946,8 @@ def invalid_probabilistic_program_observe_missing_positional(
 def test_restricted_sample_structure(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_sample(data: list[float]):
-    return sample("p", probros.Dirac(True))
+def test_restricted_sample_structure(data: list[float]):
+    return probros.sample("p", probros.Dirac(True))
 """
     diagnostics = default_linter.lint_code(code)
     assert not diagnostics
@@ -960,7 +958,7 @@ def test_restricted_sample_structure_incorrect_address_number(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_sample_incorrect_address_number(
+def test_restricted_sample_structure_incorrect_address_number(
     data: list[float],
 ):
     return probros.sample(123, probros.Dirac(True))
@@ -976,7 +974,7 @@ def invalid_probabilistic_program_sample_incorrect_address_number(
 def test_restricted_sample_structure_missing_argument(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_sample_missing_argument(
+def test_restricted_sample_structure_missing_argument(
     data: list[float],
 ):
     return probros.sample("p")
@@ -994,7 +992,7 @@ def test_restricted_sample_structure_incorrect_keyword_argument(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_sample_keyword_argument(
+def test_restricted_sample_structure_incorrect_keyword_argument(
     data: list[float],
 ):
     return probros.sample("p", distribution=probros.Uniform(0, 1))
@@ -1010,7 +1008,7 @@ def invalid_probabilistic_program_sample_keyword_argument(
 def test_restricted_factor_valid_keyword(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_factor_string_address():
+def test_restricted_factor_valid_keyword():
     probros.factor(0.001, address="data")
 """
     diagnostics = default_linter.lint_code(code)
@@ -1020,7 +1018,7 @@ def valid_probabilistic_program_factor_string_address():
 def test_restricted_factor_valid_indexed_address(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_factor_indexed_address():
+def test_restricted_factor_valid_indexed_address():
     probros.factor(0.001, probros.IndexedAddress("data", 0))
 """
     diagnostics = default_linter.lint_code(code)
@@ -1030,7 +1028,7 @@ def valid_probabilistic_program_factor_indexed_address():
 def test_restricted_observe_missing_expression(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_factor_missing_expression():
+def test_restricted_observe_missing_expression():
     probros.factor()
 """
     diagnostics = default_linter.lint_code(code)
@@ -1044,7 +1042,7 @@ def invalid_probabilistic_program_factor_missing_expression():
 def test_restricted_observe_additional_argument(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_factor_additional_arguments():
+def test_restricted_observe_additional_argument():
     probros.factor(0.123, "address", probros.Beta(0.1, 0.2))
 """
     diagnostics = default_linter.lint_code(code)
@@ -1058,7 +1056,7 @@ def invalid_probabilistic_program_factor_additional_arguments():
 def test_restricted_observe_valide_broadcasted(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_broadcast_statement(data):
+def test_restricted_observe_valide_broadcasted(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -1075,7 +1073,7 @@ def test_restricted_sample_incorrect_broadcasted_arguments(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_broadcast_statement_constant():
+def test_restricted_sample_incorrect_broadcasted_arguments():
     for i in range(0, 100):
         _ = probros.sample(
             probros.IndexedAddress("i", i),
@@ -1093,7 +1091,7 @@ def invalid_probabilistic_program_broadcast_statement_constant():
 def test_restricted_sample_valid_iid(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_iid_statement(data):
+def test_restricted_sample_valid_iid(data):
     for i in range(0, 100):
         _ = probros.sample(
             probros.IndexedAddress("i", i),
@@ -1109,7 +1107,7 @@ def test_restricted_observe_incorrect_iid_missing_argument(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_iid_statement_missing_constant(data):
+def test_restricted_observe_incorrect_iid_missing_argument(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -1131,7 +1129,7 @@ def test_restricted_indexed_address(
 ):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_indexed_address(data):
+def test_restricted_indexed_address(data):
     return probros.sample(
         probros.IndexedAddress(":)", 21),
         probros.Normal(0, 1),
@@ -1146,7 +1144,7 @@ def test_restricted_indexed_address_nested(
 ):
     code = """
 @probros.probabilistic_program
-def valid_probabilistic_program_nested_indexed_address(data):
+def test_restricted_indexed_address_nested(data):
     return probros.sample(
         probros.IndexedAddress(
             probros.IndexedAddress(
@@ -1170,7 +1168,7 @@ def test_restricted_indexed_address_missing_address(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_invalid_indexed_address_call_no_address(
+def test_restricted_indexed_address_missing_address(
     data,
 ):
     return probros.sample(probros.IndexedAddress(21), probros.Normal(0, 1))
@@ -1189,7 +1187,7 @@ def test_restricted_indexed_address_missing_number(
 ):
     code = """
 @probros.probabilistic_program
-def invalid_probabilistic_program_invalid_indexed_address_call_no_number(data):
+def test_restricted_indexed_address_missing_number(data):
     return probros.sample(probros.IndexedAddress("i"), probros.Normal(0, 1))
 """
     diagnostics = default_linter.lint_code(code)
@@ -1204,7 +1202,7 @@ def invalid_probabilistic_program_invalid_indexed_address_call_no_number(data):
 def test_unrecommended_use_case_class(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-class UnrecommendedProbabilisticProgramDecoratorOnClass:
+class TestUnrecommendedUseCaseClass:
     pass
 """
     diagnostics = default_linter.lint_code(code)
@@ -1215,7 +1213,7 @@ class UnrecommendedProbabilisticProgramDecoratorOnClass:
 def test_unrecommended_use_case_async_function(default_linter: Linter):
     code = """
 @probros.probabilistic_program
-async def unrecommended_probabilistic_program_decorator_on_async_function():
+async def test_unrecommended_use_case_async_function():
     return "some promise"
 """
     diagnostics = default_linter.lint_code(code)
