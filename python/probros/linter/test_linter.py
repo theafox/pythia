@@ -10,7 +10,7 @@ This test-file and the test-cases are intended to be used with `pytest`. Its
 fixture feature is used to parse a default probabilistic program to each
 test-case.
 
-The names of the test-cases follow the following pattern:
+The names of the test-cases generally follow the following pattern:
 ```
     test_(prohibited|restrict(ed)?)_<the rule name>_<any sub-test-cases>
 ```
@@ -33,8 +33,83 @@ def default_linter() -> Linter:
     return default_probabilistic_program_linter()
 
 
-def test_valid_probabilistic_program(default_linter: Linter):
-    code = """
+class TestEntryPointRecognition:
+
+    class TestUnrecognizedDecoratorWarning:
+
+        @staticmethod
+        def test_unrecognized_decorator_addition(default_linter: Linter):
+            code = """
+@1 + 1
+def test_unrecognized_decorator_addition():
+    pass
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.WARNING
+
+        @staticmethod
+        def test_unrecognized_decorator_string(default_linter: Linter):
+            code = """
+@"hello decorator!"
+def test_unrecognized_decorator_string():
+    pass
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.WARNING
+
+        @staticmethod
+        def test_unrecognized_decorator_matching_string(
+            default_linter: Linter,
+        ):
+            code = """
+@"probabilistic_program"
+def test_unrecognized_decorator_matching_string():
+    pass
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.WARNING
+
+    class TestUncheckedDefinitions:
+
+        @staticmethod
+        def test_unchecked_code_decorator_definition(default_linter: Linter):
+            code = """
+def test_unchecked_code_decorator_definition(func):
+    def wrapper(*args, **kwargs):
+        func(*args, **kwargs)
+        func(*args, **kwargs)
+
+    return wrapper
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_unchecked_code_different_decorator_usage(
+            default_linter: Linter,
+        ):
+            code = """
+@test_unchecked_code_decorator_definition
+def test_unchecked_code_different_decorator_usage():
+    VAR = f"This should {'allow'} anything!"
+
+    def test_unchecked_code_different_decorator_usage_nested_function(arg):
+        return f"{arg=} including f-strings"
+
+    VAR += "\\nand nested functions"
+    return test_unchecked_code_different_decorator_usage_nested_function(VAR)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+    class TestNestedProbabilisticProgramDefinition:
+
+        @staticmethod
+        def test_valid_probabilistic_program(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_valid_probabilistic_program(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
@@ -45,84 +120,134 @@ def test_valid_probabilistic_program(data):
             probros.Bernoulli(probability),
         )
     return probability
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_unrecognized_decorator_addition(default_linter: Linter):
-    code = """
-@1 + 1
-def test_unrecognized_decorator_addition():
-    pass
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.WARNING
-
-
-def test_unrecognized_decorator_string(default_linter: Linter):
-    code = """
-@"hello decorator!"
-def test_unrecognized_decorator_string():
-    pass
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.WARNING
-
-
-def test_unrecognized_decorator_matching_string(default_linter: Linter):
-    code = """
-@"probabilistic_program"
-def test_unrecognized_decorator_matching_string():
-    pass
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.WARNING
-
-
-def test_prohibited_fstring(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_invalid_probabilistic_program(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
-def test_prohibited_fstring(data):
+def test_invalid_probabilistic_program(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         address = f"flip[{i}]"
         probros.observe(data[i], address, probros.Bernoulli(probability))
     return probability
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoFstringRule.message in messages
-    assert rules.RestrictObserveCallStructureRule.message in messages
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoFstringRule.message in messages
+            assert rules.RestrictObserveCallStructureRule.message in messages
+
+        @staticmethod
+        def test_valid_probabilistic_class_method(default_linter: Linter):
+            code = """
+class TestValidProbabilisticClassMethodOuter:
+    @probros.probabilistic_program
+    def test_valid_probabilistic_class_method(self):
+        count: int = 0
+        for i in range(0, self.length):
+            probability = probros.sample(
+                probros.IndexedAddress("this", i),
+                probros.Uniform(0, 1),
+            )
+            if probability < 0.1:
+                return
+            else:
+                count += 1
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_invalid_probabilistic_class_method(default_linter: Linter):
+            code = """
+class TestProhibitedFstringInClassMethod:
+    @probros.probabilistic_program
+    def test_invalid_probabilistic_class_method(self):
+        count: int = 0
+        for i in range(0, self.length):
+            address = f"this[{i}]"
+            probability = probros.sample(address, probros.Uniform(0, 1))
+            if probability < 0.1:
+                return
+            else:
+                count += 1
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoFstringRule.message in messages
+            assert rules.RestrictSampleCallStructureRule.message in messages
+
+        @staticmethod
+        def test_valid_probabilistic_program_in_function(
+            default_linter: Linter,
+        ):
+            code = """
+def test_valid_probabilistic_program_in_function_outer():
+    @probros.probabilistic_program
+    def test_valid_probabilistic_program_in_function(data: list[int]):
+        for i in range(0, len(data)):
+            probros.observe(
+                data[i],
+                probros.IndexedAddress("data", i),
+                probros.Poisson(0.7),
+            )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_invalid_probabilistic_program_in_function(
+            default_linter: Linter,
+        ):
+            code = """
+def test_prohibited_fstring_in_function_outer():
+    @probros.probabilistic_program
+    def test_invalid_probabilistic_program_in_function(data: list[float]):
+        for i in range(0, len(data)):
+            address = f"data[{i}]"
+            probros.observe(
+                data[i],
+                address,
+                probros.Poisson(0.2),
+            )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoFstringRule.message in messages
+            assert rules.RestrictObserveCallStructureRule.message in messages
 
 
-def test_prohibited_deconstructor(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_deconstructor(data):
-    mean, stddev = 2, 0.3
-    for i in range(0, len(data)):
-        probros.observe(
-            data[i],
-            probros.IndexedAddress("data", i),
-            probros.Normal(mean, stddev),
-        )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoDeconstructorRule.message
+class TestStatementLinting:
 
+    class TestProhibitedNestedDefinitionsAndImports:
 
-def test_prohibited_nested_function(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_nested_function(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_nested_function(data):
     @probros.probabilistic_program
@@ -137,142 +262,92 @@ def test_prohibited_nested_function(data):
         return probability
 
     return test_prohibited_nested_function_nested()
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoNestedFunctionsRule.message
-
-
-def test_unchecked_code_decorator_definition(default_linter: Linter):
-    code = """
-def test_unchecked_code_decorator_definition(func):
-    def wrapper(*args, **kwargs):
-        func(*args, **kwargs)
-        func(*args, **kwargs)
-
-    return wrapper
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
-
-
-def test_unchecked_code_different_decorator_usage(default_linter: Linter):
-    code = """
-@unchecked_duplicate_decorator
-def test_unchecked_code_different_decorator_usage():
-    VAR = f"This should {'allow'} anything!"
-
-    def test_unchecked_code_different_decorator_usage_nested_function(arg):
-        return f"{arg=} including f-strings"
-
-    VAR += "\\nand nested functions"
-    return test_unchecked_code_different_decorator_usage_nested_function(VAR)
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
-
-
-def test_valid_probabilistic_class_method(default_linter: Linter):
-    code = """
-class TestValidProbabilisticClassMethodOuter:
-    @probros.probabilistic_program
-    def test_valid_probabilistic_class_method(self):
-        count: int = 0
-        for i in range(0, self.length):
-            probability = probros.sample(
-                probros.IndexedAddress("this", i),
-                probros.Uniform(0, 1),
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoNestedFunctionsRule.message
             )
-            if probability < 0.1:
-                return
-            else:
-                count += 1
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
 
-
-def test_prohibited_fstring_in_class_method(default_linter: Linter):
-    code = """
-class TestProhibitedFstringInClassMethod:
-    @probros.probabilistic_program
-    def test_prohibited_fstring_in_class_method(self):
-        count: int = 0
-        for i in range(0, self.length):
-            address = f"this[{i}]"
-            probability = probros.sample(address, probros.Uniform(0, 1))
-            if probability < 0.1:
-                return
-            else:
-                count += 1
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoFstringRule.message in messages
-    assert rules.RestrictSampleCallStructureRule.message in messages
-
-
-def test_prohibited_nested_class(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_nested_class(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_nested_class():
     class TestProhibitedNestedClassNested:
         pi = 3
 
     return TestProhibitedNestedClassNested.pi
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoNestedClassesRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoNestedClassesRule.message
 
+        @staticmethod
+        def test_prohibited_import(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_import(degrees):
+    import math
+    return math.radians(degrees)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoImportRule.message
 
-def test_valid_probabilistic_program_in_function(default_linter: Linter):
-    code = """
-def test_valid_probabilistic_program_in_function_outer():
-    @probros.probabilistic_program
-    def test_valid_probabilistic_program_in_function(data: list[int]):
-        for i in range(0, len(data)):
-            probros.observe(
-                data[i],
-                probros.IndexedAddress("data", i),
-                probros.Poisson(0.7),
+        @staticmethod
+        def test_prohibited_import_from(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_import_from():
+    from random import randint
+    return randint(0, 10)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoImportRule.message
+
+        @staticmethod
+        def test_prohibited_gloabl(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_gloabl():
+    global x
+    x = 23
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoGlobalOrNonlocalDeclarationRule.message
             )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
 
-
-def test_prohibited_fstring_in_function(default_linter: Linter):
-    code = """
-def test_prohibited_fstring_in_function_outer():
-    @probros.probabilistic_program
-    def test_prohibited_fstring_in_function(data: list[float]):
-        for i in range(0, len(data)):
-            address = f"data[{i}]"
-            probros.observe(
-                data[i],
-                address,
-                probros.Poisson(0.2),
+        @staticmethod
+        def test_prohibited_nonlocal(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_nonlocal():
+    nonlocal x
+    x = 23
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoGlobalOrNonlocalDeclarationRule.message
             )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoFstringRule.message in messages
-    assert rules.RestrictObserveCallStructureRule.message in messages
 
+    class TestRestrictedVariableManipulation:
 
-def test_prohibited_delete(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_delete(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_delete(data):
     sum = 0
@@ -284,15 +359,17 @@ def test_prohibited_delete(data):
         )
         sum += data[i]
     del sum
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoDeleteStatementRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoDeleteStatementRule.message
+            )
 
-
-def test_prohibited_type_aliasing(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_type_aliasing(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_type_aliasing():
     type Probabilities = list[probros.Beta]
@@ -300,15 +377,252 @@ def test_prohibited_type_aliasing():
     for i in range(0, 5):
         probability += probros.Beta(0.1, 0.5)
     return probability
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoTypeAliasRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoTypeAliasRule.message
 
+        @staticmethod
+        def test_allowed_array_assign(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_allowed_array_assign(data):
+    details = list()
+    details[0] = data
+    details[1] = sum(data)
+    details[2] = len(data)
+    details[3] = details[1] / details[2]
+    return details
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-def test_prohibited_asynchronous_for(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_deconstructor(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_deconstructor(data):
+    mean, stddev = 2, 0.3
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probros.Normal(mean, stddev),
+        )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoDeconstructorRule.message
+
+        @staticmethod
+        def test_prohibited_chained_assign(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_chained_assign(data):
+    x = y = data
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoChainedAssignmentRule.message
+            )
+
+        @staticmethod
+        def test_prohibited_attribute_assign(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_attribute_assign(data):
+    data.sum = sum(data)
+    return data.sum
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoAttributeAssignRule.message
+            )
+
+    class TestRestrictedControlFlowStructures:
+
+        @staticmethod
+        def test_prohibited_standalone_expression_allowed_observe(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_allowed_observe():
+    probros.observe(
+        12,
+        "standalone_observe_call",
+        probros.Uniform(0, 1),
+    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_prohibited_standalone_expression_allowed_factor(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_allowed_factor():
+    probros.factor(0.0124)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_prohibited_standalone_expression_function_call(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_function_call(n):
+    initialize_context()
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoStandaloneExpressionRule.message
+            )
+
+        @staticmethod
+        def test_prohibited_standalone_expression_calculations(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_calculations(n):
+    1 + 2**3 / 4 // 5
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoStandaloneExpressionRule.message
+            )
+
+        @staticmethod
+        def test_restricted_for_iterable(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_for_iterable(data):
+    for point in data:
+        if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
+            return "outside X and Y"
+        elif point.x < 0 or point.x > 100:
+            return "outside X"
+        elif point.y < 0 or point.y > 100:
+            return "outside Y"
+        else:
+            return "inside X and Y"
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.RestrictForLoopRule.message
+
+        @staticmethod
+        def test_restricted_for_constant(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_for_constant(data):
+    step = 0
+    for _ in "this shouldn't work either!":
+        probros.observe(data[step], "hi!", probros.Uniform(0, 1))
+        step += 1
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.RestrictForLoopRule.message
+
+        @staticmethod
+        def test_prohibited_with_file(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_with_file(filepath):
+    with open(filepath) as file:
+        data = file.readall()
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probros.Uniform(0, 1),
+        )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoWithStatementRule.message
+
+        @staticmethod
+        def test_prohibited_with_variables(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_with_variables(generator):
+    with generator() as data:
+        for i in range(0, len(data)):
+            probros.observe(
+                data[i],
+                probros.IndexedAddress("data", i),
+                probros.Uniform(0, 1),
+            )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoWithStatementRule.message
+
+        @staticmethod
+        def test_prohibited_match(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_match(data):
+    match data:
+        case []:
+            return False
+        case _:
+            return True
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoMatchRule.message
+
+        @staticmethod
+        def test_prohibited_asynchronous_function_definition(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_asynchronous_function_definition(data):
+    async def test_prohibited_asynchronous_function_definition_nested():
+        return
+            """
+            default_linter.extensive_diagnosis = True
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoAsynchronousStatementRule.message in messages
+            assert rules.NoNestedFunctionsRule.message in messages
+
+        @staticmethod
+        def test_prohibited_asynchronous_for(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_asynchronous_for(data):
     probability = probros.Gamma(0.2, 0.9)
@@ -322,87 +636,150 @@ def test_prohibited_asynchronous_for(data):
                 probros.Gamma(0.2, 0.9),
             )
         return True
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoAsynchronousStatementRule.message
-
-
-def test_prohibited_with_file(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_with_file(filepath):
-    with open(filepath) as file:
-        data = file.readall()
-    for i in range(0, len(data)):
-        probros.observe(
-            data[i],
-            probros.IndexedAddress("data", i),
-            probros.Uniform(0, 1),
-        )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoWithStatementRule.message
-
-
-def test_prohibited_with_variables(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_with_variables(generator):
-    with generator() as data:
-        for i in range(0, len(data)):
-            probros.observe(
-                data[i],
-                probros.IndexedAddress("data", i),
-                probros.Uniform(0, 1),
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoAsynchronousStatementRule.message
             )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoWithStatementRule.message
 
-
-def test_restricted_for_iterable(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_asynchronous_with(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
-def test_restricted_for_iterable(data):
-    for point in data:
-        if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
-            return "outside X and Y"
-        elif point.x < 0 or point.x > 100:
-            return "outside X"
-        elif point.y < 0 or point.y > 100:
-            return "outside Y"
-        else:
-            return "inside X and Y"
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.RestrictForLoopRule.message
+def test_prohibited_asynchronous_with(path):
+    async with open(path, "r"):
+        return
+            """
+            default_linter.extensive_diagnosis = True
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoAsynchronousStatementRule.message in messages
+            assert rules.NoWithStatementRule.message in messages
 
-
-def test_restricted_for_constant(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_pass(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
-def test_restricted_for_constant(data):
-    step = 0
-    for _ in "this shouldn't work either!":
-        probros.observe(data[step], "hi!", probros.Uniform(0, 1))
-        step += 1
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.RestrictForLoopRule.message
+def test_prohibited_pass(data):
+    pass
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoPassRule.message
+
+    class TestRestrictedExceptionHandling:
+
+        @staticmethod
+        def test_prohibited_raise(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_raise(data):
+    raise RuntimeError("forbidden!")
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoRaiseExceptionRule.message
+
+        @staticmethod
+        def test_prohibited_try_except(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_try_except(data):
+    try:
+        return
+    except:
+        return
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoTryExceptRule.message
+
+        @staticmethod
+        def test_prohibited_assert(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_assert(data):
+    assert True
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoAssertRule.message
 
 
-def test_prohibited_walrus(default_linter: Linter):
-    code = """
+class TestExpressionLinting:
+
+    class TestRestrictedOperators:
+
+        @staticmethod
+        def test_restricted_unary_operator_bitwise(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_unary_operator_bitwise(n):
+    return ~n
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictUnaryOperatorsRule.message
+            )
+
+        @staticmethod
+        def test_restricted_binary_operators_shift(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_binary_operators_shift(n):
+    return 1 << n
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictBinaryOperatorsRule.message
+            )
+
+        @staticmethod
+        def test_restricted_binary_operators_bitwise(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_binary_operators_bitwise(a, b, c, d):
+    result = a & b
+    result = result | c
+    result = result ^ d
+    return result
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 3
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            assert all(
+                diagnostic.message == rules.RestrictBinaryOperatorsRule.message
+                for diagnostic in diagnostics
+            )
+
+    class TestProhibitedInlineStatements:
+
+        @staticmethod
+        def test_prohibited_walrus(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_walrus(data):
     if (length := len(data)) > 10:
@@ -412,59 +789,15 @@ def test_prohibited_walrus(data):
                 probros.IndexedAddress("data", i),
                 probros.Uniform(0, 1),
             )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoWalrusOperatorRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoWalrusOperatorRule.message
 
-
-def test_restricted_binary_operators_shift(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_restricted_binary_operators_shift(n):
-    return 1 << n
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.RestrictBinaryOperatorsRule.message
-
-
-def test_restricted_binary_operators_bitwise(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_restricted_binary_operators_bitwise(a, b, c, d):
-    result = a & b
-    result = result | c
-    result = result ^ d
-    return result
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 3
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    assert all(
-        diagnostic.message == rules.RestrictBinaryOperatorsRule.message
-        for diagnostic in diagnostics
-    )
-
-
-def test_restricted_unary_operator_bitwise(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_restricted_unary_operator_bitwise(n):
-    return ~n
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.RestrictUnaryOperatorsRule.message
-
-
-def test_prohibited_lambda(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_lambda(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_lambda(data):
     data = filter(lambda point: point >= 0, data)
@@ -474,15 +807,15 @@ def test_prohibited_lambda(data):
             probros.IndexedAddress("data", i),
             probros.Gamma(0.1, 0.5),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoLambdaRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoLambdaRule.message
 
-
-def test_prohibited_inline_if(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_inline_if(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_inline_if(probability):
     probability = 0 if probability < 0 else probability
@@ -496,15 +829,17 @@ def test_prohibited_inline_if(probability):
             break
         i += 1
     return i
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoInlineIfRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoInlineIfRule.message
 
+    class TestRestrictedDataStructures:
 
-def test_prohibited_dictionary(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_dictionary(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_dictionary(data):
     details = {
@@ -523,15 +858,15 @@ def test_prohibited_dictionary(data):
 
     details["remark"] = "hello world!"
     return details
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoDictionaryRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoDictionaryRule.message
 
-
-def test_prohibited_set(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_set(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_set(data):
     reduced = set()
@@ -543,75 +878,84 @@ def test_prohibited_set(data):
             probros.IndexedAddress("data", i),
             probros.Uniform(0, 1),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoSetRule.message in messages
-    assert rules.NoStandaloneExpressionRule.message in messages
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoSetRule.message in messages
+            assert rules.NoStandaloneExpressionRule.message in messages
 
-
-def test_prohibited_comprehension_list(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_comprehension_list(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_comprehension_list():
     return [2**n for n in range(10)]
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoComprehensionAndGeneratorRule.message
+            )
 
-
-def test_prohibited_comprehension_set(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_comprehension_set(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_comprehension_set():
     return {2**n for n in range(10)}
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoComprehensionAndGeneratorRule.message
+            )
 
-
-def test_prohibited_comprehension_dictionary(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_comprehension_dictionary(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_comprehension_dictionary():
     return {n: 2**n for n in range(10)}
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoComprehensionAndGeneratorRule.message
+            )
 
-
-def test_prohibited_generator(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_generator(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_generator():
     return sum(2**n for n in range(10))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.NoComprehensionAndGeneratorRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoComprehensionAndGeneratorRule.message
+            )
 
+    class TestRestrictedControlFlowManipulation:
 
-def test_prohibited_asynchronous_await(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_asynchronous_await(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_asynchronous_await(data):
     probabilities = await test_prohibited_asynchronous_generator()
@@ -619,31 +963,37 @@ def test_prohibited_asynchronous_await(data):
         if probabilities[i] > 0.9:
             return True
     return False
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoAsynchronousExpressionRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.NoAsynchronousExpressionRule.message
+            )
 
-
-def test_prohibited_asynchronous_generator(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_asynchronous_generator(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_asynchronous_generator():
     return [probros.Normal(n, n * 0.1) async for n in range(10)]
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoAsynchronousExpressionRule.message in messages
-    assert rules.NoComprehensionAndGeneratorRule.message in messages
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoAsynchronousExpressionRule.message in messages
+            assert rules.NoComprehensionAndGeneratorRule.message in messages
 
-
-def test_prohibited_yield(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_yield(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_yield(data):
     for i in range(0, len(data)):
@@ -653,37 +1003,57 @@ def test_prohibited_yield(data):
             probros.Uniform(0, 1),
         )
         yield data[i]
-"""
-    default_linter.extensive_diagnosis = True
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoYieldRule.message in messages
-    assert rules.NoStandaloneExpressionRule.message in messages
+            """
+            default_linter.extensive_diagnosis = True
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoYieldRule.message in messages
+            assert rules.NoStandaloneExpressionRule.message in messages
 
-
-def test_prohibited_yield_from(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_yield_from(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_yield_from(data):
     yield from test_prohibited_yield(data)
-"""
-    default_linter.extensive_diagnosis = True
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 2
-    assert all(
-        diagnostic.severity == Severity.ERROR for diagnostic in diagnostics
-    )
-    messages = list(map(lambda diagnostic: diagnostic.message, diagnostics))
-    assert rules.NoYieldRule.message in messages
-    assert rules.NoStandaloneExpressionRule.message in messages
+            """
+            default_linter.extensive_diagnosis = True
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoYieldRule.message in messages
+            assert rules.NoStandaloneExpressionRule.message in messages
 
+    class TestRestrictedSyntax:
 
-def test_prohibited_starred(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_fstring(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_fstring():
+    return f"prohibited {'f-string'}!"
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoFstringRule.message
+
+        @staticmethod
+        def test_prohibited_starred(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_starred(data):
     zum = sum(*data)
@@ -695,15 +1065,17 @@ def test_prohibited_starred(data):
             probros.IndexedAddress("data", i),
             probros.Dirac(0.25),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoStarredRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoStarredRule.message
 
+    class TestRestrictedDataStructureManipulation:
 
-def test_prohibited_slice(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_slice(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_slice(data):
     data = data[0:100]
@@ -717,97 +1089,15 @@ def test_prohibited_slice(data):
         probros.IndexedAddress("data", len(data)),
         probros.Dirac(0.25),
     )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoSliceRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoSliceRule.message
 
-
-def test_valid_probabilistic_program_array_assign(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_valid_probabilistic_program_array_assign(data):
-    details = list()
-    details[0] = data
-    details[1] = sum(data)
-    details[2] = len(data)
-    details[3] = details[1] / details[2]
-    return details
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
-
-
-def test_prohibited_attribute_assign(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_attribute_assign(data):
-    data.sum = sum(data)
-    return data.sum
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoAttributeAssignRule.message
-
-
-def test_prohibited_standalone_expression_allowed_observe(
-    default_linter: Linter,
-):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_allowed_observe():
-    probros.observe(
-        12,
-        "standalone_observe_call",
-        probros.Uniform(0, 1),
-    )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
-
-
-def test_prohibited_standalone_expression_allowed_factor(
-    default_linter: Linter,
-):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_allowed_factor():
-    probros.factor(0.0124)
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
-
-
-def test_prohibited_standalone_expression_function_call(
-    default_linter: Linter,
-):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_function_call(n):
-    initialize_context()
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoStandaloneExpressionRule.message
-
-
-def test_prohibited_standalone_expression_calculations(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_calculations(n):
-    1 + 2**3 / 4 // 5
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoStandaloneExpressionRule.message
-
-
-def test_prohibited_multiple_subscript(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_prohibited_multiple_subscript(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_prohibited_multiple_subscript(data):
     data[0, -1] = data[-1], data[0]
@@ -817,33 +1107,113 @@ def test_prohibited_multiple_subscript(data):
             probros.IndexedAddress("data", i),
             probros.Dirac(0.25),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert diagnostics[0].message == rules.NoMultipleSubscriptRule.message
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoMultipleSubscriptRule.message
+            )
 
 
-def test_restricted_observe_call_address_number(default_linter: Linter):
-    code = """
+class TestProbrosSpecificLinting:
+
+    class TestRestrictedSample:
+
+        @staticmethod
+        def test_restricted_sample_structure(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_sample_structure(data: list[float]):
+    return probros.sample("p", probros.Dirac(True))
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_sample_structure_incorrect_address_number(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_sample_structure_incorrect_address_number(
+    data: list[float],
+):
+    return probros.sample(123, probros.Dirac(True))
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictSampleCallStructureRule.message
+            )
+
+        @staticmethod
+        def test_restricted_sample_structure_missing_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_sample_structure_missing_argument(
+    data: list[float],
+):
+    return probros.sample("p")
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictSampleCallStructureRule.message
+            )
+
+        @staticmethod
+        def test_restricted_sample_structure_incorrect_keyword_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_sample_structure_incorrect_keyword_argument(
+    data: list[float],
+):
+    return probros.sample("p", distribution=probros.Uniform(0, 1))
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictSampleCallStructureRule.message
+            )
+
+    class TestRestrictedObserve:
+
+        @staticmethod
+        def test_restricted_observe_call_address_number(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_observe_call_address_number(data):
     probability = probros.sample("p", probros.Uniform(0, 1))
     for i in range(0, len(data)):
         probros.observe(data[i], 123, probros.Bernoulli(probability))
     return probability
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictObserveCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictObserveCallStructureRule.message
+            )
 
-
-def test_restricted_observe_call_address_variable(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_observe_call_address_variable(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_observe_call_address_variable(data: list[float]):
     for i in range(0, len(data)):
@@ -853,20 +1223,20 @@ def test_restricted_observe_call_address_variable(data: list[float]):
             address,
             probros.Poisson(0.2),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictObserveCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictObserveCallStructureRule.message
+            )
 
-
-def test_restrict_observe_structure_two_keyword_arguments(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_observe_structure_two_keyword_arguments(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
     for i in range(0, len(data)):
@@ -875,15 +1245,15 @@ def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
             distribution=probros.Poisson(0.2),
             address=probros.IndexedAddress("data", i),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restrict_observe_structure_one_keyword_argument(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_observe_structure_one_keyword_argument(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
     for i in range(0, len(data)):
@@ -892,13 +1262,15 @@ def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
             probros.IndexedAddress("data", i),
             distribution=probros.Poisson(0.2),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restrict_observe_structure_incorrect_ordering(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_observe_structure_incorrect_ordering(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restrict_observe_structure_incorrect_ordering(
     data: list[float],
@@ -909,20 +1281,20 @@ def test_restrict_observe_structure_incorrect_ordering(
             probros.IndexedAddress("data", i),
             address=probros.IndexedAddress("data", i),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictObserveCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictObserveCallStructureRule.message
+            )
 
-
-def test_restrict_observe_structure_missing_positional(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_observe_structure_missing_positional(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restrict_observe_structure_missing_positional(
     data: list[float],
@@ -933,145 +1305,91 @@ def test_restrict_observe_structure_missing_positional(
             distribution=probros.Poisson(0.2),
             address=probros.IndexedAddress("data", i),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictObserveCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictObserveCallStructureRule.message
+            )
 
+    class TestRestrictedFactor:
 
-def test_restricted_sample_structure(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_restricted_sample_structure(data: list[float]):
-    return probros.sample("p", probros.Dirac(True))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
-
-
-def test_restricted_sample_structure_incorrect_address_number(
-    default_linter: Linter,
-):
-    code = """
-@probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_address_number(
-    data: list[float],
-):
-    return probros.sample(123, probros.Dirac(True))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
-    )
-
-
-def test_restricted_sample_structure_missing_argument(default_linter: Linter):
-    code = """
-@probros.probabilistic_program
-def test_restricted_sample_structure_missing_argument(
-    data: list[float],
-):
-    return probros.sample("p")
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
-    )
-
-
-def test_restricted_sample_structure_incorrect_keyword_argument(
-    default_linter: Linter,
-):
-    code = """
-@probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_keyword_argument(
-    data: list[float],
-):
-    return probros.sample("p", distribution=probros.Uniform(0, 1))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
-    )
-
-
-def test_restricted_factor_valid_keyword(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_factor_valid_keyword(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_restricted_factor_valid_keyword():
     probros.factor(0.001, address="data")
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restricted_factor_valid_indexed_address(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_factor_valid_indexed_address(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_factor_valid_indexed_address():
     probros.factor(0.001, probros.IndexedAddress("data", 0))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restricted_observe_missing_expression(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_factor_missing_expression(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
-def test_restricted_observe_missing_expression():
+def test_restricted_factor_missing_expression():
     probros.factor()
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.RestrictFactorCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictFactorCallStructureRule.message
+            )
 
-
-def test_restricted_observe_additional_argument(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_factor_additional_argument(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
-def test_restricted_observe_additional_argument():
+def test_restricted_factor_additional_argument():
     probros.factor(0.123, "address", probros.Beta(0.1, 0.2))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.RestrictFactorCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictFactorCallStructureRule.message
+            )
 
+    class TestRestrictedAddresses:
 
-def test_restricted_observe_valide_broadcasted(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_observe_valid_broadcasted(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
-def test_restricted_observe_valide_broadcasted(data):
+def test_restricted_observe_valid_broadcasted(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
             probros.Broadcasted(probros.Normal(0, 1)),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restricted_sample_incorrect_broadcasted_arguments(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_sample_incorrect_broadcasted_arguments(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_sample_incorrect_broadcasted_arguments():
     for i in range(0, 100):
@@ -1079,17 +1397,18 @@ def test_restricted_sample_incorrect_broadcasted_arguments():
             probros.IndexedAddress("i", i),
             probros.Broadcasted(probros.Normal(0, 1), 12),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message == rules.RestrictSampleCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictSampleCallStructureRule.message
+            )
 
-
-def test_restricted_sample_valid_iid(default_linter: Linter):
-    code = """
+        @staticmethod
+        def test_restricted_sample_valid_iid(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_restricted_sample_valid_iid(data):
     for i in range(0, 100):
@@ -1097,15 +1416,15 @@ def test_restricted_sample_valid_iid(data):
             probros.IndexedAddress("i", i),
             probros.IID(probros.Normal(0, 1), 12),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restricted_observe_incorrect_iid_missing_argument(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_observe_incorrect_iid_missing_argument(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_observe_incorrect_iid_missing_argument(data):
     for i in range(0, len(data)):
@@ -1114,35 +1433,31 @@ def test_restricted_observe_incorrect_iid_missing_argument(data):
             probros.IndexedAddress(data, i),
             probros.IID(probros.Normal(0, 1)),
         )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictObserveCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictObserveCallStructureRule.message
+            )
 
-
-def test_restricted_indexed_address(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_indexed_address(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_restricted_indexed_address(data):
     return probros.sample(
         probros.IndexedAddress(":)", 21),
         probros.Normal(0, 1),
     )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restricted_indexed_address_nested(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_indexed_address_nested(default_linter: Linter):
+            code = """
 @probros.probabilistic_program
 def test_restricted_indexed_address_nested(data):
     return probros.sample(
@@ -1158,77 +1473,80 @@ def test_restricted_indexed_address_nested(data):
         ),
         probros.Normal(0, 1),
     )
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
 
-
-def test_restricted_indexed_address_missing_address(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_indexed_address_missing_address(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_indexed_address_missing_address(
     data,
 ):
     return probros.sample(probros.IndexedAddress(21), probros.Normal(0, 1))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictIndexedAddressCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictIndexedAddressCallStructureRule.message
+            )
 
-
-def test_restricted_indexed_address_missing_number(
-    default_linter: Linter,
-):
-    code = """
+        @staticmethod
+        def test_restricted_indexed_address_missing_number(
+            default_linter: Linter,
+        ):
+            code = """
 @probros.probabilistic_program
 def test_restricted_indexed_address_missing_number(data):
     return probros.sample(probros.IndexedAddress("i"), probros.Normal(0, 1))
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.ERROR
-    assert (
-        diagnostics[0].message
-        == rules.RestrictIndexedAddressCallStructureRule.message
-    )
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictIndexedAddressCallStructureRule.message
+            )
 
 
-def test_unrecommended_use_case_class(default_linter: Linter):
-    code = """
+class TestUnrecommendedUseCases:
+
+    @staticmethod
+    def test_unrecommended_use_case_class(default_linter: Linter):
+        code = """
 @probros.probabilistic_program
 class TestUnrecommendedUseCaseClass:
     pass
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.INFORMATION
+    """
+        diagnostics = default_linter.lint_code(code)
+        assert len(diagnostics) == 1
+        assert diagnostics[0].severity == Severity.INFORMATION
 
-
-def test_unrecommended_use_case_async_function(default_linter: Linter):
-    code = """
+    @staticmethod
+    def test_unrecommended_use_case_async_function(default_linter: Linter):
+        code = """
 @probros.probabilistic_program
 async def test_unrecommended_use_case_async_function():
     return "some promise"
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert len(diagnostics) == 1
-    assert diagnostics[0].severity == Severity.INFORMATION
+    """
+        diagnostics = default_linter.lint_code(code)
+        assert len(diagnostics) == 1
+        assert diagnostics[0].severity == Severity.INFORMATION
 
-
-def test_unchecked_if_main(default_linter: Linter):
-    code = """
+    @staticmethod
+    def test_unchecked_if_main(default_linter: Linter):
+        code = """
 message = "This file is not intended for execution"
 
 if __name__ == f"__{'main'}__":
     raise RuntimeError(f"{message}!")
 
 raise RuntimeError(message.rsplit(" ", 1)[0] + " usage!")
-"""
-    diagnostics = default_linter.lint_code(code)
-    assert not diagnostics
+    """
+        diagnostics = default_linter.lint_code(code)
+        assert not diagnostics

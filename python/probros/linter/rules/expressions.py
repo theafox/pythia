@@ -10,18 +10,7 @@ from diagnostic import Diagnostic
 
 from .base import BaseRule
 
-
-class NoWalrusOperatorRule(BaseRule):
-
-    message = "Walrus operators are prohibited"
-
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.NamedExpr)
-            else None
-        )
+# Restrict operators. #########################################################
 
 
 class RestrictBinaryOperatorsRule(BaseRule):
@@ -74,6 +63,22 @@ class RestrictUnaryOperatorsRule(BaseRule):
         )
 
 
+# Prohibit inline statements. #################################################
+
+
+class NoWalrusOperatorRule(BaseRule):
+
+    message = "Walrus operators are prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.NamedExpr)
+            else None
+        )
+
+
 class NoLambdaRule(BaseRule):
 
     message = "Lambda expressions are prohibited"
@@ -98,6 +103,9 @@ class NoInlineIfRule(BaseRule):
             if isinstance(node, ast.IfExp)
             else None
         )
+
+
+# Restrict available data-structure. ##########################################
 
 
 class NoDictionaryRule(BaseRule):
@@ -142,6 +150,9 @@ class NoComprehensionAndGeneratorRule(BaseRule):
         )
 
 
+# Restrict control flow constructs. ###########################################
+
+
 class NoAsynchronousExpressionRule(BaseRule):
 
     message = "Asynchronous expressions are prohibited"
@@ -175,6 +186,9 @@ class NoYieldRule(BaseRule):
         )
 
 
+# Restrict syntax. ############################################################
+
+
 class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"
@@ -199,6 +213,9 @@ class NoStarredRule(BaseRule):
             if isinstance(node, ast.Starred)
             else None
         )
+
+
+# Restrict data-structure manipulation. #######################################
 
 
 class NoSliceRule(BaseRule):

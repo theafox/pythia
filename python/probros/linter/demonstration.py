@@ -2,18 +2,6 @@
 import probros
 
 
-@probros.probabilistic_program
-def test_valid_probabilistic_program(data):
-    probability = probros.sample("p", probros.Uniform(0, 1))
-    for i in range(0, len(data)):
-        probros.observe(
-            data[i],
-            probros.IndexedAddress("flip", i),
-            probros.Bernoulli(probability),
-        )
-    return probability
-
-
 @1 + 1
 def test_unrecognized_decorator_addition():
     pass
@@ -29,42 +17,6 @@ def test_unrecognized_decorator_matching_string():
     pass
 
 
-@probros.probabilistic_program
-def test_prohibited_fstring(data):
-    probability = probros.sample("p", probros.Uniform(0, 1))
-    for i in range(0, len(data)):
-        address = f"flip[{i}]"
-        probros.observe(data[i], address, probros.Bernoulli(probability))
-    return probability
-
-
-@probros.probabilistic_program
-def test_prohibited_deconstructor(data):
-    mean, stddev = 2, 0.3
-    for i in range(0, len(data)):
-        probros.observe(
-            data[i],
-            probros.IndexedAddress("data", i),
-            probros.Normal(mean, stddev),
-        )
-
-
-@probros.probabilistic_program
-def test_prohibited_nested_function(data):
-    @probros.probabilistic_program
-    def test_prohibited_nested_function_nested():
-        probability = probros.sample("p", probros.Uniform(0, 1))
-        for i in range(0, len(data)):
-            probros.observe(
-                data[i],
-                f"flip[{i}]",
-                probros.Bernoulli(probability),
-            )
-        return probability
-
-    return test_prohibited_nested_function_nested()
-
-
 def test_unchecked_code_decorator_definition(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
@@ -73,7 +25,7 @@ def test_unchecked_code_decorator_definition(func):
     return wrapper
 
 
-@unchecked_duplicate_decorator
+@test_unchecked_code_decorator_definition
 def test_unchecked_code_different_decorator_usage():
     VAR = f"This should {'allow'} anything!"
 
@@ -82,6 +34,27 @@ def test_unchecked_code_different_decorator_usage():
 
     VAR += "\\nand nested functions"
     return test_unchecked_code_different_decorator_usage_nested_function(VAR)
+
+
+@probros.probabilistic_program
+def test_valid_probabilistic_program(data):
+    probability = probros.sample("p", probros.Uniform(0, 1))
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("flip", i),
+            probros.Bernoulli(probability),
+        )
+    return probability
+
+
+@probros.probabilistic_program
+def test_invalid_probabilistic_program(data):
+    probability = probros.sample("p", probros.Uniform(0, 1))
+    for i in range(0, len(data)):
+        address = f"flip[{i}]"
+        probros.observe(data[i], address, probros.Bernoulli(probability))
+    return probability
 
 
 class TestValidProbabilisticClassMethodOuter:
@@ -101,7 +74,7 @@ class TestValidProbabilisticClassMethodOuter:
 
 class TestProhibitedFstringInClassMethod:
     @probros.probabilistic_program
-    def test_prohibited_fstring_in_class_method(self):
+    def test_invalid_probabilistic_class_method(self):
         count: int = 0
         for i in range(0, self.length):
             address = f"this[{i}]"
@@ -110,14 +83,6 @@ class TestProhibitedFstringInClassMethod:
                 return
             else:
                 count += 1
-
-
-@probros.probabilistic_program
-def test_prohibited_nested_class():
-    class TestProhibitedNestedClassNested:
-        pi = 3
-
-    return TestProhibitedNestedClassNested.pi
 
 
 def test_valid_probabilistic_program_in_function_outer():
@@ -133,7 +98,7 @@ def test_valid_probabilistic_program_in_function_outer():
 
 def test_prohibited_fstring_in_function_outer():
     @probros.probabilistic_program
-    def test_prohibited_fstring_in_function(data: list[float]):
+    def test_invalid_probabilistic_program_in_function(data: list[float]):
         for i in range(0, len(data)):
             address = f"data[{i}]"
             probros.observe(
@@ -141,6 +106,56 @@ def test_prohibited_fstring_in_function_outer():
                 address,
                 probros.Poisson(0.2),
             )
+
+
+@probros.probabilistic_program
+def test_prohibited_nested_function(data):
+    @probros.probabilistic_program
+    def test_prohibited_nested_function_nested():
+        probability = probros.sample("p", probros.Uniform(0, 1))
+        for i in range(0, len(data)):
+            probros.observe(
+                data[i],
+                f"flip[{i}]",
+                probros.Bernoulli(probability),
+            )
+        return probability
+
+    return test_prohibited_nested_function_nested()
+
+
+@probros.probabilistic_program
+def test_prohibited_nested_class():
+    class TestProhibitedNestedClassNested:
+        pi = 3
+
+    return TestProhibitedNestedClassNested.pi
+
+
+@probros.probabilistic_program
+def test_prohibited_import(degrees):
+    import math
+
+    return math.radians(degrees)
+
+
+@probros.probabilistic_program
+def test_prohibited_import_from():
+    from random import randint
+
+    return randint(0, 10)
+
+
+@probros.probabilistic_program
+def test_prohibited_gloabl():
+    global x
+    x = 23
+
+
+@probros.probabilistic_program
+def test_prohibited_nonlocal():
+    nonlocal x
+    x = 23
 
 
 @probros.probabilistic_program
@@ -166,18 +181,80 @@ def test_prohibited_type_aliasing():
 
 
 @probros.probabilistic_program
-def test_prohibited_asynchronous_for(data):
-    probability = probros.Gamma(0.2, 0.9)
-    if probability < 0.5:
-        return False
-    else:
-        async for i in range(0, len(data)):
-            probros.observe(
-                data[i],
-                probros.IndexedAddress("data", i),
-                probros.Gamma(0.2, 0.9),
-            )
-        return True
+def test_allowed_array_assign(data):
+    details = list()
+    details[0] = data
+    details[1] = sum(data)
+    details[2] = len(data)
+    details[3] = details[1] / details[2]
+    return details
+
+
+@probros.probabilistic_program
+def test_prohibited_deconstructor(data):
+    mean, stddev = 2, 0.3
+    for i in range(0, len(data)):
+        probros.observe(
+            data[i],
+            probros.IndexedAddress("data", i),
+            probros.Normal(mean, stddev),
+        )
+
+
+@probros.probabilistic_program
+def test_prohibited_chained_assign(data):
+    x = y = data
+
+
+@probros.probabilistic_program
+def test_prohibited_attribute_assign(data):
+    data.sum = sum(data)
+    return data.sum
+
+
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_allowed_observe():
+    probros.observe(
+        12,
+        "standalone_observe_call",
+        probros.Uniform(0, 1),
+    )
+
+
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_allowed_factor():
+    probros.factor(0.0124)
+
+
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_function_call(n):
+    initialize_context()
+
+
+@probros.probabilistic_program
+def test_prohibited_standalone_expression_calculations(n):
+    1 + 2**3 / 4 // 5
+
+
+@probros.probabilistic_program
+def test_restricted_for_iterable(data):
+    for point in data:
+        if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
+            return "outside X and Y"
+        elif point.x < 0 or point.x > 100:
+            return "outside X"
+        elif point.y < 0 or point.y > 100:
+            return "outside Y"
+        else:
+            return "inside X and Y"
+
+
+@probros.probabilistic_program
+def test_restricted_for_constant(data):
+    step = 0
+    for _ in "this shouldn't work either!":
+        probros.observe(data[step], "hi!", probros.Uniform(0, 1))
+        step += 1
 
 
 @probros.probabilistic_program
@@ -204,35 +281,67 @@ def test_prohibited_with_variables(generator):
 
 
 @probros.probabilistic_program
-def test_restricted_for_iterable(data):
-    for point in data:
-        if (point.x < 0 or point.x > 100) and (point.y < 0 or point.y > 100):
-            return "outside X and Y"
-        elif point.x < 0 or point.x > 100:
-            return "outside X"
-        elif point.y < 0 or point.y > 100:
-            return "outside Y"
-        else:
-            return "inside X and Y"
+def test_prohibited_match(data):
+    match data:
+        case []:
+            return False
+        case _:
+            return True
 
 
 @probros.probabilistic_program
-def test_restricted_for_constant(data):
-    step = 0
-    for _ in "this shouldn't work either!":
-        probros.observe(data[step], "hi!", probros.Uniform(0, 1))
-        step += 1
+def test_prohibited_asynchronous_function_definition(data):
+    async def test_prohibited_asynchronous_function_definition_nested():
+        return
 
 
 @probros.probabilistic_program
-def test_prohibited_walrus(data):
-    if (length := len(data)) > 10:
-        for i in range(0, length):
+def test_prohibited_asynchronous_for(data):
+    probability = probros.Gamma(0.2, 0.9)
+    if probability < 0.5:
+        return False
+    else:
+        async for i in range(0, len(data)):
             probros.observe(
                 data[i],
                 probros.IndexedAddress("data", i),
-                probros.Uniform(0, 1),
+                probros.Gamma(0.2, 0.9),
             )
+        return True
+
+
+@probros.probabilistic_program
+def test_prohibited_asynchronous_with(path):
+    async with open(path, "r"):
+        return
+
+
+@probros.probabilistic_program
+def test_prohibited_pass(data):
+    pass
+
+
+@probros.probabilistic_program
+def test_prohibited_raise(data):
+    raise RuntimeError("forbidden!")
+
+
+@probros.probabilistic_program
+def test_prohibited_try_except(data):
+    try:
+        return
+    except:
+        return
+
+
+@probros.probabilistic_program
+def test_prohibited_assert(data):
+    assert True
+
+
+@probros.probabilistic_program
+def test_restricted_unary_operator_bitwise(n):
+    return ~n
 
 
 @probros.probabilistic_program
@@ -249,8 +358,14 @@ def test_restricted_binary_operators_bitwise(a, b, c, d):
 
 
 @probros.probabilistic_program
-def test_restricted_unary_operator_bitwise(n):
-    return ~n
+def test_prohibited_walrus(data):
+    if (length := len(data)) > 10:
+        for i in range(0, length):
+            probros.observe(
+                data[i],
+                probros.IndexedAddress("data", i),
+                probros.Uniform(0, 1),
+            )
 
 
 @probros.probabilistic_program
@@ -363,6 +478,11 @@ def test_prohibited_yield_from(data):
 
 
 @probros.probabilistic_program
+def test_prohibited_fstring():
+    return f"prohibited {'f-string'}!"
+
+
+@probros.probabilistic_program
 def test_prohibited_starred(data):
     zum = sum(*data)
     for i in range(0, len(data)):
@@ -391,46 +511,6 @@ def test_prohibited_slice(data):
 
 
 @probros.probabilistic_program
-def test_valid_probabilistic_program_array_assign(data):
-    details = list()
-    details[0] = data
-    details[1] = sum(data)
-    details[2] = len(data)
-    details[3] = details[1] / details[2]
-    return details
-
-
-@probros.probabilistic_program
-def test_prohibited_attribute_assign(data):
-    data.sum = sum(data)
-    return data.sum
-
-
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_allowed_observe():
-    probros.observe(
-        12,
-        "standalone_observe_call",
-        probros.Uniform(0, 1),
-    )
-
-
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_allowed_factor():
-    probros.factor(0.0124)
-
-
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_function_call(n):
-    initialize_context()
-
-
-@probros.probabilistic_program
-def test_prohibited_standalone_expression_calculations(n):
-    1 + 2**3 / 4 // 5
-
-
-@probros.probabilistic_program
 def test_prohibited_multiple_subscript(data):
     data[0, -1] = data[-1], data[0]
     for i in range(0, len(data)):
@@ -439,6 +519,32 @@ def test_prohibited_multiple_subscript(data):
             probros.IndexedAddress("data", i),
             probros.Dirac(0.25),
         )
+
+
+@probros.probabilistic_program
+def test_restricted_sample_structure(data: list[float]):
+    return probros.sample("p", probros.Dirac(True))
+
+
+@probros.probabilistic_program
+def test_restricted_sample_structure_incorrect_address_number(
+    data: list[float],
+):
+    return probros.sample(123, probros.Dirac(True))
+
+
+@probros.probabilistic_program
+def test_restricted_sample_structure_missing_argument(
+    data: list[float],
+):
+    return probros.sample("p")
+
+
+@probros.probabilistic_program
+def test_restricted_sample_structure_incorrect_keyword_argument(
+    data: list[float],
+):
+    return probros.sample("p", distribution=probros.Uniform(0, 1))
 
 
 @probros.probabilistic_program
@@ -505,32 +611,6 @@ def test_restrict_observe_structure_missing_positional(
 
 
 @probros.probabilistic_program
-def test_restricted_sample_structure(data: list[float]):
-    return probros.sample("p", probros.Dirac(True))
-
-
-@probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_address_number(
-    data: list[float],
-):
-    return probros.sample(123, probros.Dirac(True))
-
-
-@probros.probabilistic_program
-def test_restricted_sample_structure_missing_argument(
-    data: list[float],
-):
-    return probros.sample("p")
-
-
-@probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_keyword_argument(
-    data: list[float],
-):
-    return probros.sample("p", distribution=probros.Uniform(0, 1))
-
-
-@probros.probabilistic_program
 def test_restricted_factor_valid_keyword():
     probros.factor(0.001, address="data")
 
@@ -541,17 +621,17 @@ def test_restricted_factor_valid_indexed_address():
 
 
 @probros.probabilistic_program
-def test_restricted_observe_missing_expression():
+def test_restricted_factor_missing_expression():
     probros.factor()
 
 
 @probros.probabilistic_program
-def test_restricted_observe_additional_argument():
+def test_restricted_factor_additional_argument():
     probros.factor(0.123, "address", probros.Beta(0.1, 0.2))
 
 
 @probros.probabilistic_program
-def test_restricted_observe_valide_broadcasted(data):
+def test_restricted_observe_valid_broadcasted(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
