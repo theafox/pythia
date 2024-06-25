@@ -182,3 +182,125 @@ class RestrictIndexedAddressCallStructureRule(BaseRule):
                 return None
             case _:
                 return Diagnostic.from_node(node, message=cls.message)
+
+
+class RestrictVectorConstructorCallStructureRule(BaseRule):
+
+    _NAME = "Vector"
+    _FILL = "fill"
+    _TYPE = "t"
+
+    # TODO: restrict further
+    message = (
+        f"Usage: `{_NAME}(<data>"
+        f"[, [{_FILL}=]<data>"
+        f"[, [{_TYPE}=]<data>]])`"
+    )
+
+    # TODO: restrict further
+    # NOTE: also check whether `type` is allowed without `fill`
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not is_function_called(node, cls._NAME):
+            return None
+        match node:
+            case (
+                ast.Call(
+                    args=[_],
+                    keywords=[],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[ast.keyword(arg=cls._FILL)],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[ast.keyword(arg=cls._TYPE)],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[
+                        ast.keyword(arg=cls._FILL),
+                        ast.keyword(arg=cls._TYPE),
+                    ],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[
+                        ast.keyword(arg=cls._TYPE),
+                        ast.keyword(arg=cls._FILL),
+                    ],
+                )
+                | ast.Call(
+                    args=[_, _],
+                    keywords=[ast.keyword(arg=cls._FILL)],
+                )
+                | ast.Call(
+                    args=[_, _, _],
+                    keywords=[],
+                )
+            ):
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)
+
+
+class RestrictArrayConstructorCallStructureRule(BaseRule):
+
+    _NAME = "Array"
+    _FILL = "fill"
+    _TYPE = "t"
+
+    # TODO: restrict further
+    message = (
+        f"Usage: `{_NAME}(<data>"
+        f"[, [{_FILL}=]<data>"
+        f"[, [{_TYPE}=]<data>]])`"
+    )
+
+    # TODO: restrict further
+    # NOTE: also check whether `type` is allowed without `fill`
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not is_function_called(node, cls._NAME):
+            return None
+        match node:
+            case (
+                ast.Call(
+                    args=[_],
+                    keywords=[],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[ast.keyword(arg=cls._FILL)],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[ast.keyword(arg=cls._TYPE)],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[
+                        ast.keyword(arg=cls._FILL),
+                        ast.keyword(arg=cls._TYPE),
+                    ],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[
+                        ast.keyword(arg=cls._TYPE),
+                        ast.keyword(arg=cls._FILL),
+                    ],
+                )
+                | ast.Call(
+                    args=[_, _],
+                    keywords=[ast.keyword(arg=cls._FILL)],
+                )
+                | ast.Call(
+                    args=[_, _, _],
+                    keywords=[],
+                )
+            ):
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)

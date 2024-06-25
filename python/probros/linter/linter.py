@@ -364,6 +364,8 @@ def default_probabilistic_program_linter() -> Linter:
             rules.RestrictObserveCallStructureRule,
             rules.RestrictFactorCallStructureRule,
             rules.RestrictIndexedAddressCallStructureRule,
+            rules.RestrictVectorConstructorCallStructureRule,
+            rules.RestrictArrayConstructorCallStructureRule,
         },
         _is_probabilistic_program_entry_point,
         _analyze_probabilistic_program_entry_point,

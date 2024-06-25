@@ -706,6 +706,56 @@ def test_restricted_indexed_address_missing_number(data):
 
 
 @probros.probabilistic_program
+def test_restricted_vector_constructor_size(data):
+    return probros.Vector(12)
+
+
+@probros.probabilistic_program
+def test_restricted_vector_constructor_size_fill(data):
+    return probros.Vector(12, fill=-1)
+
+
+@probros.probabilistic_program
+def test_restricted_vector_constructor_size_fill_type(data):
+    return probros.Vector(12, fill=-1, t=int)
+
+
+@probros.probabilistic_program
+def test_restricted_vector_constructor_missing_argument(data):
+    return probros.Vector()
+
+
+@probros.probabilistic_program
+def test_restricted_vector_constructor_additional_argument(data):
+    return probros.Vector(12, -1, fill=-1, t=int)
+
+
+@probros.probabilistic_program
+def test_restricted_array_constructor_size(data):
+    return probros.Array((256, 256, 3))
+
+
+@probros.probabilistic_program
+def test_restricted_array_constructor_size_fill(data):
+    return probros.Array((256, 256, 3), fill=-1)
+
+
+@probros.probabilistic_program
+def test_restricted_array_constructor_size_fill_type(data):
+    return probros.Array((256, 256, 3), fill=-1, t=int)
+
+
+@probros.probabilistic_program
+def test_restricted_array_constructor_missing_argument(data):
+    return probros.Array()
+
+
+@probros.probabilistic_program
+def test_restricted_array_constructor_additional_argument(data):
+    return probros.Array((256, 256, 3), -1, fill=-1, t=int)
+
+
+@probros.probabilistic_program
 class TestUnrecommendedUseCaseClass:
     pass
 

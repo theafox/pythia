@@ -1513,6 +1513,150 @@ def test_restricted_indexed_address_missing_number(data):
                 == rules.RestrictIndexedAddressCallStructureRule.message
             )
 
+    class TestVectorConstructor:
+
+        @staticmethod
+        def test_restricted_vector_constructor_size(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_vector_constructor_size(data):
+    return probros.Vector(12)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_vector_constructor_size_fill(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_vector_constructor_size_fill(data):
+    return probros.Vector(12, fill=-1)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_vector_constructor_size_fill_type(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_vector_constructor_size_fill_type(data):
+    return probros.Vector(12, fill=-1, t=int)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_vector_constructor_missing_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_vector_constructor_missing_argument(data):
+    return probros.Vector()
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictVectorConstructorCallStructureRule.message
+            )
+
+        @staticmethod
+        def test_restricted_vector_constructor_additional_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_vector_constructor_additional_argument(data):
+    return probros.Vector(12, -1, fill=-1, t=int)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictVectorConstructorCallStructureRule.message
+            )
+
+    class TestArrayConstructor:
+
+        @staticmethod
+        def test_restricted_array_constructor_size(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_array_constructor_size(data):
+    return probros.Array((256, 256, 3))
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_array_constructor_size_fill(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_array_constructor_size_fill(data):
+    return probros.Array((256, 256, 3), fill=-1)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_array_constructor_size_fill_type(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_array_constructor_size_fill_type(data):
+    return probros.Array((256, 256, 3), fill=-1, t=int)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_array_constructor_missing_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_array_constructor_missing_argument(data):
+    return probros.Array()
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictArrayConstructorCallStructureRule.message
+            )
+
+        @staticmethod
+        def test_restricted_array_constructor_additional_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_array_constructor_additional_argument(data):
+    return probros.Array((256, 256, 3), -1, fill=-1, t=int)
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictArrayConstructorCallStructureRule.message
+            )
+
 
 class TestUnrecommendedUseCases:
 
