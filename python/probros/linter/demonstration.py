@@ -67,7 +67,7 @@ class TestValidProbabilisticClassMethodOuter:
                 probros.Uniform(0, 1),
             )
             if probability < 0.1:
-                return
+                return None
             else:
                 count += 1
 
@@ -80,7 +80,7 @@ class TestProhibitedFstringInClassMethod:
             address = f"this[{i}]"
             probability = probros.sample(address, probros.Uniform(0, 1))
             if probability < 0.1:
-                return
+                return None
             else:
                 count += 1
 
@@ -292,7 +292,7 @@ def test_prohibited_match(data):
 @probros.probabilistic_program
 def test_prohibited_asynchronous_function_definition(data):
     async def test_prohibited_asynchronous_function_definition_nested():
-        return
+        return None
 
 
 @probros.probabilistic_program
@@ -313,12 +313,22 @@ def test_prohibited_asynchronous_for(data):
 @probros.probabilistic_program
 def test_prohibited_asynchronous_with(path):
     async with open(path, "r"):
-        return
+        return None
 
 
 @probros.probabilistic_program
 def test_prohibited_pass(data):
     pass
+
+
+@probros.probabilistic_program
+def test_valid_return(data):
+    return None
+
+
+@probros.probabilistic_program
+def test_prohibited_empty_return(data):
+    return
 
 
 @probros.probabilistic_program
@@ -329,9 +339,9 @@ def test_prohibited_raise(data):
 @probros.probabilistic_program
 def test_prohibited_try_except(data):
     try:
-        return
+        return None
     except:
-        return
+        return None
 
 
 @probros.probabilistic_program

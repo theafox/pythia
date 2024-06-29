@@ -343,6 +343,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoMatchRule,
             rules.NoAsynchronousStatementRule,
             rules.NoPassRule,
+            rules.NoEmptyReturnRule,
             rules.NoRaiseExceptionRule,
             rules.NoTryExceptRule,
             rules.NoAssertRule,
