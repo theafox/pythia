@@ -178,8 +178,7 @@ class Distribution:
             (
                 "IID",
                 lambda args: len(args) == 2
-                and cls._is_base_distribution(args[0])
-                and isinstance(args[1], ast.Constant),
+                and cls._is_base_distribution(args[0]),
                 lambda kwargs: not kwargs,
             ),
         ]
