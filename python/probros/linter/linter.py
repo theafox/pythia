@@ -328,6 +328,7 @@ def default_probabilistic_program_linter() -> Linter:
     """
     return Linter(
         {
+            # Statement rules.
             rules.NoNestedFunctionsRule,
             rules.NoNestedClassesRule,
             rules.NoImportRule,
@@ -348,9 +349,10 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoRaiseExceptionRule,
             rules.NoTryExceptRule,
             rules.NoAssertRule,
-            rules.NoWalrusOperatorRule,
+            # Expression rules.
             rules.RestrictBinaryOperatorsRule,
             rules.RestrictUnaryOperatorsRule,
+            rules.NoWalrusOperatorRule,
             rules.NoLambdaRule,
             rules.NoInlineIfRule,
             rules.NoDictionaryRule,
@@ -362,6 +364,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoStarredRule,
             rules.NoSliceRule,
             rules.NoMultipleSubscriptRule,
+            # Probabilistic-programming-specific rules.
             rules.RestrictSampleCallStructureRule,
             rules.RestrictObserveCallStructureRule,
             rules.RestrictFactorCallStructureRule,
