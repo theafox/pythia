@@ -69,7 +69,7 @@ class TestValidProbabilisticClassMethodOuter:
             if probability < 0.1:
                 return None
             else:
-                count += 1
+                count = count + 1
 
 
 class TestProhibitedFstringInClassMethod:
@@ -82,7 +82,7 @@ class TestProhibitedFstringInClassMethod:
             if probability < 0.1:
                 return None
             else:
-                count += 1
+                count = count + 1
 
 
 def test_valid_probabilistic_program_in_function_outer():
@@ -167,7 +167,7 @@ def test_prohibited_delete(data):
             probros.IndexedAddress("data", i),
             probros.Uniform(0, 1),
         )
-        sum += data[i]
+        sum = sum + data[i]
     del sum
 
 
@@ -176,7 +176,7 @@ def test_prohibited_type_aliasing():
     type Probabilities = list[probros.Beta]
     probability: Probabilities = []
     for i in range(0, 5):
-        probability += probros.Beta(0.1, 0.5)
+        probability = probability + probros.Beta(0.1, 0.5)
     return probability
 
 
@@ -199,6 +199,26 @@ def test_prohibited_deconstructor(data):
             probros.IndexedAddress("data", i),
             probros.Normal(mean, stddev),
         )
+
+
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_addition(probability):
+    probability += 0.01
+
+
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_and_bitwise(probability):
+    probability ^= 0b1010
+
+
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_division(probability):
+    probability /= 2
+
+
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_power(probability):
+    probability **= 2
 
 
 @probros.probabilistic_program
@@ -400,7 +420,7 @@ def test_prohibited_inline_if(probability):
         )
         if sample == 1:
             break
-        i += 1
+        i = i + 1
     return i
 
 
@@ -496,7 +516,7 @@ def test_prohibited_fstring():
 def test_prohibited_starred(data):
     zum = sum(*data)
     for i in range(0, len(data)):
-        data[i] /= zum
+        data[i] = data[i] / zum
     for i in range(0, len(data)):
         probros.observe(
             data[i],

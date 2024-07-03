@@ -162,7 +162,7 @@ class TestValidProbabilisticClassMethodOuter:
             if probability < 0.1:
                 return None
             else:
-                count += 1
+                count = count + 1
             """
             diagnostics = default_linter.lint_code(code)
             assert not diagnostics
@@ -180,7 +180,7 @@ class TestProhibitedFstringInClassMethod:
             if probability < 0.1:
                 return None
             else:
-                count += 1
+                count = count + 1
             """
             diagnostics = default_linter.lint_code(code)
             assert len(diagnostics) == 2
@@ -291,6 +291,7 @@ def test_prohibited_nested_class():
 @probros.probabilistic_program
 def test_prohibited_import(degrees):
     import math
+
     return math.radians(degrees)
             """
             diagnostics = default_linter.lint_code(code)
@@ -304,6 +305,7 @@ def test_prohibited_import(degrees):
 @probros.probabilistic_program
 def test_prohibited_import_from():
     from random import randint
+
     return randint(0, 10)
             """
             diagnostics = default_linter.lint_code(code)
@@ -357,7 +359,7 @@ def test_prohibited_delete(data):
             probros.IndexedAddress("data", i),
             probros.Uniform(0, 1),
         )
-        sum += data[i]
+        sum = sum + data[i]
     del sum
             """
             diagnostics = default_linter.lint_code(code)
@@ -375,7 +377,7 @@ def test_prohibited_type_aliasing():
     type Probabilities = list[probros.Beta]
     probability: Probabilities = []
     for i in range(0, 5):
-        probability += probros.Beta(0.1, 0.5)
+        probability = probability + probros.Beta(0.1, 0.5)
     return probability
             """
             diagnostics = default_linter.lint_code(code)
@@ -415,6 +417,64 @@ def test_prohibited_deconstructor(data):
             assert len(diagnostics) == 1
             assert diagnostics[0].severity == Severity.ERROR
             assert diagnostics[0].message == rules.NoDeconstructorRule.message
+
+        @staticmethod
+        def test_prohibited_augmented_assign_addition(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_addition(probability):
+    probability += 0.01
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoAugmentedAssignRule.message
+            )
+
+        @staticmethod
+        def test_prohibited_augmented_assign_and_bitwise(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_and_bitwise(probability):
+    probability ^= 0b1010
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoAugmentedAssignRule.message
+            )
+
+        @staticmethod
+        def test_prohibited_augmented_assign_division(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_division(probability):
+    probability /= 2
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoAugmentedAssignRule.message
+            )
+
+        @staticmethod
+        def test_prohibited_augmented_assign_power(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_augmented_assign_power(probability):
+    probability **= 2
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message == rules.NoAugmentedAssignRule.message
+            )
 
         @staticmethod
         def test_prohibited_chained_assign(default_linter: Linter):
@@ -849,7 +909,7 @@ def test_prohibited_inline_if(probability):
         )
         if sample == 1:
             break
-        i += 1
+        i = i + 1
     return i
             """
             diagnostics = default_linter.lint_code(code)
@@ -1080,7 +1140,7 @@ def test_prohibited_fstring():
 def test_prohibited_starred(data):
     zum = sum(*data)
     for i in range(0, len(data)):
-        data[i] /= zum
+        data[i] = data[i] / zum
     for i in range(0, len(data)):
         probros.observe(
             data[i],

@@ -336,6 +336,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoTypeAliasRule,
             rules.NoDeconstructorRule,
             rules.NoChainedAssignmentRule,
+            rules.NoAugmentedAssignRule,
             rules.NoAttributeAssignRule,
             rules.NoStandaloneExpressionRule,
             rules.RestrictForLoopRule,
