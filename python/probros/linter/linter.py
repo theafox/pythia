@@ -41,7 +41,7 @@ Status: In Development
 
 import ast
 import logging as log
-from typing import Callable, Iterable
+from typing import Callable, Iterable, override
 
 import rules
 from diagnostic import Diagnostic, Severity
@@ -79,6 +79,7 @@ class Linter(ast.NodeVisitor):
         diagnostics: The list of currently found diagnostics.
     """
 
+    @override
     def __init__(
         self,
         rules: Iterable[type[rules.BaseRule]],
@@ -111,6 +112,7 @@ class Linter(ast.NodeVisitor):
         self.diagnostics: list[Diagnostic] = []
         self._entered: bool = False
 
+    @override
     def generic_visit(self, node: ast.AST) -> None:
         """Identify entry-points and apply rules.
 

@@ -5,6 +5,7 @@ the documentation of that class in case of changes or additions.
 """
 
 import ast
+from typing import override
 
 from diagnostic import Diagnostic, Severity
 
@@ -18,6 +19,7 @@ class NoNestedFunctionsRule(BaseRule):
 
     message = "Nested functions are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -31,6 +33,7 @@ class NoNestedClassesRule(BaseRule):
 
     message = "Nested classes are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -44,6 +47,7 @@ class NoImportRule(BaseRule):
 
     message = "Importing is prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -57,6 +61,7 @@ class NoGlobalOrNonlocalDeclarationRule(BaseRule):
 
     message = "Declaring global variables is prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -73,6 +78,7 @@ class NoDeleteStatementRule(BaseRule):
 
     message = "Delete statements are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -86,6 +92,7 @@ class NoTypeAliasRule(BaseRule):
 
     message = "Type aliasing is prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -99,6 +106,7 @@ class NoDeconstructorRule(BaseRule):
 
     message = "Deconstructors are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         # Deconstruction can only occur on `Assign`, `AnnAssign` (annotated
@@ -118,6 +126,7 @@ class NoChainedAssignmentRule(BaseRule):
 
     message = "Chained assignments are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -131,6 +140,7 @@ class NoAugmentedAssignRule(BaseRule):
 
     message = "Augmented assigns are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -144,6 +154,7 @@ class WarnAnnotatedAssignRule(BaseRule):
 
     message = "Annotated assigns are discouraged"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -161,6 +172,7 @@ class NoAttributeAssignRule(BaseRule):
 
     message = "Attributes may not be written to"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         match node:
@@ -183,6 +195,7 @@ class NoStandaloneExpressionRule(BaseRule):
 
     message = "Expressions may not appear as statements"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not isinstance(node, ast.Expr):
@@ -202,6 +215,7 @@ class RestrictForLoopIteratorRule(BaseRule):
 
     message = "For-loops may only use `range`"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not isinstance(node, (ast.For, ast.AsyncFor)):
@@ -217,6 +231,7 @@ class NoForElseRule(BaseRule):
 
     message = "For-loops may not have `else` blocks"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -230,6 +245,7 @@ class NoWhileElseRule(BaseRule):
 
     message = "While-loops may not have `else` blocks"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -243,6 +259,7 @@ class NoWithStatementRule(BaseRule):
 
     message = "With statements are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -256,6 +273,7 @@ class NoMatchRule(BaseRule):
 
     message = "The match control-flow construct is prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -269,6 +287,7 @@ class NoAsynchronousStatementRule(BaseRule):
 
     message = "Asynchronous statements are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -284,6 +303,7 @@ class NoPassRule(BaseRule):
 
     message = "Pass statements are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -297,6 +317,7 @@ class NoEmptyReturnRule(BaseRule):
 
     message = "Empty returns are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -313,6 +334,7 @@ class NoRaiseExceptionRule(BaseRule):
 
     message = "Raising exceptions is prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -326,6 +348,7 @@ class NoTryExceptRule(BaseRule):
 
     message = "The try-except control-flow is prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -339,6 +362,7 @@ class NoAssertRule(BaseRule):
 
     message = "Assertions are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (

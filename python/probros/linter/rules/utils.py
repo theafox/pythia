@@ -1,5 +1,5 @@
 import ast
-from typing import Callable
+from typing import Callable, override
 
 
 def is_function_called(
@@ -50,6 +50,7 @@ class classproperty(property):
         Inspired by Denis Ryzhkov at https://stackoverflow.com/a/13624858
     """
 
+    @override
     def __get__(self, _, owner):
         """Retrieve the value of the class property.
 
@@ -74,6 +75,7 @@ class Address:
     # NOTE: extract this dynamically to future-proof for changes?
     _ADDRESS_CALL = "IndexedAddress"
 
+    @override
     def __new__(cls):
         """Prevent instantiation of this class.
 
@@ -183,6 +185,7 @@ class Distribution:
             ),
         ]
 
+    @override
     def __new__(cls):
         """Prevent instantiation of this class.
 

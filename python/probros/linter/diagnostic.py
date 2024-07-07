@@ -1,7 +1,7 @@
 import ast
 from dataclasses import dataclass
 from enum import Enum
-from typing import Self
+from typing import Self, override
 
 
 class Severity(Enum):
@@ -17,6 +17,7 @@ class Severity(Enum):
     INFORMATION = 20
     HINT = 10
 
+    @override
     def __str__(self) -> str:
         """Get the string representation of the severity.
 
@@ -47,6 +48,7 @@ class Diagnostic:
     message: str
     severity: Severity = Severity.ERROR
 
+    @override
     def __str__(self) -> str:
         """Get a presentable representation of this diangostic.
 

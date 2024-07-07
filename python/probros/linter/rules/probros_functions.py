@@ -5,6 +5,7 @@ the documentation of that class in case of changes or additions.
 """
 
 import ast
+from typing import override
 
 from diagnostic import Diagnostic
 
@@ -22,6 +23,7 @@ class RestrictSampleCallStructureRule(BaseRule):
         f", <{Distribution.representation()}>)`"
     )
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not is_function_called(node, cls._NAME):
@@ -53,6 +55,7 @@ class RestrictObserveCallStructureRule(BaseRule):
         f"[, [{_DISTRIBUTION}=]<{Distribution.representation()}>]])`"
     )
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not is_function_called(node, cls._NAME):
@@ -143,6 +146,7 @@ class RestrictFactorCallStructureRule(BaseRule):
         f"[, [{_ADDRESS}=]<{Address.representation()}>])"
     )
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not is_function_called(node, cls._NAME):
@@ -170,6 +174,7 @@ class RestrictIndexedAddressCallStructureRule(BaseRule):
 
     message = f"Usage: `{_NAME}(<address>, <index>, …)`"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not is_function_called(node, cls._NAME):
@@ -199,6 +204,7 @@ class RestrictVectorConstructorCallStructureRule(BaseRule):
 
     # TODO: restrict further
     # NOTE: also check whether `type` is allowed without `fill`
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not is_function_called(node, cls._NAME):
@@ -260,6 +266,7 @@ class RestrictArrayConstructorCallStructureRule(BaseRule):
 
     # TODO: restrict further
     # NOTE: also check whether `type` is allowed without `fill`
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not is_function_called(node, cls._NAME):

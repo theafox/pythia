@@ -5,6 +5,7 @@ the documentation of that class in case of changes or additions.
 """
 
 import ast
+from typing import override
 
 from diagnostic import Diagnostic
 
@@ -18,6 +19,7 @@ class RestrictBinaryOperatorsRule(BaseRule):
     # Prohibit shift and bitwise operators.
     message = "Binary operators may only be of: +, -, *, /, //, %, **"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not isinstance(node, ast.BinOp):
@@ -50,6 +52,7 @@ class RestrictComparisonOperatorsRule(BaseRule):
         "==, !=, <, <=, >, >="
     )
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not isinstance(node, ast.Compare):
@@ -81,6 +84,7 @@ class RestrictUnaryOperatorsRule(BaseRule):
     # Prohibit the bitwise complement operator `~`.
     message = "Unary operators may only be of: +, -, not"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         if not isinstance(node, ast.UnaryOp):
@@ -104,6 +108,7 @@ class NoWalrusOperatorRule(BaseRule):
 
     message = "Walrus operators are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -117,6 +122,7 @@ class NoLambdaRule(BaseRule):
 
     message = "Lambda expressions are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -130,6 +136,7 @@ class NoInlineIfRule(BaseRule):
 
     message = "Inline if expressions are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -146,6 +153,7 @@ class NoDictionaryRule(BaseRule):
 
     message = "Dictionaries are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         match node:
@@ -159,6 +167,7 @@ class NoSetRule(BaseRule):
 
     message = "Sets are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         match node:
@@ -172,6 +181,7 @@ class NoComprehensionAndGeneratorRule(BaseRule):
 
     message = "Comprehensions are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -191,6 +201,7 @@ class NoAsynchronousExpressionRule(BaseRule):
 
     message = "Asynchronous expressions are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         match node:
@@ -211,6 +222,7 @@ class NoYieldRule(BaseRule):
 
     message = "Yields are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -227,6 +239,7 @@ class NoFstringRule(BaseRule):
 
     message = "F-Strings are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -240,6 +253,7 @@ class NoStarredRule(BaseRule):
 
     message = "Starred variables are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -253,6 +267,7 @@ class NoTypeParameterRule(BaseRule):
 
     message = "Type parameters are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -269,6 +284,7 @@ class NoSliceRule(BaseRule):
 
     message = "Slices are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
@@ -282,6 +298,7 @@ class NoMultipleSubscriptRule(BaseRule):
 
     message = "Multi-subscripts are prohibited"
 
+    @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
         return (
