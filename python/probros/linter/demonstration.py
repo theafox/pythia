@@ -583,6 +583,17 @@ def test_prohibited_starred(data):
 
 
 @probros.probabilistic_program
+def test_prohibited_type_parameters_alias(data):
+    type Alias[*Ts] = tuple[*Ts]
+
+
+@probros.probabilistic_program
+def test_prohibited_type_parameters_function(data):
+    def first[T](l: list[T]) -> T:
+        return l[0]
+
+
+@probros.probabilistic_program
 def test_prohibited_slice(data):
     data = data[0:100]
     for i in range(0, len(data)):

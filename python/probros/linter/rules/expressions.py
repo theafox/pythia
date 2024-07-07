@@ -249,6 +249,19 @@ class NoStarredRule(BaseRule):
         )
 
 
+class NoTypeParameterRule(BaseRule):
+
+    message = "Type parameters are prohibited"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, (ast.TypeVar, ast.TypeVarTuple, ast.ParamSpec))
+            else None
+        )
+
+
 # Restrict data-structure manipulation. #######################################
 
 

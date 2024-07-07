@@ -1308,6 +1308,49 @@ def test_prohibited_starred(data):
             assert diagnostics[0].severity == Severity.ERROR
             assert diagnostics[0].message == rules.NoStarredRule.message
 
+        @staticmethod
+        def test_prohibited_type_parameters_alias(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_type_parameters_alias(data):
+    type Alias[*Ts] = tuple[*Ts]
+            """
+            default_linter.extensive_diagnosis = True
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 4
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoTypeAliasRule.message in messages
+            assert rules.NoStarredRule.message in messages
+            assert rules.NoMultipleSubscriptRule.message in messages
+            assert rules.NoTypeParameterRule.message in messages
+
+        @staticmethod
+        def test_prohibited_type_parameters_function(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_type_parameters_function(data):
+    def first[T](l: list[T]) -> T:
+        return l[0]
+            """
+            default_linter.extensive_diagnosis = True
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            assert all(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in diagnostics
+            )
+            messages = list(
+                map(lambda diagnostic: diagnostic.message, diagnostics)
+            )
+            assert rules.NoNestedFunctionsRule.message in messages
+            assert rules.NoTypeParameterRule.message in messages
+
     class TestRestrictedDataStructureManipulation:
 
         @staticmethod

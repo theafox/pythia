@@ -366,6 +366,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoYieldRule,
             rules.NoFstringRule,
             rules.NoStarredRule,
+            rules.NoTypeParameterRule,
             rules.NoSliceRule,
             rules.NoMultipleSubscriptRule,
             # Probabilistic-programming-specific rules.
