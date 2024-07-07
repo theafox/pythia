@@ -198,7 +198,7 @@ class NoStandaloneExpressionRule(BaseRule):
                 return Diagnostic.from_node(node, message=cls.message)
 
 
-class RestrictForLoopRule(BaseRule):
+class RestrictForLoopIteratorRule(BaseRule):
 
     message = "For-loops may only use `range`"
 
@@ -211,6 +211,32 @@ class RestrictForLoopRule(BaseRule):
                 return None
             case _:
                 return Diagnostic.from_node(node.iter, message=cls.message)
+
+
+class NoForElseRule(BaseRule):
+
+    message = "For-loops may not have `else` blocks"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, (ast.For, ast.AsyncFor)) and node.orelse
+            else None
+        )
+
+
+class NoWhileElseRule(BaseRule):
+
+    message = "While-loops may not have `else` blocks"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.While) and node.orelse
+            else None
+        )
 
 
 class NoWithStatementRule(BaseRule):

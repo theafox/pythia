@@ -609,13 +609,16 @@ def test_restricted_for_iterable(data):
             diagnostics = default_linter.lint_code(code)
             assert len(diagnostics) == 1
             assert diagnostics[0].severity == Severity.ERROR
-            assert diagnostics[0].message == rules.RestrictForLoopRule.message
+            assert (
+                diagnostics[0].message
+                == rules.RestrictForLoopIteratorRule.message
+            )
 
         @staticmethod
-        def test_restricted_for_constant(default_linter: Linter):
+        def test_restricted_for_iterable_constant(default_linter: Linter):
             code = """
 @probros.probabilistic_program
-def test_restricted_for_constant(data):
+def test_restricted_for_iterable_constant(data):
     step = 0
     for _ in "this shouldn't work either!":
         probros.observe(data[step], "hi!", probros.Uniform(0, 1))
@@ -624,7 +627,40 @@ def test_restricted_for_constant(data):
             diagnostics = default_linter.lint_code(code)
             assert len(diagnostics) == 1
             assert diagnostics[0].severity == Severity.ERROR
-            assert diagnostics[0].message == rules.RestrictForLoopRule.message
+            assert (
+                diagnostics[0].message
+                == rules.RestrictForLoopIteratorRule.message
+            )
+
+        @staticmethod
+        def test_prohibited_for_else(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_for_else(data):
+    for i in range(0, 10):
+        continue
+    else:
+        myvar = "hello"
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoForElseRule.message
+
+        @staticmethod
+        def test_prohibited_while_else(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_prohibited_while_else(data):
+    while False:
+        continue
+    else:
+        myvar = "hello"
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert diagnostics[0].message == rules.NoWhileElseRule.message
 
         @staticmethod
         def test_prohibited_with_file(default_linter: Linter):

@@ -275,11 +275,27 @@ def test_restricted_for_iterable(data):
 
 
 @probros.probabilistic_program
-def test_restricted_for_constant(data):
+def test_restricted_for_iterable_constant(data):
     step = 0
     for _ in "this shouldn't work either!":
         probros.observe(data[step], "hi!", probros.Uniform(0, 1))
         step += 1
+
+
+@probros.probabilistic_program
+def test_prohibited_for_else(data):
+    for i in range(0, 10):
+        continue
+    else:
+        myvar = "hello"
+
+
+@probros.probabilistic_program
+def test_prohibited_while_else(data):
+    while False:
+        continue
+    else:
+        myvar = "hello"
 
 
 @probros.probabilistic_program
