@@ -42,6 +42,40 @@ class RestrictBinaryOperatorsRule(BaseRule):
         )
 
 
+class RestrictComparisonOperatorsRule(BaseRule):
+
+    # Prohibit `is`, `is not`, `in`, `not in`.
+    message = (
+        "Comparison operators may only be binary and one of: "
+        "==, !=, <, <=, >, >="
+    )
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        if not isinstance(node, ast.Compare):
+            return None
+        match node:
+            case ast.Compare(
+                ops=[
+                    ast.Eq()
+                    | ast.NotEq()
+                    | ast.Lt()
+                    | ast.LtE()
+                    | ast.Gt()
+                    | ast.GtE()
+                ],
+                comparators=comparators,
+            ) if len(comparators) == 1:
+                return None
+            case _:
+                return Diagnostic.from_node(node, message=cls.message)
+        return (
+            Diagnostic.from_node(node, message=cls.message)
+            if isinstance(node, ast.BinOp)
+            else None
+        )
+
+
 class RestrictUnaryOperatorsRule(BaseRule):
 
     # Prohibit the bitwise complement operator `~`.

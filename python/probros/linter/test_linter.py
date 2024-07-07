@@ -857,6 +857,103 @@ def test_restricted_binary_operators_bitwise(a, b, c, d):
                 for diagnostic in diagnostics
             )
 
+        @staticmethod
+        def test_restricted_comparison_operators(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_comparison_operators(a, b, c, d, e, f, g):
+    result = a == b
+    result = result != c
+    result = result < d
+    result = result <= e
+    result = result > f
+    result = result >= g
+    return result
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_restricted_comparison_operators_is(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_comparison_operators_is(a, b):
+    return a is b
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictComparisonOperatorsRule.message
+            )
+
+        @staticmethod
+        def test_restricted_comparison_operators_is_not(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_comparison_operators_is_not(a, b):
+    return a is not b
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictComparisonOperatorsRule.message
+            )
+
+        @staticmethod
+        def test_restricted_comparison_operators_in(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_restricted_comparison_operators_in(a, b):
+    return a in b
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictComparisonOperatorsRule.message
+            )
+
+        @staticmethod
+        def test_restricted_comparison_operators_not_in(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_comparison_operators_not_in(a, b):
+    return a not in b
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictComparisonOperatorsRule.message
+            )
+
+        @staticmethod
+        def test_restricted_comparison_operators_multiple(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_restricted_comparison_operators_multiple(a, b, c):
+    return a < b <= c
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+            assert (
+                diagnostics[0].message
+                == rules.RestrictComparisonOperatorsRule.message
+            )
+
     class TestProhibitedInlineStatements:
 
         @staticmethod

@@ -351,6 +351,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoAssertRule,
             # Expression rules.
             rules.RestrictBinaryOperatorsRule,
+            rules.RestrictComparisonOperatorsRule,
             rules.RestrictUnaryOperatorsRule,
             rules.NoWalrusOperatorRule,
             rules.NoLambdaRule,
