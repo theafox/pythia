@@ -72,6 +72,98 @@ def test_unrecognized_decorator_matching_string():
             assert len(diagnostics) == 1
             assert diagnostics[0].severity == Severity.WARNING
 
+    class TestInvalidEntryPoints:
+
+        @staticmethod
+        def test_valid_entry_point_positional_only_arguments(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_valid_entry_point_positional_only_arguments(a, b, /, c):
+    return a + b + c
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert not diagnostics
+
+        @staticmethod
+        def test_invalid_entry_point_keyword_argument(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_invalid_entry_point_keyword_argument(data=None):
+    return data
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+
+        @staticmethod
+        def test_invalid_entry_point_keyword_only_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_invalid_entry_point_keyword_only_argument(a, *args, b):
+    return a * b
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+
+        @staticmethod
+        def test_invalid_entry_point_catch_argument(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_invalid_entry_point_catch_argument(data, *args):
+    return data
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+
+        @staticmethod
+        def test_invalid_entry_point_catch_keyword_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_invalid_entry_point_catch_keyword_argument(data, **kwargs):
+    return data
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.ERROR
+
+        @staticmethod
+        def test_warned_entry_point_typing(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_warned_entry_point_typing(data: list[int]):
+    return data
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.WARNING
+
+        @staticmethod
+        def test_warned_entry_point_typed_keyword_argument(
+            default_linter: Linter,
+        ):
+            code = """
+@probros.probabilistic_program
+def test_invalid_entry_point_typed_keyword_argument(data: list[int] = []):
+    return data
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 2
+            severities = list(
+                map(lambda diagnostic: diagnostic.severity, diagnostics)
+            )
+            assert Severity.ERROR in severities
+            assert Severity.WARNING in severities
+
     class TestUncheckedDefinitions:
 
         @staticmethod
@@ -201,7 +293,7 @@ class TestProhibitedFstringInClassMethod:
             code = """
 def test_valid_probabilistic_program_in_function_outer():
     @probros.probabilistic_program
-    def test_valid_probabilistic_program_in_function(data: list[int]):
+    def test_valid_probabilistic_program_in_function(data):
         for i in range(0, len(data)):
             probros.observe(
                 data[i],
@@ -219,7 +311,7 @@ def test_valid_probabilistic_program_in_function_outer():
             code = """
 def test_prohibited_fstring_in_function_outer():
     @probros.probabilistic_program
-    def test_invalid_probabilistic_program_in_function(data: list[float]):
+    def test_invalid_probabilistic_program_in_function(data):
         for i in range(0, len(data)):
             address = f"data[{i}]"
             probros.observe(
@@ -1404,7 +1496,7 @@ class TestProbrosSpecificLinting:
         def test_restricted_sample_structure(default_linter: Linter):
             code = """
 @probros.probabilistic_program
-def test_restricted_sample_structure(data: list[float]):
+def test_restricted_sample_structure(data):
     return probros.sample("p", probros.Dirac(True))
             """
             diagnostics = default_linter.lint_code(code)
@@ -1416,9 +1508,7 @@ def test_restricted_sample_structure(data: list[float]):
         ):
             code = """
 @probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_address_number(
-    data: list[float],
-):
+def test_restricted_sample_structure_incorrect_address_number(data):
     return probros.sample(123, probros.Dirac(True))
             """
             diagnostics = default_linter.lint_code(code)
@@ -1435,9 +1525,7 @@ def test_restricted_sample_structure_incorrect_address_number(
         ):
             code = """
 @probros.probabilistic_program
-def test_restricted_sample_structure_missing_argument(
-    data: list[float],
-):
+def test_restricted_sample_structure_missing_argument(data):
     return probros.sample("p")
             """
             diagnostics = default_linter.lint_code(code)
@@ -1454,9 +1542,7 @@ def test_restricted_sample_structure_missing_argument(
         ):
             code = """
 @probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_keyword_argument(
-    data: list[float],
-):
+def test_restricted_sample_structure_incorrect_keyword_argument(data):
     return probros.sample("p", distribution=probros.Uniform(0, 1))
             """
             diagnostics = default_linter.lint_code(code)
@@ -1495,7 +1581,7 @@ def test_restricted_observe_call_address_number(data):
         ):
             code = """
 @probros.probabilistic_program
-def test_restricted_observe_call_address_variable(data: list[float]):
+def test_restricted_observe_call_address_variable(data):
     for i in range(0, len(data)):
         address = probros.IndexedAddress("data", i)
         probros.observe(
@@ -1518,7 +1604,7 @@ def test_restricted_observe_call_address_variable(data: list[float]):
         ):
             code = """
 @probros.probabilistic_program
-def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
+def test_restrict_observe_structure_two_keyword_arguments(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -1535,7 +1621,7 @@ def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
         ):
             code = """
 @probros.probabilistic_program
-def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
+def test_restrict_observe_structure_one_keyword_argument(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -1552,9 +1638,7 @@ def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
         ):
             code = """
 @probros.probabilistic_program
-def test_restrict_observe_structure_incorrect_ordering(
-    data: list[float],
-):
+def test_restrict_observe_structure_incorrect_ordering(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -1576,9 +1660,7 @@ def test_restrict_observe_structure_incorrect_ordering(
         ):
             code = """
 @probros.probabilistic_program
-def test_restrict_observe_structure_missing_positional(
-    data: list[float],
-):
+def test_restrict_observe_structure_missing_positional(data):
     for i in range(0, len(data)):
         probros.observe(
             value=data[i],

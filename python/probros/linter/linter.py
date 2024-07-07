@@ -41,6 +41,7 @@ Status: In Development
 
 import ast
 import logging as log
+from itertools import chain
 from typing import Callable, Iterable, override
 
 import rules
@@ -69,6 +70,9 @@ class Linter(ast.NodeVisitor):
     node outside code of interest. It is therefore independent of the check for
     entry-point nodes and does _not_ guarentee that the passed node is a valid
     entry-point.
+    In  case `analyze_entry_point` returns (at least) one diagnostic of the
+    error-level, the node is skipped, even as an entry-point, i.e. no further
+    diagnosis is done on this node's children.
 
     Attributes:
         rules: The rules to apply to code of interest.
@@ -127,14 +131,23 @@ class Linter(ast.NodeVisitor):
 
         # Outside code of interest…
         if not self._entered:
-            self.diagnostics += self.analyze_entry_point(node)
+            entry_point_diagnostics = self.analyze_entry_point(node)
+            self.diagnostics += entry_point_diagnostics
             if not self.is_entry_point(node):
                 super().generic_visit(node)
-            else:
+            elif not any(
+                diagnostic.severity == Severity.ERROR
+                for diagnostic in entry_point_diagnostics
+            ):
                 log.debug(f"Found admissible node {ast.dump(node)[:25]}….")
                 self._entered = True
                 super().generic_visit(node)
                 self._entered = False
+            else:
+                log.debug(
+                    "Entry-point analysis found an error"
+                    f", skipping admissible node {ast.dump(node)[:25]}…"
+                )
             return
 
         # Inside code of interest…
@@ -289,6 +302,9 @@ def _analyze_probabilistic_program_entry_point(
     elif not isinstance(node, ast.FunctionDef):
         return []
 
+    diagnostics: list[Diagnostic] = []
+
+    # In case some decorators could not be verified…
     unrecognized: list[ast.expr] = list(
         filter(
             lambda decorator: not isinstance(
@@ -298,13 +314,10 @@ def _analyze_probabilistic_program_entry_point(
             node.decorator_list,
         )
     )
-
     if unrecognized:
         log.warning(
             f"Could not verify at least one decorator of '{node.name}'…"
         )
-
-    diagnostics: list[Diagnostic] = []
     for decorator in unrecognized:
         log.debug(f"Could not verify decorator: {ast.dump(decorator)}")
         diagnostics.append(
@@ -314,6 +327,50 @@ def _analyze_probabilistic_program_entry_point(
                 severity=Severity.WARNING,
             )
         )
+
+    # In case the entry-point is valid…
+    if isinstance(node, ast.FunctionDef) and any(
+        isinstance(decorator, ast.Attribute)
+        and decorator.attr == _DECORATOR_NAME
+        or isinstance(decorator, ast.Name)
+        and decorator.id == _DECORATOR_NAME
+        for decorator in node.decorator_list
+    ):
+        # warn about discouraged argument-types.
+        if (
+            node.args.kwonlyargs
+            or node.args.vararg  # `*args`
+            or node.args.kwarg  # `**kwargs`
+            or node.args.kw_defaults  # `arg=3` as a keyword argument
+            or node.args.defaults  # `arg=3` as a positional argument
+        ):
+            diagnostics.append(
+                Diagnostic.from_node(
+                    node,
+                    message="The use of keyword arguments, `*args`"
+                    ", `**kwargs`, and defaults is discouraged",
+                    severity=Severity.ERROR,
+                )
+            )
+
+        # inform about discouraged typing.
+        if any(
+            argument.annotation
+            for argument in chain(
+                node.args.args,
+                node.args.posonlyargs,
+                (node.args.vararg,),
+                (node.args.kwarg,),
+            )
+            if argument
+        ):
+            diagnostics.append(
+                Diagnostic.from_node(
+                    node,
+                    message="Typing is disouraged",
+                    severity=Severity.WARNING,
+                )
+            )
 
     return diagnostics
 

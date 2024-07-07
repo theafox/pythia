@@ -17,6 +17,41 @@ def test_unrecognized_decorator_matching_string():
     pass
 
 
+@probros.probabilistic_program
+def test_valid_entry_point_positional_only_arguments(a, b, /, c):
+    return a + b + c
+
+
+@probros.probabilistic_program
+def test_invalid_entry_point_keyword_argument(data=None):
+    return data
+
+
+@probros.probabilistic_program
+def test_invalid_entry_point_keyword_only_argument(a, *args, b):
+    return a * b
+
+
+@probros.probabilistic_program
+def test_invalid_entry_point_catch_argument(data, *args):
+    return data
+
+
+@probros.probabilistic_program
+def test_invalid_entry_point_catch_keyword_argument(data, **kwargs):
+    return data
+
+
+@probros.probabilistic_program
+def test_warned_entry_point_typing(data: list[int]):
+    return data
+
+
+@probros.probabilistic_program
+def test_invalid_entry_point_typed_keyword_argument(data: list[int] = []):
+    return data
+
+
 def test_unchecked_code_decorator_definition(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)
@@ -87,7 +122,7 @@ class TestProhibitedFstringInClassMethod:
 
 def test_valid_probabilistic_program_in_function_outer():
     @probros.probabilistic_program
-    def test_valid_probabilistic_program_in_function(data: list[int]):
+    def test_valid_probabilistic_program_in_function(data):
         for i in range(0, len(data)):
             probros.observe(
                 data[i],
@@ -98,7 +133,7 @@ def test_valid_probabilistic_program_in_function_outer():
 
 def test_prohibited_fstring_in_function_outer():
     @probros.probabilistic_program
-    def test_invalid_probabilistic_program_in_function(data: list[float]):
+    def test_invalid_probabilistic_program_in_function(data):
         for i in range(0, len(data)):
             address = f"data[{i}]"
             probros.observe(
@@ -620,28 +655,22 @@ def test_prohibited_multiple_subscript(data):
 
 
 @probros.probabilistic_program
-def test_restricted_sample_structure(data: list[float]):
+def test_restricted_sample_structure(data):
     return probros.sample("p", probros.Dirac(True))
 
 
 @probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_address_number(
-    data: list[float],
-):
+def test_restricted_sample_structure_incorrect_address_number(data):
     return probros.sample(123, probros.Dirac(True))
 
 
 @probros.probabilistic_program
-def test_restricted_sample_structure_missing_argument(
-    data: list[float],
-):
+def test_restricted_sample_structure_missing_argument(data):
     return probros.sample("p")
 
 
 @probros.probabilistic_program
-def test_restricted_sample_structure_incorrect_keyword_argument(
-    data: list[float],
-):
+def test_restricted_sample_structure_incorrect_keyword_argument(data):
     return probros.sample("p", distribution=probros.Uniform(0, 1))
 
 
@@ -654,7 +683,7 @@ def test_restricted_observe_call_address_number(data):
 
 
 @probros.probabilistic_program
-def test_restricted_observe_call_address_variable(data: list[float]):
+def test_restricted_observe_call_address_variable(data):
     for i in range(0, len(data)):
         address = probros.IndexedAddress("data", i)
         probros.observe(
@@ -665,7 +694,7 @@ def test_restricted_observe_call_address_variable(data: list[float]):
 
 
 @probros.probabilistic_program
-def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
+def test_restrict_observe_structure_two_keyword_arguments(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -675,7 +704,7 @@ def test_restrict_observe_structure_two_keyword_arguments(data: list[float]):
 
 
 @probros.probabilistic_program
-def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
+def test_restrict_observe_structure_one_keyword_argument(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -685,9 +714,7 @@ def test_restrict_observe_structure_one_keyword_argument(data: list[float]):
 
 
 @probros.probabilistic_program
-def test_restrict_observe_structure_incorrect_ordering(
-    data: list[float],
-):
+def test_restrict_observe_structure_incorrect_ordering(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
@@ -697,9 +724,7 @@ def test_restrict_observe_structure_incorrect_ordering(
 
 
 @probros.probabilistic_program
-def test_restrict_observe_structure_missing_positional(
-    data: list[float],
-):
+def test_restrict_observe_structure_missing_positional(data):
     for i in range(0, len(data)):
         probros.observe(
             value=data[i],
