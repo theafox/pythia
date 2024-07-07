@@ -60,7 +60,7 @@ def test_invalid_probabilistic_program(data):
 class TestValidProbabilisticClassMethodOuter:
     @probros.probabilistic_program
     def test_valid_probabilistic_class_method(self):
-        count: int = 0
+        count = 0
         for i in range(0, self.length):
             probability = probros.sample(
                 probros.IndexedAddress("this", i),
@@ -75,7 +75,7 @@ class TestValidProbabilisticClassMethodOuter:
 class TestProhibitedFstringInClassMethod:
     @probros.probabilistic_program
     def test_invalid_probabilistic_class_method(self):
-        count: int = 0
+        count = 0
         for i in range(0, self.length):
             address = f"this[{i}]"
             probability = probros.sample(address, probros.Uniform(0, 1))
@@ -219,6 +219,11 @@ def test_prohibited_augmented_assign_division(probability):
 @probros.probabilistic_program
 def test_prohibited_augmented_assign_power(probability):
     probability **= 2
+
+
+@probros.probabilistic_program
+def test_warned_annotated_assign_int(a):
+    b: int = a
 
 
 @probros.probabilistic_program

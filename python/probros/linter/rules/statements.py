@@ -6,7 +6,7 @@ the documentation of that class in case of changes or additions.
 
 import ast
 
-from diagnostic import Diagnostic
+from diagnostic import Diagnostic, Severity
 
 from .base import BaseRule
 from .utils import is_function_called
@@ -136,6 +136,23 @@ class NoAugmentedAssignRule(BaseRule):
         return (
             Diagnostic.from_node(node, message=cls.message)
             if isinstance(node, ast.AugAssign)
+            else None
+        )
+
+
+class WarnAnnotatedAssignRule(BaseRule):
+
+    message = "Annotated assigns are discouraged"
+
+    @classmethod
+    def check(cls, node: ast.AST) -> Diagnostic | None:
+        return (
+            Diagnostic.from_node(
+                node,
+                message=cls.message,
+                severity=Severity.WARNING,
+            )
+            if isinstance(node, ast.AnnAssign)
             else None
         )
 

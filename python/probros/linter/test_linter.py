@@ -12,7 +12,7 @@ test-case.
 
 The names of the test-cases generally follow the following pattern:
 ```
-    test_(prohibited|restrict(ed)?)_<the rule name>_<any sub-test-cases>
+    test_(warned|prohibited|restrict(ed)?)_<the rule name>_<any sub-test-cases>
 ```
 
 Fixtures:
@@ -153,7 +153,7 @@ def test_invalid_probabilistic_program(data):
 class TestValidProbabilisticClassMethodOuter:
     @probros.probabilistic_program
     def test_valid_probabilistic_class_method(self):
-        count: int = 0
+        count = 0
         for i in range(0, self.length):
             probability = probros.sample(
                 probros.IndexedAddress("this", i),
@@ -173,7 +173,7 @@ class TestValidProbabilisticClassMethodOuter:
 class TestProhibitedFstringInClassMethod:
     @probros.probabilistic_program
     def test_invalid_probabilistic_class_method(self):
-        count: int = 0
+        count = 0
         for i in range(0, self.length):
             address = f"this[{i}]"
             probability = probros.sample(address, probros.Uniform(0, 1))
@@ -381,9 +381,17 @@ def test_prohibited_type_aliasing():
     return probability
             """
             diagnostics = default_linter.lint_code(code)
-            assert len(diagnostics) == 1
-            assert diagnostics[0].severity == Severity.ERROR
-            assert diagnostics[0].message == rules.NoTypeAliasRule.message
+            assert len(diagnostics) == 2
+            assert any(
+                diagnostic.severity == Severity.ERROR
+                and diagnostic.message == rules.NoTypeAliasRule.message
+                for diagnostic in diagnostics
+            )
+            assert any(
+                diagnostic.severity == Severity.WARNING
+                and diagnostic.message == rules.WarnAnnotatedAssignRule.message
+                for diagnostic in diagnostics
+            )
 
         @staticmethod
         def test_allowed_array_assign(default_linter: Linter):
@@ -474,6 +482,20 @@ def test_prohibited_augmented_assign_power(probability):
             assert diagnostics[0].severity == Severity.ERROR
             assert (
                 diagnostics[0].message == rules.NoAugmentedAssignRule.message
+            )
+
+        @staticmethod
+        def test_warned_annotated_assign_int(default_linter: Linter):
+            code = """
+@probros.probabilistic_program
+def test_warned_annotated_assign_int(a):
+    b: int = a
+            """
+            diagnostics = default_linter.lint_code(code)
+            assert len(diagnostics) == 1
+            assert diagnostics[0].severity == Severity.WARNING
+            assert (
+                diagnostics[0].message == rules.WarnAnnotatedAssignRule.message
             )
 
         @staticmethod
