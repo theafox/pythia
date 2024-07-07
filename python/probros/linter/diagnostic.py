@@ -8,8 +8,10 @@ class Severity(Enum):
     """This represents the severity of diagnostics.
 
     Attributes:
-        WARNING: Indicates a warning-level severity.
         ERROR: Indicates a warning-level severity.
+        WARNING: Indicates a warning-level severity.
+        INFORMATION: Indicates an information-level severity.
+        HINT: Indicates a hint-level severity.
     """
 
     ERROR = 40
