@@ -24,7 +24,6 @@ Fixtures:
 import pytest
 import rules
 from diagnostic import Severity
-
 from linter import Linter, default_probabilistic_program_linter
 
 
@@ -34,9 +33,7 @@ def default_linter() -> Linter:
 
 
 class TestEntryPointRecognition:
-
     class TestUnrecognizedDecoratorWarning:
-
         @staticmethod
         def test_unrecognized_decorator_addition(default_linter: Linter):
             code = """
@@ -73,7 +70,6 @@ def test_unrecognized_decorator_matching_string():
             assert diagnostics[0].severity == Severity.WARNING
 
     class TestInvalidEntryPoints:
-
         @staticmethod
         def test_valid_entry_point_positional_only_arguments(
             default_linter: Linter,
@@ -165,7 +161,6 @@ def test_invalid_entry_point_typed_keyword_argument(data: list[int] = []):
             assert Severity.WARNING in severities
 
     class TestUncheckedDefinitions:
-
         @staticmethod
         def test_unchecked_code_decorator_definition(default_linter: Linter):
             code = """
@@ -198,7 +193,6 @@ def test_unchecked_code_different_decorator_usage():
             assert not diagnostics
 
     class TestNestedProbabilisticProgramDefinition:
-
         @staticmethod
         def test_valid_probabilistic_program(default_linter: Linter):
             code = """
@@ -334,9 +328,7 @@ def test_prohibited_fstring_in_function_outer():
 
 
 class TestStatementLinting:
-
     class TestProhibitedNestedDefinitionsAndImports:
-
         @staticmethod
         def test_prohibited_nested_function(default_linter: Linter):
             code = """
@@ -438,7 +430,6 @@ def test_prohibited_nonlocal():
             )
 
     class TestRestrictedVariableManipulation:
-
         @staticmethod
         def test_prohibited_delete(default_linter: Linter):
             code = """
@@ -620,7 +611,6 @@ def test_prohibited_attribute_assign(data):
             )
 
     class TestRestrictedControlFlowStructures:
-
         @staticmethod
         def test_prohibited_standalone_expression_allowed_observe(
             default_linter: Linter,
@@ -911,7 +901,6 @@ def test_prohibited_empty_return(data):
             assert diagnostics[0].message == rules.NoEmptyReturnRule.message
 
     class TestRestrictedExceptionHandling:
-
         @staticmethod
         def test_prohibited_raise(default_linter: Linter):
             code = """
@@ -953,9 +942,7 @@ def test_prohibited_assert(data):
 
 
 class TestExpressionLinting:
-
     class TestRestrictedOperators:
-
         @staticmethod
         def test_restricted_unary_operator_bitwise(default_linter: Linter):
             code = """
@@ -1105,7 +1092,6 @@ def test_restricted_comparison_operators_multiple(a, b, c):
             )
 
     class TestProhibitedInlineStatements:
-
         @staticmethod
         def test_prohibited_walrus(default_linter: Linter):
             code = """
@@ -1165,7 +1151,6 @@ def test_prohibited_inline_if(probability):
             assert diagnostics[0].message == rules.NoInlineIfRule.message
 
     class TestRestrictedDataStructures:
-
         @staticmethod
         def test_prohibited_dictionary(default_linter: Linter):
             code = """
@@ -1281,7 +1266,6 @@ def test_prohibited_generator():
             )
 
     class TestRestrictedControlFlowManipulation:
-
         @staticmethod
         def test_prohibited_asynchronous_await(default_linter: Linter):
             code = """
@@ -1367,7 +1351,6 @@ def test_prohibited_yield_from(data):
             assert rules.NoStandaloneExpressionRule.message in messages
 
     class TestRestrictedSyntax:
-
         @staticmethod
         def test_prohibited_fstring(default_linter: Linter):
             code = """
@@ -1444,7 +1427,6 @@ def test_prohibited_type_parameters_function(data):
             assert rules.NoTypeParameterRule.message in messages
 
     class TestRestrictedDataStructureManipulation:
-
         @staticmethod
         def test_prohibited_slice(default_linter: Linter):
             code = """
@@ -1489,9 +1471,7 @@ def test_prohibited_multiple_subscript(data):
 
 
 class TestProbrosSpecificLinting:
-
     class TestRestrictedSample:
-
         @staticmethod
         def test_restricted_sample_structure(default_linter: Linter):
             code = """
@@ -1554,7 +1534,6 @@ def test_restricted_sample_structure_incorrect_keyword_argument(data):
             )
 
     class TestRestrictedObserve:
-
         @staticmethod
         def test_restricted_observe_call_address_number(
             default_linter: Linter,
@@ -1677,7 +1656,6 @@ def test_restrict_observe_structure_missing_positional(data):
             )
 
     class TestRestrictedFactor:
-
         @staticmethod
         def test_restricted_factor_valid_keyword(default_linter: Linter):
             code = """
@@ -1731,7 +1709,6 @@ def test_restricted_factor_additional_argument():
             )
 
     class TestRestrictedAddresses:
-
         @staticmethod
         def test_restricted_observe_valid_broadcasted(default_linter: Linter):
             code = """
@@ -1876,7 +1853,6 @@ def test_restricted_indexed_address_missing_number(data):
             )
 
     class TestVectorConstructor:
-
         @staticmethod
         def test_restricted_vector_constructor_size(
             default_linter: Linter,
@@ -1948,7 +1924,6 @@ def test_restricted_vector_constructor_additional_argument(data):
             )
 
     class TestArrayConstructor:
-
         @staticmethod
         def test_restricted_array_constructor_size(
             default_linter: Linter,
@@ -2021,7 +1996,6 @@ def test_restricted_array_constructor_additional_argument(data):
 
 
 class TestUnrecommendedUseCases:
-
     @staticmethod
     def test_unrecommended_use_case_class(default_linter: Linter):
         code = """

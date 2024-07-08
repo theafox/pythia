@@ -1,4 +1,4 @@
-""" This module contains rules for validating probros-specific nodes.
+"""This module contains rules for validating probros-specific nodes.
 
 Each rule is implemented as a class inheriting from `BaseRule`. Therefore, view
 the documentation of that class in case of changes or additions.
@@ -14,7 +14,6 @@ from .utils import Address, Distribution, is_function_called
 
 
 class RestrictSampleCallStructureRule(BaseRule):
-
     _NAME = "sample"
 
     message = (
@@ -44,7 +43,6 @@ class RestrictSampleCallStructureRule(BaseRule):
 
 
 class RestrictObserveCallStructureRule(BaseRule):
-
     _NAME = "observe"
     _ADDRESS = "address"
     _DISTRIBUTION = "distribution"
@@ -137,7 +135,6 @@ class RestrictObserveCallStructureRule(BaseRule):
 
 
 class RestrictFactorCallStructureRule(BaseRule):
-
     _NAME = "factor"
     _ADDRESS = "address"
 
@@ -156,12 +153,15 @@ class RestrictFactorCallStructureRule(BaseRule):
             case ast.Call(args=[_], keywords=[]):
                 return None
             # Address given.
-            case ast.Call(
-                args=[_, address],
-                keywords=[],
-            ) | ast.Call(
-                args=[_],
-                keywords=[ast.keyword(arg=cls._ADDRESS, value=address)],
+            case (
+                ast.Call(
+                    args=[_, address],
+                    keywords=[],
+                )
+                | ast.Call(
+                    args=[_],
+                    keywords=[ast.keyword(arg=cls._ADDRESS, value=address)],
+                )
             ) if Address.is_address(address):
                 return None
             case _:
@@ -169,7 +169,6 @@ class RestrictFactorCallStructureRule(BaseRule):
 
 
 class RestrictIndexedAddressCallStructureRule(BaseRule):
-
     _NAME = "IndexedAddress"
 
     message = f"Usage: `{_NAME}(<address>, <index>, …)`"
@@ -190,7 +189,6 @@ class RestrictIndexedAddressCallStructureRule(BaseRule):
 
 
 class RestrictVectorConstructorCallStructureRule(BaseRule):
-
     _NAME = "Vector"
     _FILL = "fill"
     _TYPE = "t"
@@ -252,7 +250,6 @@ class RestrictVectorConstructorCallStructureRule(BaseRule):
 
 
 class RestrictArrayConstructorCallStructureRule(BaseRule):
-
     _NAME = "Array"
     _FILL = "fill"
     _TYPE = "t"

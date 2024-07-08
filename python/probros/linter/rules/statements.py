@@ -1,4 +1,4 @@
-""" This module contains rules for validating statement nodes.
+"""This module contains rules for validating statement nodes.
 
 Each rule is implemented as a class inheriting from `BaseRule`. Therefore, view
 the documentation of that class in case of changes or additions.
@@ -16,7 +16,6 @@ from .utils import is_function_called
 
 
 class NoNestedFunctionsRule(BaseRule):
-
     message = "Nested functions are prohibited"
 
     @override
@@ -30,7 +29,6 @@ class NoNestedFunctionsRule(BaseRule):
 
 
 class NoNestedClassesRule(BaseRule):
-
     message = "Nested classes are prohibited"
 
     @override
@@ -44,7 +42,6 @@ class NoNestedClassesRule(BaseRule):
 
 
 class NoImportRule(BaseRule):
-
     message = "Importing is prohibited"
 
     @override
@@ -58,7 +55,6 @@ class NoImportRule(BaseRule):
 
 
 class NoGlobalOrNonlocalDeclarationRule(BaseRule):
-
     message = "Declaring global variables is prohibited"
 
     @override
@@ -75,7 +71,6 @@ class NoGlobalOrNonlocalDeclarationRule(BaseRule):
 
 
 class NoDeleteStatementRule(BaseRule):
-
     message = "Delete statements are prohibited"
 
     @override
@@ -89,7 +84,6 @@ class NoDeleteStatementRule(BaseRule):
 
 
 class NoTypeAliasRule(BaseRule):
-
     message = "Type aliasing is prohibited"
 
     @override
@@ -103,7 +97,6 @@ class NoTypeAliasRule(BaseRule):
 
 
 class NoDeconstructorRule(BaseRule):
-
     message = "Deconstructors are prohibited"
 
     @override
@@ -123,7 +116,6 @@ class NoDeconstructorRule(BaseRule):
 
 
 class NoChainedAssignmentRule(BaseRule):
-
     message = "Chained assignments are prohibited"
 
     @override
@@ -137,7 +129,6 @@ class NoChainedAssignmentRule(BaseRule):
 
 
 class NoAugmentedAssignRule(BaseRule):
-
     message = "Augmented assigns are prohibited"
 
     @override
@@ -151,7 +142,6 @@ class NoAugmentedAssignRule(BaseRule):
 
 
 class WarnAnnotatedAssignRule(BaseRule):
-
     message = "Annotated assigns are discouraged"
 
     @override
@@ -169,7 +159,6 @@ class WarnAnnotatedAssignRule(BaseRule):
 
 
 class NoAttributeAssignRule(BaseRule):
-
     message = "Attributes may not be written to"
 
     @override
@@ -180,8 +169,9 @@ class NoAttributeAssignRule(BaseRule):
                 isinstance(target, ast.Attribute) for target in targets
             ):
                 return Diagnostic.from_node(node, message=cls.message)
-            case ast.AnnAssign(target=ast.Attribute()) | ast.AugAssign(
-                target=ast.Attribute()
+            case (
+                ast.AnnAssign(target=ast.Attribute())
+                | ast.AugAssign(target=ast.Attribute())
             ):
                 return Diagnostic.from_node(node, message=cls.message)
             case _:
@@ -192,7 +182,6 @@ class NoAttributeAssignRule(BaseRule):
 
 
 class NoStandaloneExpressionRule(BaseRule):
-
     message = "Expressions may not appear as statements"
 
     @override
@@ -212,7 +201,6 @@ class NoStandaloneExpressionRule(BaseRule):
 
 
 class RestrictForLoopIteratorRule(BaseRule):
-
     message = "For-loops may only use `range`"
 
     @override
@@ -228,7 +216,6 @@ class RestrictForLoopIteratorRule(BaseRule):
 
 
 class NoForElseRule(BaseRule):
-
     message = "For-loops may not have `else` blocks"
 
     @override
@@ -242,7 +229,6 @@ class NoForElseRule(BaseRule):
 
 
 class NoWhileElseRule(BaseRule):
-
     message = "While-loops may not have `else` blocks"
 
     @override
@@ -256,7 +242,6 @@ class NoWhileElseRule(BaseRule):
 
 
 class NoWithStatementRule(BaseRule):
-
     message = "With statements are prohibited"
 
     @override
@@ -270,7 +255,6 @@ class NoWithStatementRule(BaseRule):
 
 
 class NoMatchRule(BaseRule):
-
     message = "The match control-flow construct is prohibited"
 
     @override
@@ -284,7 +268,6 @@ class NoMatchRule(BaseRule):
 
 
 class NoAsynchronousStatementRule(BaseRule):
-
     message = "Asynchronous statements are prohibited"
 
     @override
@@ -300,7 +283,6 @@ class NoAsynchronousStatementRule(BaseRule):
 
 
 class NoPassRule(BaseRule):
-
     message = "Pass statements are prohibited"
 
     @override
@@ -314,7 +296,6 @@ class NoPassRule(BaseRule):
 
 
 class NoEmptyReturnRule(BaseRule):
-
     message = "Empty returns are prohibited"
 
     @override
@@ -331,7 +312,6 @@ class NoEmptyReturnRule(BaseRule):
 
 
 class NoRaiseExceptionRule(BaseRule):
-
     message = "Raising exceptions is prohibited"
 
     @override
@@ -345,7 +325,6 @@ class NoRaiseExceptionRule(BaseRule):
 
 
 class NoTryExceptRule(BaseRule):
-
     message = "The try-except control-flow is prohibited"
 
     @override
@@ -359,7 +338,6 @@ class NoTryExceptRule(BaseRule):
 
 
 class NoAssertRule(BaseRule):
-
     message = "Assertions are prohibited"
 
     @override

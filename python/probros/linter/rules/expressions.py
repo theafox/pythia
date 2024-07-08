@@ -1,4 +1,4 @@
-""" This module contains rules for validating expression nodes.
+"""This module contains rules for validating expression nodes.
 
 Each rule is implemented as a class inheriting from `BaseRule`. Therefore, view
 the documentation of that class in case of changes or additions.
@@ -15,7 +15,6 @@ from .base import BaseRule
 
 
 class RestrictBinaryOperatorsRule(BaseRule):
-
     # Prohibit shift and bitwise operators.
     message = "Binary operators may only be of: +, -, *, /, //, %, **"
 
@@ -45,7 +44,6 @@ class RestrictBinaryOperatorsRule(BaseRule):
 
 
 class RestrictComparisonOperatorsRule(BaseRule):
-
     # Prohibit `is`, `is not`, `in`, `not in`.
     message = (
         "Comparison operators may only be binary and one of: "
@@ -80,7 +78,6 @@ class RestrictComparisonOperatorsRule(BaseRule):
 
 
 class RestrictUnaryOperatorsRule(BaseRule):
-
     # Prohibit the bitwise complement operator `~`.
     message = "Unary operators may only be of: +, -, not"
 
@@ -105,7 +102,6 @@ class RestrictUnaryOperatorsRule(BaseRule):
 
 
 class NoWalrusOperatorRule(BaseRule):
-
     message = "Walrus operators are prohibited"
 
     @override
@@ -119,7 +115,6 @@ class NoWalrusOperatorRule(BaseRule):
 
 
 class NoLambdaRule(BaseRule):
-
     message = "Lambda expressions are prohibited"
 
     @override
@@ -133,7 +128,6 @@ class NoLambdaRule(BaseRule):
 
 
 class NoInlineIfRule(BaseRule):
-
     message = "Inline if expressions are prohibited"
 
     @override
@@ -150,7 +144,6 @@ class NoInlineIfRule(BaseRule):
 
 
 class NoDictionaryRule(BaseRule):
-
     message = "Dictionaries are prohibited"
 
     @override
@@ -164,7 +157,6 @@ class NoDictionaryRule(BaseRule):
 
 
 class NoSetRule(BaseRule):
-
     message = "Sets are prohibited"
 
     @override
@@ -178,7 +170,6 @@ class NoSetRule(BaseRule):
 
 
 class NoComprehensionAndGeneratorRule(BaseRule):
-
     message = "Comprehensions are prohibited"
 
     @override
@@ -198,7 +189,6 @@ class NoComprehensionAndGeneratorRule(BaseRule):
 
 
 class NoAsynchronousExpressionRule(BaseRule):
-
     message = "Asynchronous expressions are prohibited"
 
     @override
@@ -219,7 +209,6 @@ class NoAsynchronousExpressionRule(BaseRule):
 
 
 class NoYieldRule(BaseRule):
-
     message = "Yields are prohibited"
 
     @override
@@ -236,7 +225,6 @@ class NoYieldRule(BaseRule):
 
 
 class NoFstringRule(BaseRule):
-
     message = "F-Strings are prohibited"
 
     @override
@@ -250,7 +238,6 @@ class NoFstringRule(BaseRule):
 
 
 class NoStarredRule(BaseRule):
-
     message = "Starred variables are prohibited"
 
     @override
@@ -264,7 +251,6 @@ class NoStarredRule(BaseRule):
 
 
 class NoTypeParameterRule(BaseRule):
-
     message = "Type parameters are prohibited"
 
     @override
@@ -281,7 +267,6 @@ class NoTypeParameterRule(BaseRule):
 
 
 class NoSliceRule(BaseRule):
-
     message = "Slices are prohibited"
 
     @override
@@ -295,7 +280,6 @@ class NoSliceRule(BaseRule):
 
 
 class NoMultipleSubscriptRule(BaseRule):
-
     message = "Multi-subscripts are prohibited"
 
     @override
