@@ -1,6 +1,6 @@
 import ast
 from itertools import chain
-from typing import override
+from typing import Iterable, override
 
 from context import Context
 
@@ -9,60 +9,81 @@ from ..utils import get_name
 
 
 class FunctionMapping(BaseMapping):
-    function_macro: str | None = None
+    macros: Iterable[str] = []
 
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.FunctionDef):
-            return node
-        name = node.name
-        arguments = [
-            argument.arg
-            for argument in chain(node.args.posonlyargs, node.args.args)
-        ]
-        context.line(
-            (f"{cls.function_macro} " if cls.function_macro else "")
-            + f"function {name}({', '.join(arguments)})"
-        )
-        with context.indented():
-            for statement in node.body:
-                context.translator.visit(statement)
-        context.line("end")
-        return node
+        match node:
+            case ast.FunctionDef(
+                name=name,
+                args=ast.arguments(
+                    posonlyargs=positional_arguments,
+                    args=arguments,
+                ),
+                body=body,
+            ):
+                macros = [
+                    f"@{macro.removeprefix("@")}"
+                    for macro in cls.macros
+                    if macro
+                ]
+                arguments = [
+                    argument.arg
+                    for argument in chain(positional_arguments, arguments)
+                ]
+                context.line(
+                    (" ".join(macros) + " " if macros else "")
+                    + f"function {name}({', '.join(arguments)})"
+                )
+                with context.indented():
+                    for statement in body:
+                        context.translator.visit(statement)
+                context.line("end")
+                return node
+            case _:
+                return node
 
 
 class IfMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.If):
-            return node
-        context.line(f"if {context.translator.visit(node.test)}")
-        with context.indented():
-            for statement in node.body:
-                context.translator.visit(statement)
-        if node.orelse:
-            context.line("else")
-            with context.indented():
-                for statement in node.orelse:
-                    context.translator.visit(statement)
-        context.line("end")
-        return node
+        match node:
+            case ast.If(
+                test=conditional,
+                body=if_body,
+                orelse=else_body,
+            ):
+                context.line(f"if {context.translator.visit(conditional)}")
+                with context.indented():
+                    for statement in if_body:
+                        context.translator.visit(statement)
+                if else_body:
+                    context.line("else")
+                    with context.indented():
+                        for statement in else_body:
+                            context.translator.visit(statement)
+                context.line("end")
+                return node
+            case _:
+                return node
 
 
 class WhileLoopMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.While):
-            return node
-        context.line(f"while {context.translator.visit(node.test)}")
-        with context.indented():
-            for statement in node.body:
-                context.translator.visit(statement)
-        context.line("end")
-        return node
+        match node:
+            case ast.While(test=conditional, body=body):
+                context.line(f"while {context.translator.visit(conditional)}")
+                with context.indented():
+                    for statement in body:
+                        context.translator.visit(statement)
+                context.line("end")
+                return node
+            case _:
+                return node
 
 
 class ForLoopMapping(BaseMapping):
@@ -105,31 +126,37 @@ class ContinueMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.Continue):
-            return node
-        context.line("continue")
-        return node
+        match node:
+            case ast.Continue():
+                context.line("continue")
+                return node
+            case _:
+                return node
 
 
 class BreakMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.Break):
-            return node
-        context.line("break")
-        return node
+        match node:
+            case ast.Break():
+                context.line("break")
+                return node
+            case _:
+                return node
 
 
 class ReturnMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.Return):
-            return node
-        value = context.translator.visit(node.value) if node.value else "nothing"
-        context.line(f"return {value}")
-        return node
+        match node:
+            case ast.Return(value=value):
+                value = context.translator.visit(value) if value else "nothing"
+                context.line(f"return {value}")
+                return node
+            case _:
+                return node
 
 
 class AssignmentMapping(BaseMapping):
@@ -153,7 +180,11 @@ class NameMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        return node.id if isinstance(node, ast.Name) else node
+        match node:
+            case ast.Name(id=name):
+                return name
+            case _:
+                return node
 
 
 class ConstantMapping(BaseMapping):
@@ -206,11 +237,13 @@ class IndexingMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.Subscript):
-            return node
-        target = context.translator.visit(node.value)
-        index = context.translator.visit(node.slice)
-        return f"{target}[({index}) + 1]"
+        match node:
+            case ast.Subscript(value=target, slice=index):
+                target = context.translator.visit(target)
+                index = context.translator.visit(index)
+                return f"{target}[({index}) + 1]"
+            case _:
+                return node
 
 
 class CallMapping(BaseMapping):
@@ -311,10 +344,10 @@ class UnaryOperatorsMapping(BaseMapping):
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        if not isinstance(node, ast.UnaryOp):
-            return node
-        operand = context.translator.visit(node.operand)
-        operator = cls.mappings.get(type(node.op))
-        if not operator:
-            return node
-        return f"{operator} ({operand})"
+        match node:
+            case ast.UnaryOp(operand=operand, op=operator):
+                operand = context.translator.visit(operand)
+                operator = cls.mappings.get(type(operator))
+                return f"{operator} ({operand})" if operator else node
+            case _:
+                return node
