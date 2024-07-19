@@ -36,11 +36,6 @@ class RestrictBinaryOperatorsRule(BaseRule):
                 return None
             case _:
                 return Diagnostic.from_node(node, message=cls.message)
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.BinOp)
-            else None
-        )
 
 
 class RestrictComparisonOperatorsRule(BaseRule):
@@ -70,11 +65,6 @@ class RestrictComparisonOperatorsRule(BaseRule):
                 return None
             case _:
                 return Diagnostic.from_node(node, message=cls.message)
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.BinOp)
-            else None
-        )
 
 
 class RestrictUnaryOperatorsRule(BaseRule):
@@ -91,11 +81,6 @@ class RestrictUnaryOperatorsRule(BaseRule):
                 return None
             case _:
                 return Diagnostic.from_node(node, message=cls.message)
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.BinOp)
-            else None
-        )
 
 
 # Prohibit inline statements. #################################################
