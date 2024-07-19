@@ -63,7 +63,14 @@ class Diagnostic:
     @classmethod
     def from_node(
         cls,
-        node: ast.AST,
+        node: ast.stmt
+        | ast.expr
+        | ast.excepthandler
+        | ast.arg
+        | ast.keyword
+        | ast.alias
+        | ast.pattern
+        | ast.type_param,
         message: str,
         severity: Severity = Severity.ERROR,
     ) -> Self:
