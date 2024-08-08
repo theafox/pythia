@@ -2,14 +2,9 @@ import ast
 from typing import Callable
 
 
-def get_name(node: ast.expr, /, flat_name_only: bool = False) -> str:
+def get_name(node: ast.expr) -> str:
     match node:
-        case ast.Name(id=called) if flat_name_only:
-            return called
-        case (
-            ast.Name(id=called)
-            | ast.Attribute(attr=called)
-        ) if not flat_name_only:
+        case ast.Name(id=called) | ast.Attribute(attr=called):
             return called
         case _:
             return str(node)

@@ -1,6 +1,7 @@
 import ast
+from dataclasses import KW_ONLY, dataclass
 from itertools import chain
-from typing import Iterable, override
+from typing import Callable, Iterable, override
 
 from context import Context
 
@@ -247,31 +248,63 @@ class IndexingMapping(BaseMapping):
 
 
 class CallMapping(BaseMapping):
-    # TODO: translate specific arguments properly
-    mappings: dict[str, str] = {
-        "len": "length",
-        "abs": "abs",
-        "sum": "sum",
-        "max": "maximum",
-        "min": "minimum",
-        "sorted": "sort",
-        "round": "round",
-        "print": "println",
+    @dataclass(frozen=True)
+    class Mapping:
+        frm: str
+        to: str
+        _: KW_ONLY  # continue with keyword-only arguments
+        must_be_flat: bool = False
+        check_arguments: Callable[[Iterable[ast.expr]], bool] = lambda _: True
+        map_arguments: Callable[
+            [Iterable[ast.expr], Context], Iterable[str]
+        ] = lambda arguments, context: map(
+            str, map(context.translator.visit, arguments)
+        )
+
+    _default_mappings: Iterable[Mapping] = {
+        # Maths.
+        Mapping("abs", "abs", must_be_flat=True),
+        Mapping("max", "max", must_be_flat=True),
+        Mapping("min", "min", must_be_flat=True),
+        Mapping("sum", "sum", must_be_flat=True),
+        Mapping("round", "round", must_be_flat=True),
+        # Arrays.
+        Mapping("len", "length", must_be_flat=True),
+        Mapping("sorted", "sort", must_be_flat=True),
+        # IO.
+        Mapping("print", "println", must_be_flat=True),
     }
+
+    # In case multiple mappings are defined for the same function, the most
+    # recent the iterator extracts is used. Therefore, this may be used to
+    # override default mappings such as `abs`.
+    mappings: Iterable[Mapping] = {}
 
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
+        # Convert to native mapping-data-structure for easier key lookup.
+        # Additionally, this eliminates any duplicate entries, using the last
+        # one found.
+        mappings = {
+            mapping.frm: mapping
+            for mapping in chain(cls._default_mappings, cls.mappings)
+        }
         match node:
             case ast.Call(
                 func=function,
                 args=arguments,
-            ) if (
-                name := get_name(function, flat_name_only=True)
-            ) in cls.mappings.keys():
-                name = cls.mappings[name]
-                arguments = map(context.translator.visit, arguments)
-                return f"{name}({", ".join(map(str, arguments))})"
+            ) if (name := get_name(function)) in mappings and (
+                not (
+                    isinstance(function, ast.Attribute)
+                    and mappings[name].must_be_flat
+                )
+                and mappings[name].check_arguments(arguments)
+            ):
+                # TODO: allow for keyword arguments!
+                arguments = mappings[name].map_arguments(arguments, context)
+                name = mappings[name].to
+                return f"{name}({", ".join(arguments)})"
             case _:
                 return node
 
