@@ -275,7 +275,7 @@ class CallMapping(BaseMapping):
     @dataclass(frozen=True)
     class Mapping:
         frm: str
-        to: str
+        to: str | None
         _: KW_ONLY  # continue with keyword-only arguments
         must_be_flat: bool = False
         check_arguments: Callable[[Iterable[ast.expr]], bool | str] = (
@@ -345,7 +345,11 @@ class CallMapping(BaseMapping):
 
                 arguments = mappings[name].map_arguments(arguments, context)
                 name = mappings[name].to
-                return f"{name}({", ".join(arguments)})"
+                return (
+                    f"{name}({", ".join(arguments)})"
+                    if name
+                    else "; ".join(arguments)
+                )
             case _:
                 return node
 
