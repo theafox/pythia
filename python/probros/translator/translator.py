@@ -58,12 +58,14 @@ def default_julia_translator() -> Translator:
             ast.While: julia_mappings.WhileLoopMapping,
             ast.For: julia_mappings.ForLoopMapping,
             ast.Assign: julia_mappings.AssignmentMapping,
+            ast.Expr: julia_mappings.StandaloneExpressionMapping,
             ast.Return: julia_mappings.ReturnMapping,
             ast.Continue: julia_mappings.ContinueMapping,
             ast.Break: julia_mappings.BreakMapping,
             # Expressions.
             ast.Tuple: julia_mappings.TupleMapping,
             ast.List: julia_mappings.ListMapping,
+            ast.Attribute: julia_mappings.AttributeMapping,
             ast.Subscript: julia_mappings.IndexingMapping,
             ast.Call: julia_mappings.CallMapping,
             ast.BinOp: julia_mappings.BinaryOperatorsMapping,
@@ -85,6 +87,7 @@ def default_python_translator() -> Translator:
             ast.While: python_mappings.WhileLoopMapping,
             ast.For: python_mappings.ForLoopMapping,
             ast.Assign: python_mappings.AssignmentMapping,
+            ast.Expr: python_mappings.StandaloneExpressionMapping,
             ast.Return: python_mappings.ReturnMapping,
             **{
                 target: python_mappings.GenericStatementMapping
@@ -93,6 +96,7 @@ def default_python_translator() -> Translator:
             # Expressions.
             ast.Tuple: python_mappings.TupleMapping,
             ast.List: python_mappings.ListMapping,
+            ast.Attribute: python_mappings.AttributeMapping,
             ast.Subscript: python_mappings.IndexingMapping,
             ast.BinOp: python_mappings.BinaryOperatorsMapping,
             ast.Compare: python_mappings.BinaryOperatorsMapping,

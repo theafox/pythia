@@ -165,6 +165,18 @@ class AssignmentMapping(BaseMapping):
                 return node
 
 
+class StandaloneExpressionMapping(BaseMapping):
+    @override
+    @classmethod
+    def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
+        match node:
+            case ast.Expr(value=value):
+                context.line(str(context.translator.visit(value)))
+                return node
+            case _:
+                return node
+
+
 class TupleMapping(BaseMapping):
     @override
     @classmethod
@@ -191,6 +203,17 @@ class ListMapping(BaseMapping):
             case ast.List(elts=[*elements]):
                 evaluated = map(context.translator.visit, elements)
                 return f"[{", ".join(map(str, evaluated))}]"
+            case _:
+                return node
+
+
+class AttributeMapping(BaseMapping):
+    @override
+    @classmethod
+    def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
+        match node:
+            case ast.Attribute(value=left, attr=right):
+                return f"{context.translator.visit(left)}.{right}"
             case _:
                 return node
 
