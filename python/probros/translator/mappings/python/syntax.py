@@ -242,6 +242,12 @@ class CallMapping(BaseMapping):
         check_arguments: Callable[[Iterable[ast.expr]], bool | str] = (
             lambda _: True
         )
+        normalize_arguments: Callable[
+            [Iterable[ast.expr], Iterable[ast.keyword], Context],
+            Iterable[ast.expr],
+        ] = lambda arguments, keywords, _: list(arguments) + [
+            keyword.value for keyword in keywords
+        ]
         map_arguments: Callable[
             [Iterable[ast.expr], Context], Iterable[str]
         ] = lambda arguments, context: map(
@@ -263,12 +269,15 @@ class CallMapping(BaseMapping):
             case ast.Call(
                 func=function,
                 args=arguments,
+                keywords=keyword_arguments,
             ) if (name := get_name(function)) not in mappings or not (
                 isinstance(function, ast.Attribute)
                 and mappings[name].must_be_flat
             ):
-                # TODO: allow for keyword arguments!
                 if name in mappings:
+                    arguments = mappings[name].normalize_arguments(
+                        arguments, keyword_arguments, context
+                    )
                     if (
                         message := mappings[name].check_arguments(arguments)
                     ) is not True:
