@@ -5,6 +5,7 @@ import mappings.julia as julia_mappings
 import mappings.python as python_mappings
 from context import Context
 from mappings import BaseMapping
+from mappings.base import MappingError
 
 _PARSE_ERROR_CODE = 10
 _READ_ERROR_CODE = 20
@@ -30,8 +31,12 @@ class Translator(ast.NodeTransformer):
 
     def translate(self, node: ast.AST) -> str:
         self._context = Context(self)
-        self.visit(node)
-        return self._context.consolidated()
+        try:
+            self.visit(node)
+        except MappingError as error:
+            return error.message  # TODO: implement proper logging
+        else:
+            return self._context.consolidated()
 
     def translate_code(self, code: str) -> str:
         try:

@@ -6,6 +6,7 @@ from typing import Callable, Iterable, override
 from context import Context
 
 from .. import BaseMapping
+from ..base import MappingError
 from ..utils import get_name
 
 
@@ -238,7 +239,9 @@ class CallMapping(BaseMapping):
         to: str
         _: KW_ONLY  # continue with keyword-only arguments
         must_be_flat: bool = False
-        check_arguments: Callable[[Iterable[ast.expr]], bool] = lambda _: True
+        check_arguments: Callable[[Iterable[ast.expr]], bool | str] = (
+            lambda _: True
+        )
         map_arguments: Callable[
             [Iterable[ast.expr], Context], Iterable[str]
         ] = lambda arguments, context: map(
@@ -260,14 +263,21 @@ class CallMapping(BaseMapping):
             case ast.Call(
                 func=function,
                 args=arguments,
-            ) if (name := get_name(function)) not in mappings or (
-                not (
-                    isinstance(function, ast.Attribute)
-                    and mappings[name].must_be_flat
-                )
-                and mappings[name].check_arguments(arguments)
+            ) if (name := get_name(function)) not in mappings or not (
+                isinstance(function, ast.Attribute)
+                and mappings[name].must_be_flat
             ):
                 # TODO: allow for keyword arguments!
+                if name in mappings:
+                    if (
+                        message := mappings[name].check_arguments(arguments)
+                    ) is not True:
+                        raise (
+                            MappingError(message)
+                            if message is not False
+                            else MappingError()
+                        )
+
                 arguments = (
                     mappings[name].map_arguments(arguments, context)
                     if name in mappings
