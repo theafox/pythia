@@ -1,5 +1,5 @@
 import ast
-from typing import Mapping, override
+from typing import Callable, Mapping, override
 
 import mappings.julia as julia_mappings
 import mappings.python as python_mappings
@@ -16,9 +16,13 @@ class Translator(ast.NodeTransformer):
     def __init__(
         self,
         mappings: Mapping[type[ast.AST], type[BaseMapping]],
+        preamble: Callable[[Context], None] = lambda _: None,
+        postamble: Callable[[Context], None] = lambda _: None,
     ):
         super().__init__()
         self.mappings = mappings
+        self.preamble = preamble
+        self.postamble = postamble
         self._context = Context(self)
 
     @override
@@ -32,7 +36,11 @@ class Translator(ast.NodeTransformer):
     def translate(self, node: ast.AST) -> str:
         self._context = Context(self)
         try:
+            with self._context.in_preamble() as preamble:
+                self.preamble(preamble)
             self.visit(node)
+            with self._context.in_postamble() as postamble:
+                self.postamble(postamble)
         except MappingError as error:
             return error.message  # TODO: implement proper logging
         else:
