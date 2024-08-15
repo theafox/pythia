@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, override
+from itertools import chain
+from typing import TYPE_CHECKING, ClassVar, override
 
 # Import `Translator` only for the language-server and any linters since
 # circular imports would become a problem otherwise. For this reason, use
@@ -27,6 +28,13 @@ class Context:
 
     _indentation: int = field(default=0, init=False)
     _lines: list[Line] = field(default_factory=list, init=False)
+
+    _unique_address_counter: ClassVar[int] = 0
+
+    @staticmethod
+    def unique_address() -> str:
+        Context._unique_address_counter += 1
+        return f"__context__unique_address_{Context._unique_address_counter}"
 
     def consolidated(self) -> str:
         return "\n".join(str(line) for line in self._lines)
