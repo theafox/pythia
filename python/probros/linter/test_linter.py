@@ -1710,31 +1710,31 @@ def test_restricted_factor_additional_argument():
 
     class TestRestrictedAddresses:
         @staticmethod
-        def test_restricted_observe_valid_broadcasted(default_linter: Linter):
+        def test_restricted_observe_valid_iid(default_linter: Linter):
             code = """
 @probros.probabilistic_program
-def test_restricted_observe_valid_broadcasted(data):
+def test_restricted_observe_valid_iid(data):
     for i in range(0, len(data)):
         probros.observe(
             data[i],
             probros.IndexedAddress("data", i),
-            probros.Broadcasted(probros.Normal(0, 1)),
+            probros.IID(probros.Normal(0, 1), 21),
         )
             """
             diagnostics = default_linter.lint_code(code)
             assert not diagnostics
 
         @staticmethod
-        def test_restricted_sample_incorrect_broadcasted_arguments(
+        def test_restricted_sample_incorrect_iid_arguments(
             default_linter: Linter,
         ):
             code = """
 @probros.probabilistic_program
-def test_restricted_sample_incorrect_broadcasted_arguments():
+def test_restricted_sample_incorrect_iid_arguments():
     for i in range(0, 100):
         _ = probros.sample(
             probros.IndexedAddress("i", i),
-            probros.Broadcasted(probros.Normal(0, 1), 12),
+            probros.IID(probros.Normal(0, 1)),
         )
             """
             diagnostics = default_linter.lint_code(code)

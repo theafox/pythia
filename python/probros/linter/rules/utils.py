@@ -172,12 +172,6 @@ class Distribution:
 
         return [
             (
-                "Broadcasted",
-                lambda args: len(args) == 1
-                and cls._is_base_distribution(args[0]),
-                lambda kwargs: not kwargs,
-            ),
-            (
                 "IID",
                 lambda args: len(args) == 2
                 and cls._is_base_distribution(args[0]),
