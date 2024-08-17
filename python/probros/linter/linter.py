@@ -9,9 +9,10 @@ Example:
     logging output. The former restricts it to fatal messages, while the latter
     shows everything logged. To format the output as JSON, the `--json` flag
     may be provided. (This may include more details than the standard output.)
-    Additionally, either one positional argument must be provided, a file-path,
-    or the code directly via the `-c`/`--code` flag. (View these options using
-    the `-h`/`--help` flag.)
+    Additionally, either (i) one positional argument must be provided, a
+    file-path, (ii) the flag `--stdin`, indicating the code will be passed in
+    through std, or (iii) parse the code directly via the `-c`/`--code` flag.
+    (View these options using the `-h`/`--help` flag.)
 
         $ python3 linter.py test.py
         Linter ran successfully, received 3 hints.
@@ -41,6 +42,7 @@ Status: In Development
 
 import ast
 import logging as log
+import sys
 from itertools import chain
 from typing import Callable, Iterable, override
 
@@ -234,6 +236,26 @@ class Linter(ast.NodeVisitor):
                 code: str = file.read()
         except IOError:
             log.fatal(f"Could not read file {path[:25]!a}….")
+            exit(_READ_ERROR_CODE)
+        return self.lint_code(code)
+
+    def lint_stdin(self) -> list[Diagnostic]:
+        """Lint the input from stdin.
+
+        In case of errors while or because of reading stdin, exit the
+        program with code `_READ_ERROR_CODE`. And in case of errors while or
+        because of parsing the code, with code `_PARSE_ERROR_CODE`.
+
+        Returns:
+            The diagnostics found by the linter. All diagnostics identified by
+            the linter and any runtime errors are logged.
+        """
+
+        log.debug("Reading from stdin.")
+        try:
+            code: str = sys.stdin.read()
+        except IOError:
+            log.fatal("Could not read from stdin.")
             exit(_READ_ERROR_CODE)
         return self.lint_code(code)
 
@@ -448,11 +470,12 @@ def main() -> None:
     - either `-v` / `--verbose` to print debugging messages or
     - `-q` / `--quiet` to suppress anyything but fatal errors and the results,
     - `--json` to format the output as JSON, and
-    - either a filepath as a positional argument, or code usig `-c`/`--code`.
+    - either a filepath as a positional argument,
+    - `--stdin`,
+    - or code usig `-c`/`--code`.
     """
 
     import argparse
-    import sys
     from dataclasses import asdict
     from json import dumps
 
@@ -483,6 +506,11 @@ def main() -> None:
         help="File to run the linter on",
         type=str,
         nargs="?",
+    )
+    code_origin.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Read the code from stdin",
     )
     code_origin.add_argument("-c", "--code", help="The code to lint", type=str)
     parser.add_argument(
@@ -520,6 +548,8 @@ def main() -> None:
     diagnostics: list[Diagnostic] = []
     if args.filepath:
         diagnostics += linter.lint_file(args.filepath)
+    elif args.stdin:
+        diagnostics += linter.lint_stdin()
     elif args.code:
         diagnostics += linter.lint_code(args.code)
     else:
