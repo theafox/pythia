@@ -4,6 +4,7 @@ from typing import Callable, Mapping, override
 import mappings.julia as julia_mappings
 import mappings.julia.gen as gen_mappings
 import mappings.python as python_mappings
+import mappings.python.pyro as pyro_mappings
 from context import Context
 from mappings import BaseMapping, MappingError
 
@@ -131,3 +132,12 @@ def default_python_translator() -> Translator:
             },
         }
     )
+
+
+def default_pyro_translator() -> Translator:
+    python_translator = default_python_translator()
+    python_translator.preamble = pyro_mappings.preamble
+    python_translator.mappings = dict(python_translator.mappings) | {
+        ast.Call: pyro_mappings.CallMapping
+    }
+    return python_translator

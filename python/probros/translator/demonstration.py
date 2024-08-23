@@ -2,11 +2,13 @@ from translator import (
     Translator,
     default_gen_translator,
     default_julia_translator,
+    default_pyro_translator,
     default_python_translator,
 )
 
 AVAILABLE_TRANSLATORS = [
     ("python", default_python_translator()),
+    ("pyro", default_pyro_translator()),
     ("julia", default_julia_translator()),
     ("gen", default_gen_translator()),
 ]
