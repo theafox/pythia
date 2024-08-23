@@ -1,13 +1,11 @@
 import ast
-from dataclasses import KW_ONLY, dataclass
 from itertools import chain
 from typing import Callable, Iterable, override
 
 from context import Context
 
-from .. import BaseMapping
-from ..base import MappingError
-from ..utils import get_name
+from mappings import BaseMapping
+from mappings.utils import get_name, organize_arguments
 
 
 class GenericStatementMapping(BaseMapping):
@@ -233,71 +231,28 @@ class IndexingMapping(BaseMapping):
 
 
 class CallMapping(BaseMapping):
-    @dataclass(frozen=True)
-    class Mapping:
-        frm: str
-        to: str | None
-        _: KW_ONLY  # continue with keyword-only arguments
-        must_be_flat: bool = False
-        check_arguments: Callable[[Iterable[ast.expr]], bool | str] = (
-            lambda _: True
-        )
-        normalize_arguments: Callable[
-            [Iterable[ast.expr], Iterable[ast.keyword], Context],
-            Iterable[ast.expr],
-        ] = lambda arguments, keywords, _: list(arguments) + [
-            keyword.value for keyword in keywords
-        ]
-        map_arguments: Callable[
-            [Iterable[ast.expr], Context], Iterable[str]
-        ] = lambda arguments, context: map(
-            str, map(context.translator.visit, arguments)
-        )
-
-    # In case multiple mappings are defined for the same function, the most
-    # recent the iterator extracts is used.
-    mappings: Iterable[Mapping] = {}
+    mappings: dict[str, Callable[[ast.Call, Context], str]] = {}
 
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        # Convert to native mapping-data-structure for easier key lookup.
-        # Additionally, this eliminates any duplicate entries, using the last
-        # one found.
-        mappings = {mapping.frm: mapping for mapping in cls.mappings}
         match node:
-            case ast.Call(
-                func=function,
-                args=arguments,
-                keywords=keyword_arguments,
-            ) if (name := get_name(function)) not in mappings or not (
-                isinstance(function, ast.Attribute)
-                and mappings[name].must_be_flat
-            ):
-                if name in mappings:
-                    arguments = mappings[name].normalize_arguments(
-                        arguments, keyword_arguments, context
-                    )
-                    if (
-                        message := mappings[name].check_arguments(arguments)
-                    ) is not True:
-                        raise (
-                            MappingError(message)
-                            if message is not False
-                            else MappingError()
-                        )
-
-                arguments = (
-                    mappings[name].map_arguments(arguments, context)
-                    if name in mappings
-                    else map(str, map(context.translator.visit, arguments))
-                )
-                if name in mappings:
-                    name = mappings[name].to
+            case ast.Call(func=function) if (
+                name := get_name(function)
+            ) in cls.mappings:
+                mapping = cls.mappings[name]
+                return mapping(node, context)  # pass on `MappingError`
+            case ast.Call(func=function):
                 return (
-                    f"{name}({", ".join(arguments)})"
-                    if name
-                    else "; ".join(arguments)
+                    context.translator.visit(function)
+                    + "("
+                    + ", ".join(
+                        str(context.translator.visit(argument))
+                        for argument in organize_arguments(
+                            node.args, node.keywords
+                        )
+                    )
+                    + ")"
                 )
             case _:
                 return node

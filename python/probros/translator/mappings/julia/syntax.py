@@ -1,13 +1,11 @@
 import ast
-from dataclasses import KW_ONLY, dataclass
 from itertools import chain
 from typing import Callable, Iterable, override
 
 from context import Context
 
-from .. import BaseMapping
-from ..base import MappingError
-from ..utils import get_name
+from mappings import BaseMapping
+from mappings.utils import get_function_call_mapping, get_name
 
 
 class FunctionMapping(BaseMapping):
@@ -272,84 +270,37 @@ class IndexingMapping(BaseMapping):
 
 
 class CallMapping(BaseMapping):
-    @dataclass(frozen=True)
-    class Mapping:
-        frm: str
-        to: str | None
-        _: KW_ONLY  # continue with keyword-only arguments
-        must_be_flat: bool = False
-        check_arguments: Callable[[Iterable[ast.expr]], bool | str] = (
-            lambda _: True
-        )
-        normalize_arguments: Callable[
-            [Iterable[ast.expr], Iterable[ast.keyword], Context],
-            Iterable[ast.expr],
-        ] = lambda arguments, keywords, _: list(arguments) + [
-            keyword.value for keyword in keywords
-        ]
-        map_arguments: Callable[
-            [Iterable[ast.expr], Context], Iterable[str]
-        ] = lambda arguments, context: map(
-            str, map(context.translator.visit, arguments)
-        )
-
-    _default_mappings: Iterable[Mapping] = {
-        # Maths.
-        Mapping("abs", "abs", must_be_flat=True),
-        Mapping("max", "max", must_be_flat=True),
-        Mapping("min", "min", must_be_flat=True),
-        Mapping("sum", "sum", must_be_flat=True),
-        Mapping("round", "round", must_be_flat=True),
+    _default_mappings: dict[str, Callable[[ast.Call, Context], str]] = {
+        "abs": get_function_call_mapping(must_be_flat=True),
+        "max": get_function_call_mapping(must_be_flat=True),
+        "min": get_function_call_mapping(must_be_flat=True),
+        "sum": get_function_call_mapping(must_be_flat=True),
+        "round": get_function_call_mapping(must_be_flat=True),
         # Arrays.
-        Mapping("len", "length", must_be_flat=True),
-        Mapping("sorted", "sort", must_be_flat=True),
+        "len": get_function_call_mapping(
+            function_name="length", must_be_flat=True
+        ),
+        "sorted": get_function_call_mapping(
+            function_name="sort", must_be_flat=True
+        ),
         # IO.
-        Mapping("print", "println", must_be_flat=True),
+        "print": get_function_call_mapping(
+            function_name="println", must_be_flat=True
+        ),
     }
-
-    # In case multiple mappings are defined for the same function, the most
-    # recent the iterator extracts is used. Therefore, this may be used to
-    # override default mappings such as `abs`.
-    mappings: Iterable[Mapping] = {}
+    mappings: dict[str, Callable[[ast.Call, Context], str]] = {}
 
     @override
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
-        # Convert to native mapping-data-structure for easier key lookup.
-        # Additionally, this eliminates any duplicate entries, using the last
-        # one found.
-        mappings = {
-            mapping.frm: mapping
-            for mapping in chain(cls._default_mappings, cls.mappings)
-        }
+        # Mappings in `mappings` may override those in  `_default_mappings`.
+        mappings = cls._default_mappings | cls.mappings
         match node:
-            case ast.Call(
-                func=function,
-                args=arguments,
-                keywords=keyword_arguments,
-            ) if (name := get_name(function)) in mappings and not (
-                isinstance(function, ast.Attribute)
-                and mappings[name].must_be_flat
-            ):
-                arguments = mappings[name].normalize_arguments(
-                    arguments, keyword_arguments, context
-                )
-                if (
-                    message := mappings[name].check_arguments(arguments)
-                ) is not True:
-                    raise (
-                        MappingError(message)
-                        if message is not False
-                        else MappingError()
-                    )
-
-                arguments = mappings[name].map_arguments(arguments, context)
-                name = mappings[name].to
-                return (
-                    f"{name}({", ".join(arguments)})"
-                    if name
-                    else "; ".join(arguments)
-                )
+            case ast.Call(func=function) if (
+                name := get_name(function)
+            ) in mappings:
+                mapping = mappings[name]
+                return mapping(node, context)  # pass on `MappingError`
             case _:
                 return node
 
