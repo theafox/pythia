@@ -2,10 +2,10 @@ import ast
 from typing import Callable, Mapping, override
 
 import mappings.julia as julia_mappings
+import mappings.julia.gen as gen_mappings
 import mappings.python as python_mappings
 from context import Context
-from mappings import BaseMapping
-from mappings.base import MappingError
+from mappings import BaseMapping, MappingError
 
 _PARSE_ERROR_CODE = 10
 _READ_ERROR_CODE = 20
@@ -89,6 +89,16 @@ def default_julia_translator() -> Translator:
             ast.Name: julia_mappings.NameMapping,
         }
     )
+
+
+def default_gen_translator() -> Translator:
+    julia_translator = default_julia_translator()
+    julia_translator.preamble = gen_mappings.preamble
+    julia_translator.mappings = dict(julia_translator.mappings) | {
+        ast.FunctionDef: gen_mappings.FunctionMapping,
+        ast.Call: gen_mappings.CallMapping,
+    }
+    return julia_translator
 
 
 def default_python_translator() -> Translator:
