@@ -3,6 +3,7 @@ from typing import Callable, Mapping, override
 
 import mappings.julia as julia_mappings
 import mappings.julia.gen as gen_mappings
+import mappings.julia.turing as turing_mappings
 import mappings.python as python_mappings
 import mappings.python.pyro as pyro_mappings
 from context import Context
@@ -98,6 +99,17 @@ def default_gen_translator() -> Translator:
     julia_translator.mappings = dict(julia_translator.mappings) | {
         ast.FunctionDef: gen_mappings.FunctionMapping,
         ast.Call: gen_mappings.CallMapping,
+    }
+    return julia_translator
+
+
+def default_turing_translator() -> Translator:
+    julia_translator = default_julia_translator()
+    julia_translator.preamble = turing_mappings.preamble
+    julia_translator.mappings = dict(julia_translator.mappings) | {
+        ast.FunctionDef: turing_mappings.FunctionMapping,
+        ast.Assign: turing_mappings.AssignmentMapping,
+        ast.Call: turing_mappings.CallMapping,
     }
     return julia_translator
 

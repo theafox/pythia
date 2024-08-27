@@ -4,6 +4,7 @@ from translator import (
     default_julia_translator,
     default_pyro_translator,
     default_python_translator,
+    default_turing_translator,
 )
 
 AVAILABLE_TRANSLATORS = [
@@ -11,6 +12,7 @@ AVAILABLE_TRANSLATORS = [
     ("pyro", default_pyro_translator()),
     ("julia", default_julia_translator()),
     ("gen", default_gen_translator()),
+    ("turing", default_turing_translator()),
 ]
 CODE_PIECES = [
     #### The following examples are the models demonstrated in the thesis. ####
