@@ -8,7 +8,7 @@ from context import Context
 class BaseMapping(ABC):
     @classmethod
     @abstractmethod
-    def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
+    def map(cls, node: ast.AST, context: Context) -> str:
         raise NotImplementedError("Mapping method not implemented.")
 
 

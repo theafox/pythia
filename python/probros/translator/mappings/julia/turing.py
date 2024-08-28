@@ -58,7 +58,7 @@ class FunctionMapping(BaseFunctionMapping):
 class AssignmentMapping(BaseAssignmentMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> ast.AST | str:
+    def map(cls, node: ast.AST, context: Context) -> str:
         match node:
             case (
                 ast.Assign(
@@ -95,7 +95,7 @@ class AssignmentMapping(BaseAssignmentMapping):
                 target = context.translator.visit(target)
                 distribution = context.translator.visit(distribution)
                 context.line(f"{target} ~ {distribution}")
-                return node
+                return str(node)
             case _:
                 return super().map(node, context)
 
@@ -186,7 +186,7 @@ class CallMapping(BaseCallMapping):
             argument_defaults=[lambda: ast.Constant(Context.unique_address())],
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         subscriptable, *indices = argument_strings
         return (

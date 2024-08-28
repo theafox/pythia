@@ -40,7 +40,7 @@ class CallMapping(BaseCallMapping):
             ],
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         address, distribution = argument_strings[:2]
         return f"{{{address}}} ~ {distribution}"
@@ -67,7 +67,7 @@ class CallMapping(BaseCallMapping):
             ],
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         _, address, distribution = argument_strings[:3]
         return f"{{{address}}} ~ {distribution}"
@@ -115,7 +115,7 @@ class CallMapping(BaseCallMapping):
             argument_defaults=[lambda: ast.Constant(Context.unique_address())],
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         subscriptable, *indices = argument_strings
         return (

@@ -55,7 +55,7 @@ class CallMapping(BaseCallMapping):
             ],
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         argument_strings.append(f"obs={argument_strings.pop(0)}")
         mapping = get_function_call_mapping(
@@ -92,7 +92,7 @@ class CallMapping(BaseCallMapping):
             map_datatype(arguments.pop(2)) if len(arguments) >= 3 else None
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         if datatype is not None:
             argument_strings.append(f"dtype={datatype}")
@@ -109,7 +109,7 @@ class CallMapping(BaseCallMapping):
             argument_defaults=[lambda: ast.Constant(Context.unique_address())],
         )
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         subscriptable, *indices = argument_strings
         return (
@@ -135,7 +135,7 @@ class CallMapping(BaseCallMapping):
         if not isinstance(arguments[1], (ast.List, ast.Tuple)):
             arguments[1] = ast.Tuple([arguments[1]])
         argument_strings = [
-            str(context.translator.visit(argument)) for argument in arguments
+            context.translator.visit(argument) for argument in arguments
         ]
         distribution, size = argument_strings[:2]
         return f"{distribution}.expand({size})"

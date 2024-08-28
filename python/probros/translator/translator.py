@@ -28,11 +28,11 @@ class Translator(ast.NodeTransformer):
         self._context = Context(self)
 
     @override
-    def visit(self, node: ast.AST) -> ast.AST | str:
+    def visit(self, node: ast.AST) -> str:
         return (
             mapping.map(node, self._context)
             if (mapping := self.mappings.get(type(node)))
-            else super().generic_visit(node)
+            else str(super().generic_visit(node))
         )
 
     def translate(self, node: ast.AST) -> str:

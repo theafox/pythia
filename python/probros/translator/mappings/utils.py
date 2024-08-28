@@ -137,7 +137,7 @@ def get_function_call_mapping(
         arguments_ = [
             argument
             if isinstance(argument, str)
-            else str(context.translator.visit(argument))
+            else context.translator.visit(argument)
             for argument in arguments_
         ]
         return (
