@@ -1,4 +1,5 @@
 import ast
+import sys
 from typing import Any, Callable, Iterable, Mapping, override
 
 import mappings.julia as julia_mappings
@@ -79,6 +80,13 @@ class Translator(ast.NodeTransformer):
         try:
             with open(path, "r") as file:
                 code = file.read()
+        except IOError:
+            exit(_READ_ERROR_CODE)
+        return self.translate_code(code)
+
+    def translate_stdin(self) -> str | None:
+        try:
+            code = sys.stdin.read()
         except IOError:
             exit(_READ_ERROR_CODE)
         return self.translate_code(code)
