@@ -1,5 +1,7 @@
 import ast
+import logging as log
 import sys
+from enum import IntEnum
 from typing import Any, Callable, Iterable, Mapping, override
 
 import mappings.julia as julia_mappings
@@ -10,11 +12,26 @@ import mappings.python.pyro as pyro_mappings
 from context import Context
 from mappings import BaseMapping, MappingError
 
-_PARSE_ERROR_CODE = 10
-_READ_ERROR_CODE = 20
+
+class ExitCode(IntEnum):
+    # User generated and input errors.
+    INVALID_ARGUMENTS = 10
+    READ_ERROR = 11
+    PARSE_ERROR = 12
+    # Runtime errors.
+    TRANSLATION_ERROR = 20
+    NOT_YET_IMPLEMENTED = 21  # TODO: remove me.
 
 
-class Translator(ast.NodeTransformer):
+def _display(item: str | ast.AST, maximum_length: int = 25) -> str:
+    message = item if isinstance(item, str) else ast.dump(item)
+    message = message.encode("unicode_escape", "backslashreplace").decode()
+    if len(message) > maximum_length:
+        message = f"{message[:maximum_length]}…"
+    return message
+
+
+class Translator(ast.NodeVisitor):
     @override
     def __init__(
         self,
@@ -37,24 +54,24 @@ class Translator(ast.NodeTransformer):
 
     @override
     def visit(self, node: ast.AST) -> str:
-        return (
-            mapping.map(node, self._context)
-            if (mapping := self.mappings.get(type(node)))
-            else str(super().generic_visit(node))
-        )
+        if mapping := self.mappings.get(type(node)):
+            log.debug(f"Mapping found for node: {_display(node)}.")
+            return mapping.map(node, self._context)
+        else:
+            log.debug(f"No mapping found for node: {_display(node)}.")
+            return str(super().generic_visit(node))
 
-    def translate(self, node: ast.AST) -> str:
+    def translate(self, node: ast.AST) -> str | None:
         diagnosis = self.validate_node(node)
         if diagnosis is not True:
+            log.error("Validation of the node before translation failed…")
             if diagnosis is not False:
                 diagnosis = (
                     [diagnosis]
                     if isinstance(diagnosis, str)
                     else list(diagnosis)
                 )
-                for item in diagnosis:
-                    # TODO: logging.
-                    pass
+                log.debug("Validation error(s): " + "; ".join(diagnosis))
             return None
 
         self._context = Context(self)
@@ -65,30 +82,37 @@ class Translator(ast.NodeTransformer):
             with self._context.in_postamble() as postamble:
                 self.postamble(postamble)
         except MappingError as error:
-            return error.message  # TODO: implement proper logging
+            log.error(error.message)
+            return None
         else:
             return self._context.consolidated()
 
-    def translate_code(self, code: str) -> str:
+    def translate_code(self, code: str) -> str | None:
+        log.debug(f"Parsing code: {_display(code)}.")
         try:
-            tree = ast.parse(code)
+            node = ast.parse(code)
         except (SyntaxError, ValueError):
-            exit(_PARSE_ERROR_CODE)
-        return self.translate(tree)
+            log.fatal(f"Could not parse code: {_display(code)}.")
+            exit(ExitCode.PARSE_ERROR)
+        return self.translate(node)
 
-    def translate_file(self, path: str) -> str:
+    def translate_file(self, path: str) -> str | None:
+        log.debug(f"Reading file: {_display(path)}.")
         try:
             with open(path, "r") as file:
                 code = file.read()
         except IOError:
-            exit(_READ_ERROR_CODE)
+            log.fatal(f"Could not read the file: {_display(path)}.")
+            exit(ExitCode.READ_ERROR)
         return self.translate_code(code)
 
     def translate_stdin(self) -> str | None:
+        log.debug("Reading from `stdin`.")
         try:
             code = sys.stdin.read()
         except IOError:
-            exit(_READ_ERROR_CODE)
+            log.fatal("Could not read from stdin.")
+            exit(ExitCode.READ_ERROR)
         return self.translate_code(code)
 
 
