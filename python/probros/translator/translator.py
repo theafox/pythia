@@ -1,5 +1,5 @@
 import ast
-from typing import Callable, Mapping, override
+from typing import Any, Callable, Iterable, Mapping, override
 
 import mappings.julia as julia_mappings
 import mappings.julia.gen as gen_mappings
@@ -20,11 +20,18 @@ class Translator(ast.NodeTransformer):
         mappings: Mapping[type[ast.AST], type[BaseMapping]],
         preamble: Callable[[Context], None] = lambda _: None,
         postamble: Callable[[Context], None] = lambda _: None,
+        /,
+        validate_node: Callable[
+            [ast.AST], bool | str | Iterable[str]
+        ] = lambda _: True,
+        **kwargs: Any,
     ):
-        super().__init__()
+        super().__init__(**kwargs)
         self.mappings = mappings
         self.preamble = preamble
         self.postamble = postamble
+        self.validate_node = validate_node
+
         self._context = Context(self)
 
     @override
@@ -36,6 +43,19 @@ class Translator(ast.NodeTransformer):
         )
 
     def translate(self, node: ast.AST) -> str:
+        diagnosis = self.validate_node(node)
+        if diagnosis is not True:
+            if diagnosis is not False:
+                diagnosis = (
+                    [diagnosis]
+                    if isinstance(diagnosis, str)
+                    else list(diagnosis)
+                )
+                for item in diagnosis:
+                    # TODO: logging.
+                    pass
+            return None
+
         self._context = Context(self)
         try:
             with self._context.in_preamble() as preamble:
