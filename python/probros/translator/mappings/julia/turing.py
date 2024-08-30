@@ -1,3 +1,13 @@
+"""This file contains mappings specific for the Turing framework.
+
+Note that this builds on top of the more general mapping provided by
+`./syntax.py`.
+
+Each mapping is implemented as a class inheriting from `BaseMapping`.
+Therefore, view the documentation of that class in case of changes or
+additions.
+"""
+
 import ast
 from typing import Callable, Iterable, override
 

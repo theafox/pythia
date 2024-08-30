@@ -51,6 +51,39 @@ def organize_arguments(
         | tuple[int, str, Callable[[], ast.expr]]
     ] = [],
 ) -> Iterable[ast.expr]:
+    """Organize (keyword) arguments according to given defaults.
+
+    The defaults for the positional arguments merely insert the defaults in
+    case fewer arguments exist than defaults. The defaults for keyword
+    arguments may only sort them according to their relative position compared
+    to the other defaults (by using a simple `str`), or giving an expected
+    (i) position, (ii) name, and (iii) default. Notice, since the positional
+    defaults specify a minimum number of positional arguments, the keyword
+    defaults may use this to specify their positions. Therefore, the order
+    matters for each parameter!
+
+    Consider the imaginary function `func(a, b, c=12, d=None)` and some usage
+    of this function were the positional arguments are `["some"]` and there are
+    no keyword arguments given. By using organizing parameters like
+    `["text", 3.12]` for positional arguments and `[(3, "c", 12), "d"]` for
+    keyword arguments, the result would be `["some", 3.12, 12]`.
+
+    Args:
+        arguments: Positional arguments to organize.
+        keyword_arguments: Keyword arguments to organize.
+        argument_defaults: Defaults for the positional arguments.
+        keyword_argument_defaults: Defaults for the keyword arguments. In case
+            only a `str` is given, simple insert it in its relative position
+            according to the other defaults. In case a tuple is given, the
+            arguments specifies the position (starting at 1), name, and
+            default. Those are merely inserted if the position matches. This is
+            important for respecting keyword arguments who may be used
+            positionally.
+
+    Returns:
+        The organized arguments.
+    """
+
     # Positional arguments.
     arguments = list(arguments)
     argument_defaults = list(argument_defaults)
@@ -103,6 +136,21 @@ def get_function_call_mapping(
     argument_delimiter: str = ", ",
     must_be_flat: bool = False,
 ) -> Callable[[ast.Call, Context], str]:
+    """Get a simple mapping for a function call.
+
+    Args:
+        function_name: The name of the function to call. In case of `None`
+            extract the name dynamically.
+        arguments: The arguments for the call. In case of `None` extract the
+            arguments dynamically.
+        parentheses: The paranthesis to use for the call.
+        argument_delimiter: The delimiter seperating the arguments.
+        must_be_flat: In case the original call must be flat.
+
+    Returns:
+        A function which maps nodes according to the given parameters.
+    """
+
     def map(node: ast.Call, context: Context) -> str:
         # Reassign variables which may be written to and do _not_ use
         # `nonlocal` or similar since those writes may carry over to the next

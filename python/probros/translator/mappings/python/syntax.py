@@ -1,3 +1,14 @@
+"""This file contains general mappings for the Python programming language.
+
+Note that additional mapping may still be required for translation. More
+specific mappings requiring knowledge about the target language or framework
+were omitted or generalized.
+
+Each mapping is implemented as a class inheriting from `BaseMapping`.
+Therefore, view the documentation of that class in case of changes or
+additions.
+"""
+
 import ast
 from itertools import chain
 from typing import Callable, Iterable, override
