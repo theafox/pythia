@@ -36,8 +36,9 @@ class FunctionMapping(BaseFunctionMapping):
 class CallMapping(BaseCallMapping):
     @staticmethod
     def _unsupported(node: ast.Call, _: Context) -> str:
-        name = get_name(node.func)
-        raise MappingError(f"Gen doesn't provide an equivalent for `{name}`.")
+        raise MappingError(
+            f"Gen doesn't provide an equivalent for `{get_name(node)}`."
+        )
 
     @staticmethod
     def _sample(node: ast.Call, context: Context) -> str:

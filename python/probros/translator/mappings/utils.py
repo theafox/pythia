@@ -1,16 +1,83 @@
 import ast
 import inspect
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable
 
 from context import Context
 
 
-def get_name(node: ast.expr) -> str:
+class NameNotFoundError(Exception):
+    """An error representing that no name could be found.
+
+    Attributes:
+        message: A message for the user explaining the (cause of the) error.
+    """
+
+    def __init__(
+        self, message: str | None = None, *args: Any, **kwargs: Any
+    ) -> None:
+        """Initialize an error instance.
+
+        Args:
+            message: An optional message for the user explaining the (cause of
+                the) error.
+        """
+
+        super().__init__(message, *args, **kwargs)
+        self.message = (
+            message if message is not None else "Failed to retrieve the name."
+        )
+
+
+def get_name(node: ast.AST) -> str:
+    """Get the name of the given `ast` node.
+
+    This tries to extensively cover as much node-types as possible and retrieve
+    whatever part of the node-type may be interpreted as a name. In case
+    multiple parts may be intepreted/given as a name, take the first. (E.g.
+    a node representing `import a as b, c as d` results in the name `"b"`.)
+
+    Args:
+        node: The node of which to get the name from.
+
+    Raises:
+        NameNotFoundError: In case no name could be found.
+
+    Returns:
+        The name of the node.
+    """
+
     match node:
-        case ast.Name(id=called) | ast.Attribute(attr=called):
-            return called
+        case (
+            ast.Name(id=name)
+            | ast.Attribute(attr=name)
+            | ast.TypeVarTuple(name=name)
+            | ast.ParamSpec(name=name)
+            | ast.arg(arg=name)
+            | ast.keyword(arg=name)
+            | ast.alias(name=name, asname=None)
+            | ast.alias(asname=name)
+            | ast.ClassDef(name=name)
+            | ast.FunctionDef(name=name)
+            | ast.AsyncFunctionDef(name=name)
+            | ast.Global(names=[name, *_])
+            | ast.Nonlocal(names=[name, *_])
+            | ast.MatchAs(name=name)
+        ) if name is not None:
+            return name
+        case (
+            ast.Call(func=nested)
+            | ast.TypeAlias(name=nested)
+            | ast.Import(names=[nested, *_])
+            | ast.ImportFrom(names=[nested, *_])
+            | ast.ExceptHandler(type=nested)
+            | ast.MatchClass(cls=nested)
+        ) if nested is not None:
+            return get_name(nested)
         case _:
-            return str(node)
+            raise NameNotFoundError(
+                "Failed to retrieve name of node with type"
+                f" '{node.__class__.__name__}': {ast.dump(node)}."
+            )
 
 
 def organize_arguments(
@@ -144,7 +211,7 @@ def get_function_call_mapping(
         if must_be_flat and not isinstance(node.func, ast.Name):
             return str(node)  # inject/change as needed.
         if function_name_ is None:
-            function_name_ = get_name(node.func)
+            function_name_ = get_name(node)
         if arguments_ is None:
             arguments_ = lambda arguments, keyword_arguments: (  # noqa: E731
                 organize_arguments(arguments, keyword_arguments)

@@ -307,9 +307,7 @@ class CallMapping(BaseMapping):
         # Mappings in `mappings` may override those in  `_default_mappings`.
         mappings = cls._default_mappings | cls.mappings
         match node:
-            case ast.Call(func=function) if (
-                name := get_name(function)
-            ) in mappings:
+            case ast.Call() if (name := get_name(node)) in mappings:
                 mapping = mappings[name]
                 return mapping(node, context)  # pass on `MappingError`
             case _:

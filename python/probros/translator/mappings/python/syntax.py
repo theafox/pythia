@@ -248,14 +248,12 @@ class CallMapping(BaseMapping):
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> str:
         match node:
-            case ast.Call(func=function) if (
-                name := get_name(function)
-            ) in cls.mappings:
+            case ast.Call() if (name := get_name(node)) in cls.mappings:
                 mapping = cls.mappings[name]
                 return mapping(node, context)  # pass on `MappingError`
-            case ast.Call(func=function):
+            case ast.Call():
                 return (
-                    context.translator.visit(function)
+                    context.translator.visit(node.func)
                     + "("
                     + ", ".join(
                         context.translator.visit(argument)

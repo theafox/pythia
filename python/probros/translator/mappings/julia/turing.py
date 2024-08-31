@@ -29,8 +29,7 @@ def _compare_target_address_depth(target: ast.expr, address: ast.expr):
     # FIXME: possibly improve? e.g. correlate used subscripts
     depth = 0
     while (
-        isinstance(address, ast.Call)
-        and get_name(address.func) == "IndexedAddress"
+        isinstance(address, ast.Call) and get_name(address) == "IndexedAddress"
     ):
         current_arguments = list(
             organize_arguments(
@@ -71,28 +70,14 @@ class AssignmentMapping(BaseAssignmentMapping):
     def map(cls, node: ast.AST, context: Context) -> str:
         match node:
             case (
-                ast.Assign(
-                    targets=[target, *_],
-                    value=ast.Call(
-                        func=function,
-                        args=arguments,
-                        keywords=keyword_arguments,
-                    ),
-                )
-                | ast.AnnAssign(
-                    target=target,
-                    value=ast.Call(
-                        func=function,
-                        args=arguments,
-                        keywords=keyword_arguments,
-                    ),
-                )
-            ) if get_name(function) == "sample":
+                ast.Assign(targets=[target, *_], value=ast.Call() as call)
+                | ast.AnnAssign(target=target, value=ast.Call() as call)
+            ) if get_name(call) == "sample":
                 # NOTE: since Turing doesn't use explicit addresses, discard
                 # the address and merely use the assignment target.
                 arguments = organize_arguments(
-                    arguments,
-                    keyword_arguments,
+                    call.args,
+                    call.keywords,
                     argument_defaults=[
                         lambda: ast.Constant(Context.unique_address()),
                         ast.Call(ast.Name("Dirac"), [ast.Constant(True)], []),
@@ -113,9 +98,8 @@ class AssignmentMapping(BaseAssignmentMapping):
 class CallMapping(BaseCallMapping):
     @staticmethod
     def _unsupported(node: ast.Call, _: Context) -> str:
-        name = get_name(node.func)
         raise MappingError(
-            f"Turing doesn't provide an equivalent for `{name}`."
+            f"Turing doesn't provide an equivalent for `{get_name(node)}`."
         )
 
     @staticmethod

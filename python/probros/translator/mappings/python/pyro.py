@@ -46,8 +46,9 @@ class CallMapping(BaseCallMapping):
 
     @staticmethod
     def _unsupported(node: ast.Call, _: Context) -> str:
-        name = get_name(node.func)
-        raise MappingError(f"Pyro doesn't provide an equivalent for `{name}`.")
+        raise MappingError(
+            f"Pyro doesn't provide an equivalent for `{get_name(node)}`."
+        )
 
     @staticmethod
     def _observe(node: ast.Call, context: Context) -> str:
@@ -152,7 +153,7 @@ class CallMapping(BaseCallMapping):
 
     @staticmethod
     def _half_cauchy_half_normal(node: ast.Call, context: Context) -> str:
-        name = get_name(node.func)
+        name = get_name(node)
         arguments = list(organize_arguments(node.args, node.keywords))
         match arguments:
             case [] | [_]:
