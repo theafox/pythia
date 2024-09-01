@@ -120,7 +120,7 @@ def _display(item: str | ast.AST, maximum_length: int = 25) -> str:
     return message
 
 
-class Translator(ast.NodeVisitor):
+class Translator:
     """A general purpose translator to translate Python code.
 
     The current implementation translates the entire code passed to it.
@@ -135,16 +135,6 @@ class Translator(ast.NodeVisitor):
     to be used with simpler translations where the original and target code
     resemble each other in their semantic meaning and general structure.
 
-    For most users `translate` and the convenience alternatives
-    (`translate_code`, `translate_file`, and `translate_stdin`) should be used
-    for translation, not `visit`. Those add the `post`- and `preamble`, catch
-    errors, and validate input and are therefore intended as the translation
-    interface. For developers altering, extending, or inheriting this class,
-    the `visit` method shall be used to translate sub-nodes during the
-    translation process. For instance, during the translation of the binary
-    operation `a + 1`, use `visit` to translate each operand, not `translate`
-    (or its convenience alternatives).
-
     Attributes:
         mappings: The mapping rules to use for translation.
         preamble: Function which allows placing code before the mapping rules
@@ -157,6 +147,60 @@ class Translator(ast.NodeVisitor):
             interpreted as error messasges. If validation fails, no
             translation is attempted.
     """
+
+    # Hide the traversal mechanism from the public eye. Moreover, this prevents
+    # confusion between `translate(_file|_code|_stdin)?` and `visit` by the
+    # user and inside mapping definitions.
+    class _TranslatingTraverser(ast.NodeVisitor):
+        """A node traverser used for translation.
+
+        Note that this class is intended to be used for one singular traversal
+        of a node tree. It is not intended for rerunning on a new tree, use a
+        new instance in that case.
+
+        Attributes:
+            mappings: The mapping rules to use for translation.
+            context: `Context` object used during the traversal.
+        """
+
+        def __init__(
+            self,
+            mappings: Mapping[type[ast.AST], type[BaseMapping]],
+            **kwargs: Any,
+        ) -> None:
+            super().__init__(**kwargs)
+            self.mappings = mappings
+            self.context = Context(self)
+
+        @override
+        def visit(self, node: ast.AST) -> str:
+            """Map the node through traversal using the registered mappings.
+
+            This class is overridden from the parent class. It will be called
+            whenever a node is encountered during the walk throug the tree. For
+            this reason it is not recommended to subclass this and/or add any
+            `visit_*` methods.
+
+            Args:
+                node: The node to map.
+
+            Raises:
+                MappingError: In case a registered mapping encounters a fatal
+                    error, it is not caught and instead passed on.
+
+            Returns:
+                The mapping of the provided node.
+            """
+
+            if mapping := self.mappings.get(type(node)):
+                log.debug(f"Mapping found for node: {_display(node)}.")
+                return mapping.map(
+                    node, self.context
+                )  # pass on `MappingError`
+            else:
+                log.debug(f"No mapping found for node: {_display(node)}.")
+                # This advances further into the tree (child-nodes).
+                return str(super().generic_visit(node))
 
     @override
     def __init__(
@@ -175,43 +219,6 @@ class Translator(ast.NodeVisitor):
         self.preamble = preamble
         self.postamble = postamble
         self.validate_node = validate_node
-
-        self._context = Context(self)
-
-    @override
-    def visit(self, node: ast.AST) -> str:
-        """Map the node using the registered mappings.
-
-        In case no mapping is provided, necessary, or an error occurs with a
-        node, it is recommended to return the plain string representation of
-        the node, i.e. `str(node)`, to visualize a missing mapping in the
-        output or raise `MappingError`.
-
-        This class is overridden from the parent class. It will be called
-        whenever a node is encountered during the walk throug the tree. For
-        this reason it is not recommended to subclass this and add any
-        `visit_*` methods.
-
-        NOTE: This method is not intended to be used by ordinary usage of
-        translation. See the documentation of the `Translator` class.
-
-        Args:
-            node: The node to map.
-
-        Raises:
-            MappingError: In case a registered mapping encounters a fatal error
-            and raises this error, it is not caught and instead passed on.
-
-        Returns:
-            The mapping of the provided node.
-        """
-
-        if mapping := self.mappings.get(type(node)):
-            log.debug(f"Mapping found for node: {_display(node)}.")
-            return mapping.map(node, self._context)  # pass on `MappingError`
-        else:
-            log.debug(f"No mapping found for node: {_display(node)}.")
-            return str(super().generic_visit(node))
 
     def translate(self, node: ast.AST) -> str | None:
         """Translate the provided node.
@@ -240,18 +247,18 @@ class Translator(ast.NodeVisitor):
                 log.debug("Validation error(s): " + "; ".join(diagnosis))
             return None
 
-        self._context = Context(self)
+        traverser = self._TranslatingTraverser(self.mappings)
         try:
-            with self._context.in_preamble() as preamble:
+            with traverser.context.in_preamble() as preamble:
                 self.preamble(preamble)
-            self.visit(node)
-            with self._context.in_postamble() as postamble:
+            traverser.visit(node)
+            with traverser.context.in_postamble() as postamble:
                 self.postamble(postamble)
         except MappingError as error:
             log.error(error.message)
             return None
         else:
-            return self._context.consolidated()
+            return traverser.context.consolidated()
 
     def translate_code(self, code: str) -> str | None:
         """Translate the provided code.
