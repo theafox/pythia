@@ -15,7 +15,7 @@ from typing import Callable, Iterable, override
 
 from context import Context
 
-from mappings import BaseMapping
+from mappings import BaseMapping, MappingWarning
 from mappings.utils import get_name, organize_arguments
 
 
@@ -66,7 +66,10 @@ class FunctionMapping(BaseMapping):
                         context.translator.visit(statement)
                 return str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class IfMapping(BaseMapping):
@@ -90,7 +93,10 @@ class IfMapping(BaseMapping):
                             context.translator.visit(statement)
                 return str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class WhileLoopMapping(BaseMapping):
@@ -105,7 +111,10 @@ class WhileLoopMapping(BaseMapping):
                         context.translator.visit(statement)
                 return str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class ForLoopMapping(BaseMapping):
@@ -141,8 +150,13 @@ class ForLoopMapping(BaseMapping):
                     for statement in body:
                         context.translator.visit(statement)
                 return str(node)
+            case ast.For():
+                raise MappingWarning("Invalid for-loop format.")
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class ReturnMapping(BaseMapping):
@@ -155,7 +169,10 @@ class ReturnMapping(BaseMapping):
                 context.line(f"return {value}")
                 return str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class AssignmentMapping(BaseMapping):
@@ -172,7 +189,10 @@ class AssignmentMapping(BaseMapping):
                 context.line(f"{target} = {value}")
                 return str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class StandaloneExpressionMapping(BaseMapping):
@@ -184,7 +204,10 @@ class StandaloneExpressionMapping(BaseMapping):
                 context.line(context.translator.visit(value))
                 return str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class TupleMapping(BaseMapping):
@@ -200,7 +223,10 @@ class TupleMapping(BaseMapping):
                 evaluated = map(context.translator.visit, elements)
                 return f"({", ".join(evaluated)})"
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class ListMapping(BaseMapping):
@@ -214,7 +240,10 @@ class ListMapping(BaseMapping):
                 evaluated = map(context.translator.visit, elements)
                 return f"[{", ".join(evaluated)}]"
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class AttributeMapping(BaseMapping):
@@ -225,7 +254,10 @@ class AttributeMapping(BaseMapping):
             case ast.Attribute(value=left, attr=right):
                 return f"{context.translator.visit(left)}.{right}"
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class IndexingMapping(BaseMapping):
@@ -238,7 +270,10 @@ class IndexingMapping(BaseMapping):
                 index = context.translator.visit(index)
                 return f"{target}[{index}]"
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class CallMapping(BaseMapping):
@@ -264,7 +299,10 @@ class CallMapping(BaseMapping):
                     + ")"
                 )
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class BinaryOperatorsMapping(BaseMapping):
@@ -324,7 +362,10 @@ class BinaryOperatorsMapping(BaseMapping):
                     else str(node)
                 )
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
 
 
 class UnaryOperatorsMapping(BaseMapping):
@@ -343,4 +384,7 @@ class UnaryOperatorsMapping(BaseMapping):
                 operator = cls.mappings.get(type(operator))
                 return f"{operator} ({operand})" if operator else str(node)
             case _:
-                return str(node)
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )

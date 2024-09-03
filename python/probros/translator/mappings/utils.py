@@ -4,6 +4,8 @@ from typing import Any, Callable, Iterable
 
 from context import Context
 
+from mappings import MappingWarning
+
 
 class NameNotFoundError(Exception):
     """An error representing that no name could be found.
@@ -185,7 +187,12 @@ def get_function_call_mapping(
             arguments dynamically.
         parentheses: The paranthesis to use for the call.
         argument_delimiter: The delimiter seperating the arguments.
-        must_be_flat: In case the original call must be flat.
+        must_be_flat: In case the original call must be flat, raise
+            `MappingWarning` otherwise.
+
+    Raises:
+        MappingWarning: In case the original call is not flat when it was
+            expected to be.
 
     Returns:
         A function which maps nodes according to the given parameters.
@@ -209,7 +216,11 @@ def get_function_call_mapping(
             | None
         ) = arguments
         if must_be_flat and not isinstance(node.func, ast.Name):
-            return str(node)  # inject/change as needed.
+            from translator import _display  # type: ignore
+
+            raise MappingWarning(
+                f"Expected a flat function call: {_display(node)}."
+            )
         if function_name_ is None:
             function_name_ = get_name(node)
         if arguments_ is None:

@@ -75,7 +75,7 @@ import mappings.julia.turing as turing_mappings
 import mappings.python as python_mappings
 import mappings.python.pyro as pyro_mappings
 from context import Context
-from mappings import BaseMapping, MappingError
+from mappings import BaseMapping, MappingError, MappingWarning
 
 
 class ExitCode(IntEnum):
@@ -193,14 +193,25 @@ class Translator:
             """
 
             if mapping := self.mappings.get(type(node)):
-                log.debug(f"Mapping found for node: {_display(node)}.")
-                return mapping.map(
-                    node, self.context
-                )  # pass on `MappingError`
+                try:
+                    mapped = mapping.map(node, self.context)
+                except MappingError as error:
+                    raise error
+                except MappingWarning as warning:
+                    cause = warning.message.removesuffix(".")
+                    log.warning(
+                        "Mapping failed for node-type"
+                        f" `{type(node).__name__}`: {cause}."
+                    )
+                else:
+                    if mapped is not None:
+                        return mapped
             else:
-                log.debug(f"No mapping found for node: {_display(node)}.")
                 # This advances further into the tree (child-nodes).
-                return str(super().generic_visit(node))
+                mapped = super().generic_visit(node)
+                if mapped:
+                    return mapped
+            return str(node)
 
     @override
     def __init__(

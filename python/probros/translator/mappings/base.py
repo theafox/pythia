@@ -14,12 +14,10 @@ class BaseMapping(ABC):
 
     Each mapping should use the provided `Context` instance for adding lines,
     translating sub-nodes, generating unique information, …. Furthermore, the
-    return value of the `map` method is only relevant for expressions (which
-    do not take up whole lines). In case the mapping translates a statement (no
-    return value required) or a non-fatal error is encountered, it is
-    recommended return the string representation of the given node to showcase
-    the interrupted translation of this node in the resulting translation. In
-    case of an error during the mapping, raise `MappingError`.
+    return value of the `map` method is only relevant for expressions ( do not
+    take up whole lines, i.e. no statements). In case a non-fatal error is
+    encountered, raise `MappingWarning`, and in case of a fatal error, raise
+    `MappingError`.
     """
 
     @classmethod
@@ -34,6 +32,8 @@ class BaseMapping(ABC):
         Raises:
             NotImplementedError: In case the `map` method was not overridden
                 properly.
+            MappingWarning: In case a non-fatal error is encountered during
+                translation, the remaining translation may still continue.
             MappingError: In case a fatal error occured during translation
                 which requires the user's attention or invalidates the whole
                 translation. In case of a non-fatal error, simply return the
@@ -47,6 +47,23 @@ class BaseMapping(ABC):
         """
 
         raise NotImplementedError("Mapping method not implemented.")
+
+
+class MappingWarning(Exception):
+    """This represents a (non-fatal) warning during the translation process.
+
+    Attributes:
+        message: A message for the user explaining the (cause of the) warning.
+    """
+
+    def __init__(
+        self,
+        message: str = "Received a warning during translation.",
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, *args, **kwargs)
+        self.message = message
 
 
 class MappingError(Exception):
