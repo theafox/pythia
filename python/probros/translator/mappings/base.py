@@ -22,7 +22,7 @@ class BaseMapping(ABC):
 
     @classmethod
     @abstractmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         """Map the given node to some resulting code.
 
         Args:
@@ -41,9 +41,8 @@ class BaseMapping(ABC):
                 proper translation for this node in the resulting translation.
 
         Returns:
-            The mapping in case of an expression. In case of statements, the
-            return value is meaningless, it is recommended to return the string
-            representation of the node in that case.
+            In case the node represents a statement `None`, in case it
+            represents an expression, the mapping.
         """
 
         raise NotImplementedError("Mapping method not implemented.")

@@ -15,19 +15,13 @@ class NameNotFoundError(Exception):
     """
 
     def __init__(
-        self, message: str | None = None, *args: Any, **kwargs: Any
+        self,
+        message: str = "Failed to retrieve the name.",
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
-        """Initialize an error instance.
-
-        Args:
-            message: An optional message for the user explaining the (cause of
-                the) error.
-        """
-
         super().__init__(message, *args, **kwargs)
-        self.message = (
-            message if message is not None else "Failed to retrieve the name."
-        )
+        self.message = message
 
 
 def get_name(node: ast.AST) -> str:

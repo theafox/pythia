@@ -67,7 +67,7 @@ class FunctionMapping(BaseFunctionMapping):
 class AssignmentMapping(BaseAssignmentMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case (
                 ast.Assign(targets=[target, *_], value=ast.Call() as call)
@@ -90,7 +90,6 @@ class AssignmentMapping(BaseAssignmentMapping):
                 target = context.translator.visit(target)
                 distribution = context.translator.visit(distribution)
                 context.line(f"{target} ~ {distribution}")
-                return str(node)
             case _:
                 return super().map(node, context)
 

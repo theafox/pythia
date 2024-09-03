@@ -24,7 +24,7 @@ class FunctionMapping(BaseMapping):
 
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.FunctionDef(
                 name=name,
@@ -51,7 +51,6 @@ class FunctionMapping(BaseMapping):
                     for statement in body:
                         context.translator.visit(statement)
                 context.line("end")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -62,7 +61,7 @@ class FunctionMapping(BaseMapping):
 class IfMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.If(
                 test=conditional,
@@ -79,7 +78,6 @@ class IfMapping(BaseMapping):
                         for statement in else_body:
                             context.translator.visit(statement)
                 context.line("end")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -90,7 +88,7 @@ class IfMapping(BaseMapping):
 class WhileLoopMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.While(test=conditional, body=body):
                 context.line(f"while {context.translator.visit(conditional)}")
@@ -98,7 +96,6 @@ class WhileLoopMapping(BaseMapping):
                     for statement in body:
                         context.translator.visit(statement)
                 context.line("end")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -109,7 +106,7 @@ class WhileLoopMapping(BaseMapping):
 class ForLoopMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.For(
                 target=target,
@@ -131,13 +128,12 @@ class ForLoopMapping(BaseMapping):
                         end = context.translator.visit(arguments[1])
                         stepsize = context.translator.visit(arguments[2])
                     case _:
-                        return str(node)
+                        return
                 context.line(f"for {target} = {start}:{stepsize}:{end}")
                 with context.indented():
                     for statement in body:
                         context.translator.visit(statement)
                 context.line("end")
-                return str(node)
             case ast.For():
                 raise MappingWarning("Invalid for-loop format.")
             case _:
@@ -150,11 +146,10 @@ class ForLoopMapping(BaseMapping):
 class ContinueMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Continue():
                 context.line("continue")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -165,11 +160,10 @@ class ContinueMapping(BaseMapping):
 class BreakMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Break():
                 context.line("break")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -180,12 +174,11 @@ class BreakMapping(BaseMapping):
 class ReturnMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Return(value=value):
                 value = context.translator.visit(value) if value else "nothing"
                 context.line(f"return {value}")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -196,7 +189,7 @@ class ReturnMapping(BaseMapping):
 class AssignmentMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case (
                 ast.Assign(targets=[target, *_], value=value)
@@ -205,7 +198,6 @@ class AssignmentMapping(BaseMapping):
                 target = context.translator.visit(target)
                 value = context.translator.visit(value)
                 context.line(f"{target} = {value}")
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -216,11 +208,10 @@ class AssignmentMapping(BaseMapping):
 class StandaloneExpressionMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Expr(value=value):
                 context.line(context.translator.visit(value))
-                return str(node)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -231,7 +222,7 @@ class StandaloneExpressionMapping(BaseMapping):
 class NameMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Name(id=name):
                 return name
@@ -245,7 +236,7 @@ class NameMapping(BaseMapping):
 class ConstantMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Constant(value=value) if isinstance(value, str):
                 value = repr(value)
@@ -264,7 +255,7 @@ class ConstantMapping(BaseMapping):
 class TupleMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Tuple(elts=[]):
                 return "()"
@@ -283,7 +274,7 @@ class TupleMapping(BaseMapping):
 class ListMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.List(elts=[]):
                 return "[]"
@@ -300,7 +291,7 @@ class ListMapping(BaseMapping):
 class AttributeMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Attribute(value=left, attr=right):
                 return f"{context.translator.visit(left)}.{right}"
@@ -314,7 +305,7 @@ class AttributeMapping(BaseMapping):
 class IndexingMapping(BaseMapping):
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Subscript(value=target, slice=index):
                 target = context.translator.visit(target)
@@ -350,7 +341,7 @@ class CallMapping(BaseMapping):
 
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         # Mappings in `mappings` may override those in  `_default_mappings`.
         mappings = cls._default_mappings | cls.mappings
         match node:
@@ -391,7 +382,7 @@ class BinaryOperatorsMapping(BaseMapping):
 
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.BinOp(left=left, op=operator, right=right):
                 left = context.translator.visit(left)
@@ -439,7 +430,7 @@ class UnaryOperatorsMapping(BaseMapping):
 
     @override
     @classmethod
-    def map(cls, node: ast.AST, context: Context) -> str:
+    def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.UnaryOp(operand=operand, op=operator):
                 operand = context.translator.visit(operand)
