@@ -1,10 +1,10 @@
 import ast
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum
 from typing import Self, override
 
 
-class Severity(Enum):
+class Severity(IntEnum):
     """This represents the severity of diagnostics.
 
     Attributes:
