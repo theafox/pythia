@@ -117,6 +117,7 @@ class Linter(ast.NodeVisitor):
 
         self.diagnostics: list[Diagnostic] = []
         self._entered: bool = False
+        self._found_outside: bool = False
 
     @override
     def generic_visit(self, node: ast.AST) -> None:
@@ -136,6 +137,9 @@ class Linter(ast.NodeVisitor):
             entry_point_diagnostics = self.analyze_entry_point(node)
             self.diagnostics += entry_point_diagnostics
             if not self.is_entry_point(node):
+                if not list(ast.iter_child_nodes(node)):
+                    # Found a leaf node outside code-of-interest.
+                    self._found_outside = True
                 super().generic_visit(node)
             elif not any(
                 diagnostic.severity == Severity.ERROR
@@ -183,6 +187,8 @@ class Linter(ast.NodeVisitor):
         log.debug(f"Linting tree {ast.dump(tree)[:25]!a}….")
 
         self.diagnostics = []
+        self._entered = False
+        self._found_outside = False
         self.visit(tree)
         log.debug(
             f"Linting finished, got {len(self.diagnostics)} diagnostic(s)."
@@ -258,6 +264,16 @@ class Linter(ast.NodeVisitor):
             log.fatal("Could not read from stdin.")
             exit(_READ_ERROR_CODE)
         return self.lint_code(code)
+
+    def found_code_outside(self) -> bool:
+        """Whether code was found outside code-of-interest in the last linting.
+
+        Returns:
+            In case any leaf-node was found outside code-of-interest returns
+            `True`, `False` otherwise.
+        """
+
+        return self._found_outside
 
 
 def _is_probabilistic_program_entry_point(node: ast.AST) -> bool:
