@@ -11,10 +11,9 @@ additions.
 import ast
 from typing import Callable
 
-from context import Context
-
-from mappings import MappingError
-from mappings.utils import (
+from translator.context import Context
+from translator.mappings import MappingError
+from translator.mappings.utils import (
     get_function_call_mapping,
     get_name,
     organize_arguments,

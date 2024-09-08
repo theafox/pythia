@@ -2,9 +2,8 @@ import ast
 import inspect
 from typing import Any, Callable, Iterable
 
-from context import Context
-
-from mappings import MappingWarning
+from translator.context import Context
+from translator.mappings import MappingWarning
 
 
 class NameNotFoundError(Exception):

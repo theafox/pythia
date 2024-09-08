@@ -1,81 +1,29 @@
-"""A translator for probabilistic programs.
+"""The main components of the `translator` module.
 
-This module provides a general purpose translator class which may be used with
-custom mappings for a spectrum of use-cases. Default implementations and a
-CLI-interface are provided which may be used to translate code conforming to
-the specifications of the PyThia Meta-Probabilistic-Programming-Language into
-the frameworks Gen, Turing, and Pyro.
+The `translator` module is designed to provide the ability to translate Python
+code into other languages/frameworks. This file provides the main components of
+this functionality.
 
 Usage:
-    To use the CLI tool of this module, run this file using Python with the
-    appropriate options like:
-
-        $ python3 translator.py -f -o output.txt Gen test.py
-        Translator ran successfully, 92 character(s) and 7 line(s) translated.
-        Translation successfully written to file: output.txt.
-
-        $ python3 translator.py -v Pyro test.py
-        * Reading file: test.py.
-        * Parsing code: import sys\n\ndef model(data….
-        * No mapping found for node: Module(body=[FunctionDef(….
-        * Mapping found for node: FunctionDef(name='model',….
-        …
-
-    In case the script exits with an error, the exit code indicates the type of
-    error. See `ExitCode` for further details on the specific exit codes.
-
-Options:
-    - `h`/`--help` for a help message (no execution of the translator); either
-    - `-v` / `--verbose` to print debugging messages or
-    - `-q` / `--quiet` to suppress anyything but fatal errors and the results;
-    - `-f`/`--force` to force translation, regardless of any code-validation;
-    - the target language/framework for translation; either
-    - the filepath to the code,
-    - `--stdin` to read the code from standard-input (`stdin`), or
-    - `-c`/`--code` to pass in code directly in the CLI; and either
-    - `-o`/`--output` to output to a file, with an error if it already exists,
-    - `--output-overwrite` to overwrite the potentially existing file, or
-    - `--output-append` to append to a potentially existing file.
-
-Attributes:
-    Translator: This class represents a general translator. By specifying
-        mappings and other potential dependencies, the translator may be suited
-        to the required use-case.
-    ExitCode: An enumeration representing the different possible exit codes.
-    default_julia_translator: This provides the default translator for the
-        Julia programming language. However, more specific aspects requiring
-        knowledge about target frameworks are missing.
-    default_gen_translator: This provides the default translator for the Gen
-        framework.
-    default_turing_translator: This provides the default translator for the
-        Turing framework.
-    default_python_translator: This provides the default translator for the
-        Python programming language. However, more specific aspects requiring
-        knowledge about target frameworks are missing.
-    default_pyro_translator: This provides the default translator for the Pyro
-        framework.
-    main: This function includes the setup for the CLI functionality, i.e. the
-        specifications of the CLI flags, parsing of the input and running of
-        the default probabilistic program translator for PyThia.
+    For usage in a script see the package documentation (`__init__.py`). For
+    usage as a CLI tool see the module documentation (`__main__.py`).
 
 Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
-Version: 0.1.0
-Status: In Development
 """
 
 import ast
 import logging as log
 import sys
 from enum import IntEnum
-from typing import Any, Callable, Iterable, Mapping, Sequence, override
+from typing import Any, Callable, Iterable, Mapping, override
 
-import mappings.julia as julia_mappings
-import mappings.julia.gen as gen_mappings
-import mappings.julia.turing as turing_mappings
-import mappings.python as python_mappings
-import mappings.python.pyro as pyro_mappings
-from context import Context
-from mappings import BaseMapping, MappingError, MappingWarning
+import translator.mappings.julia as julia_mappings
+import translator.mappings.julia.gen as gen_mappings
+import translator.mappings.julia.turing as turing_mappings
+import translator.mappings.python as python_mappings
+import translator.mappings.python.pyro as pyro_mappings
+from translator.context import Context
+from translator.mappings import BaseMapping, MappingError, MappingWarning
 
 
 class ExitCode(IntEnum):
@@ -494,176 +442,3 @@ def default_pyro_translator() -> Translator:
         ast.Call: pyro_mappings.CallMapping
     }
     return python_translator
-
-
-def main(arguments: Sequence[str] | None = None) -> None:
-    """Parse CLI arguments and execute a translator.
-
-    This uses `argparse` to decypher any arguments. Valid arguments are:
-    - `h`/`--help` for a help message (no execution of the translator); either
-    - `-v` / `--verbose` to print debugging messages or
-    - `-q` / `--quiet` to suppress anyything but fatal errors and the results;
-    - `-f`/`--force` to force translation, regardless of any code-validation;
-    - the target language/framework for translation; either
-    - the filepath to the code,
-    - `--stdin` to read the code from standard-input (`stdin`), or
-    - `-c`/`--code` to pass in code directly in the CLI; and either
-    - `-o`/`--output` to output to a file, with an error if it already exists,
-    - `--output-overwrite` to overwrite the potentially existing file, or
-    - `--output-append` to append to a potentially existing file.
-    """
-
-    import argparse
-
-    translators = {
-        "pyro": default_pyro_translator(),
-        "gen": default_gen_translator(),
-        "turing": default_turing_translator(),
-    }
-
-    parser = argparse.ArgumentParser(
-        description="Translate probabilistic programms from PyThia into "
-        + ", ".join(translators.keys())[::-1].replace(",", "ro ,", 1)[::-1]
-        + "."
-    )
-    verbosity = parser.add_mutually_exclusive_group()
-    verbosity.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="output more verbose messages",
-    )
-    verbosity.add_argument(
-        "-q",
-        "--quiet",
-        action="store_true",
-        help="only output fatal errors and the results",
-    )
-    parser.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        help="force translation, regardless of any prior code-validation",
-    )
-    parser.add_argument(
-        "target",
-        choices=translators.keys(),
-        type=str.lower,
-        help="language/framework to translate the code to",
-    )
-    code_origin = parser.add_mutually_exclusive_group(required=True)
-    code_origin.add_argument(
-        "filepath",
-        nargs="?",
-        help="file to run the translator on",
-    )
-    code_origin.add_argument(
-        "--stdin",
-        action="store_true",
-        help="read the code from stdin",
-    )
-    code_origin.add_argument(
-        "-c",
-        "--code",
-        type=str,
-        help="the code to lint",
-    )
-    code_destination = parser.add_mutually_exclusive_group()
-    code_destination.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        help="file to write the output to (error if it already exists)",
-    )
-    code_destination.add_argument(
-        "--output-overwrite",
-        type=str,
-        help="file to write the output to (overwriting if it already exists)",
-        dest="output_overwrite",
-    )
-    code_destination.add_argument(
-        "--output-append",
-        type=str,
-        help="file to write the output to (appending if it already exists)",
-        dest="output_append",
-    )
-    args = parser.parse_args(arguments)
-
-    # Use multiple handlers, to allow redirecting the output if required and
-    # prepending messages with indicators of logging or warning messages.
-    warning = log.StreamHandler(sys.stdout)
-    warning.addFilter(lambda record: log.ERROR <= record.levelno)
-    warning.setFormatter(log.Formatter("! %(message)s"))
-    if args.quiet:
-        log.basicConfig(level=log.FATAL, handlers=(warning,))
-    else:
-        standard = log.StreamHandler(sys.stdout)
-        standard.addFilter(
-            lambda record: log.DEBUG < record.levelno < log.ERROR
-        )
-        standard.setFormatter(log.Formatter("%(message)s"))
-        if not args.verbose:
-            log.basicConfig(level=log.INFO, handlers=(warning, standard))
-        else:
-            verbose = log.StreamHandler(sys.stdout)
-            verbose.addFilter(lambda record: record.levelno <= log.DEBUG)
-            verbose.setFormatter(log.Formatter("* %(message)s"))
-            log.basicConfig(
-                level=log.DEBUG, handlers=(warning, standard, verbose)
-            )
-
-    translator = translators.get(args.target)
-    if translator is None:
-        log.fatal(f"Unknown translation target specified: {args.target}.")
-        exit(ExitCode.INVALID_ARGUMENTS)
-    if not args.force:
-        # TODO: Integrate the default linter for PyThia.
-        log.fatal(
-            "The linter is not yet available, "
-            "please use `-f` or `--force` for the time being."
-        )
-        exit(ExitCode.NOT_YET_IMPLEMENTED)
-    translation = None
-    if args.filepath:
-        translation = translator.translate_file(args.filepath)
-    elif args.stdin:
-        translation = translator.translate_stdin()
-    elif args.code:
-        translation = translator.translate_code(args.code)
-    else:
-        log.fatal("Did not receive any code or code-source")
-        exit(ExitCode.INVALID_ARGUMENTS)
-    if translation is None:
-        log.info("Translator failed, could not translate the provided code.")
-        exit(ExitCode.TRANSLATION_ERROR)
-    translation = translation.strip("\n") + "\n"
-
-    log.info(
-        f"Translator ran successfully, {len(translation)} character(s)"
-        f" and {translation.count("\n")} line(s) translated."
-    )
-    if args.output or args.output_overwrite or args.output_append:
-        path, mode = (
-            (args.output, "x")
-            if args.output
-            else (
-                (args.output_overwrite, "w")
-                if args.output_overwrite
-                else (args.output_append, "a")
-            )
-        )
-        try:
-            with open(path, mode) as file:
-                file.write(translation)
-        except FileExistsError:
-            log.fatal(f"Output file '{path}' already exists, aborting.")
-        else:
-            log.info(f"Translation successfully written to file: {path}.")
-    else:
-        if not args.quiet:
-            print()
-        print(translation, end="")
-
-
-if __name__ == "__main__":
-    main()

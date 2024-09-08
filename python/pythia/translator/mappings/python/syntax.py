@@ -13,10 +13,9 @@ import ast
 from itertools import chain
 from typing import Callable, Iterable, override
 
-from context import Context
-
-from mappings import BaseMapping, MappingWarning
-from mappings.utils import get_name, organize_arguments
+from translator.context import Context
+from translator.mappings import BaseMapping, MappingWarning
+from translator.mappings.utils import get_name, organize_arguments
 
 
 class GenericStatementMapping(BaseMapping):

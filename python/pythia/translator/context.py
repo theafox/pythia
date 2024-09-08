@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Line:
+class _Line:
     """This represents a line of code.
 
     Attributes:
@@ -55,7 +55,7 @@ class Context:
     translator: "Translator._TranslatingTraverser"  # type: ignore
 
     _indentation: int = field(default=0, init=False)
-    _lines: list[Line] = field(default_factory=list, init=False)
+    _lines: list[_Line] = field(default_factory=list, init=False)
     _preamble: list[str] = field(default_factory=list, init=False)
     _postamble: list[str] = field(default_factory=list, init=False)
 
@@ -96,7 +96,7 @@ class Context:
             line: The line of code to append to the body.
         """
 
-        self._lines.append(Line(self._indentation, line))
+        self._lines.append(_Line(self._indentation, line))
 
     @contextmanager
     def indented(self):

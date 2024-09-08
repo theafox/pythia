@@ -2,7 +2,7 @@ import ast
 from abc import ABC, abstractmethod
 from typing import Any
 
-from context import Context
+from translator.context import Context
 
 
 class BaseMapping(ABC):

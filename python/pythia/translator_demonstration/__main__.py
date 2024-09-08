@@ -1,3 +1,16 @@
+"""A simple demonstration of the translator.
+
+This showcases the translator using the examples of the thesis defining
+_PyThia_.
+
+Usage: This should be executed as a module, i.e.
+    `python -m translator_demonstration [OPTIONS]`. In case any command-line
+    arguments are provided, they are interpreted as the selection of target
+    languages/frameworks to translate.
+
+Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
+"""
+
 from translator import (
     Translator,
     default_gen_translator,
@@ -15,7 +28,6 @@ AVAILABLE_TRANSLATORS = [
     ("turing", default_turing_translator()),
 ]
 CODE_PIECES = [
-    #### The following examples are the models demonstrated in the thesis. ####
     # Cointoss.
     """\
 @probabilistic_program
@@ -25,7 +37,7 @@ def coinflip(data):
         if data[i] != 0 and data[i] != 1:
             continue
         observe(data[i], IndexedAddress("data", i), Bernoulli(probability))""",
-    # Numer of Heads.
+    # Number of Heads.
     """\
 @probabilistic_program
 def number_of_heads(probability):
@@ -188,33 +200,32 @@ def gaussian_mixture_model(numer_of_clusters, data):
 ]
 
 
-def display_translation(
+def _display_translation(
     code: str,
     *translators: tuple[str, Translator],
+    width: int = 60,
+    header_character: str = "=",
+    subheader_character: str = "-",
 ) -> None:
-    WIDTH = 60
-    HEADER_CHARACTER = "="
-    SUBHEADER_CHARACTER = "-"
-
-    # Header, original code.
-    print(f"\n{" Original Code ":{HEADER_CHARACTER}^{WIDTH}}")
+    print(f"\n{" Original Code ":{header_character}^{width}}")
     print(code, end="")
-
-    # Translators.
     for name, translator in translators:
-        print(f"\n{f" Translated: {name} ":{SUBHEADER_CHARACTER}^{WIDTH}}")
-        print(translator.translate_code(code), end="")
-
-    print("\n" + HEADER_CHARACTER * WIDTH)
+        print(f"\n{f" Translated: {name} ":{subheader_character}^{width}}")
+        if translation := translator.translate_code(code):
+            print(translation, end="")
+    print("\n" + header_character * width)
 
 
 if __name__ == "__main__":
     import sys
 
+    from translator.__main__ import Verbosity, configure_logger
+
+    configure_logger(Verbosity.NORMAL)
     translators = [
         (name, translator)
         for name, translator in AVAILABLE_TRANSLATORS
         if not (arguments := sys.argv[1:]) or name in arguments
     ]
     for code in CODE_PIECES:
-        display_translation(code, *translators)
+        _display_translation(code, *translators)
