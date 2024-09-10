@@ -12,9 +12,9 @@ Usage:
     custom code with custom mappings.
 
 Attributes:
-    Translator: This class represents a general translator. By specifying
-        mappings and other potential dependencies, the translator may be suited
-        to the required use-case.
+    Translator: This class represents a general-purpose translator. By
+        specifying mappings and other potential dependencies, the translator
+        may be suited to the required use-case.
     default_julia_translator: This provides the default translator for the
         Julia programming language. However, more specific aspects requiring
         knowledge about target frameworks are missing.

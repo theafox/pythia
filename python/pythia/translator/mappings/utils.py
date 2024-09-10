@@ -1,3 +1,9 @@
+"""Utility functions, classes, etc. for defining mappings.
+
+The components of this file are written for and intended to be used for the
+definition of mappings.
+"""
+
 import ast
 import inspect
 from typing import Any, Callable, Iterable
@@ -28,7 +34,7 @@ def get_name(node: ast.AST) -> str:
 
     This tries to extensively cover as much node-types as possible and retrieve
     whatever part of the node-type may be interpreted as a name. In case
-    multiple parts may be intepreted/given as a name, take the first. (E.g.
+    multiple parts may be interpreted/given as a name, take the first. (E.g.
     a node representing `import a as b, c as d` results in the name `"b"`.)
 
     Args:
@@ -40,7 +46,6 @@ def get_name(node: ast.AST) -> str:
     Returns:
         The name of the node.
     """
-
     match node:
         case (
             ast.Name(id=name)
@@ -118,7 +123,6 @@ def organize_arguments(
     Returns:
         The organized arguments.
     """
-
     # Positional arguments.
     arguments = list(arguments)
     argument_defaults = list(argument_defaults)
@@ -178,8 +182,8 @@ def get_function_call_mapping(
             extract the name dynamically.
         arguments: The arguments for the call. In case of `None` extract the
             arguments dynamically.
-        parentheses: The paranthesis to use for the call.
-        argument_delimiter: The delimiter seperating the arguments.
+        parentheses: The parenthesis to use for the call.
+        argument_delimiter: The delimiter separating the arguments.
         must_be_flat: In case the original call must be flat, raise
             `MappingWarning` otherwise.
 

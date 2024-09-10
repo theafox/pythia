@@ -1,3 +1,11 @@
+"""Base classes and other overarching components required for mappings.
+
+The main component of this file is the base class of mappings. It should be
+implemented for defining mappings and used by the translator for translation.
+See the documentation of this base class for further information about the
+other components.
+"""
+
 import ast
 from abc import ABC, abstractmethod
 from typing import Any
@@ -34,7 +42,7 @@ class BaseMapping(ABC):
                 properly.
             MappingWarning: In case a non-fatal error is encountered during
                 translation, the remaining translation may still continue.
-            MappingError: In case a fatal error occured during translation
+            MappingError: In case a fatal error occurred during translation
                 which requires the user's attention or invalidates the whole
                 translation. In case of a non-fatal error, simply return the
                 string representation of the node, highlighting a missing
@@ -44,7 +52,6 @@ class BaseMapping(ABC):
             In case the node represents a statement `None`, in case it
             represents an expression, the mapping.
         """
-
         raise NotImplementedError("Mapping method not implemented.")
 
 

@@ -47,10 +47,10 @@ class ExitCode(IntEnum):
 
 
 def _display(item: str | ast.AST, maximum_length: int = 25) -> str:
-    """Convert the item to a readable representation.
+    r"""Convert the item to a readable representation.
 
     This is intended to be used for logging. It escapes special characters such
-    as `\\t` and limits the maximum length of the string. In case an `ast` node
+    as `\t` and limits the maximum length of the string. In case an `ast` node
     is given, dump it to make it readable.
 
     Args:
@@ -60,7 +60,6 @@ def _display(item: str | ast.AST, maximum_length: int = 25) -> str:
     Returns:
         A readable representation of the given item.
     """
-
     message = item if isinstance(item, str) else ast.dump(item)
     message = message.encode("unicode_escape", "backslashreplace").decode()
     if len(message) > maximum_length:
@@ -72,13 +71,13 @@ class Translator:
     """A general purpose translator to translate Python code.
 
     The current implementation translates the entire code passed to it.
-    Therefore, seperating dead-code from code to be translated is the user's
+    Therefore, separating dead-code from code to be translated is the user's
     responsibility.
 
     The architecture of this translator was kept rather simple, each mapping
     given during instantiation maps a node they are assigned to and may
     influence other nodes only in a limited capacity. (Primarily child-nodes,
-    since no explicit functionanilty is provided to access siblings, parents,
+    since no explicit functionality is provided to access siblings, parents,
     or similar traversal of the abstract syntax tree.) It is therefore intended
     to be used with simpler translations where the original and target code
     resemble each other in their semantic meaning and general structure.
@@ -92,7 +91,7 @@ class Translator:
         validate_node: Function which validates the node to translate. In case
             anything but `True` is returned, that is interpreted as an error.
             Moreover, if a string or multiple are returned, they are
-            interpreted as error messasges. If validation fails, no
+            interpreted as error messages. If validation fails, no
             translation is attempted.
     """
 
@@ -125,9 +124,9 @@ class Translator:
             """Map the node through traversal using the registered mappings.
 
             This class is overridden from the parent class. It will be called
-            whenever a node is encountered during the walk throug the tree. For
-            this reason it is not recommended to subclass this and/or add any
-            `visit_*` methods.
+            whenever a node is encountered during the walk through the tree.
+            For this reason it is not recommended to subclass this and/or add
+            any `visit_*` methods.
 
             Args:
                 node: The node to map.
@@ -139,7 +138,6 @@ class Translator:
             Returns:
                 The mapping of the provided node.
             """
-
             if mapping := self.mappings.get(type(node)):
                 try:
                     mapped = mapping.map(node, self.context)
@@ -193,7 +191,6 @@ class Translator:
         Returns:
             The translated code or `None` in case of an error.
         """
-
         diagnosis = self.validate_node(node)
         if diagnosis is not True:
             log.error("Validation of the node before translation failed…")
@@ -226,7 +223,7 @@ class Translator:
         restrictions outlined for _PyThia_ by using
         `Translator.validate_node`. In case anything but `True` is returned,
         that is interpreted as an error. Moreover, if a string or multiple are
-        returned, they are interpreted as error messasges. If validation
+        returned, they are interpreted as error messages. If validation
         fails, no translation is attempted.
 
         Args:
@@ -235,7 +232,6 @@ class Translator:
         Returns:
             The translated code or `None` in case of an error.
         """
-
         log.debug(f"Parsing code: {_display(code)}.")
         try:
             node = ast.parse(code)
@@ -251,7 +247,7 @@ class Translator:
         restrictions outlined for _PyThia_ by using
         `Translator.validate_node`. In case anything but `True` is returned,
         that is interpreted as an error. Moreover, if a string or multiple are
-        returned, they are interpreted as error messasges. If validation
+        returned, they are interpreted as error messages. If validation
         fails, no translation is attempted.
 
         Args:
@@ -261,7 +257,6 @@ class Translator:
         Returns:
             The translated code or `None` in case of an error.
         """
-
         log.debug(f"Reading file: {_display(path)}.")
         try:
             with open(path, "r") as file:
@@ -278,13 +273,12 @@ class Translator:
         restrictions outlined for _PyThia_ by using
         `Translator.validate_node`. In case anything but `True` is returned,
         that is interpreted as an error. Moreover, if a string or multiple are
-        returned, they are interpreted as error messasges. If validation
+        returned, they are interpreted as error messages. If validation
         fails, no translation is attempted.
 
         Returns:
             The translated code or `None` in case of an error.
         """
-
         log.debug("Reading from `stdin`.")
         try:
             code = sys.stdin.read()
@@ -307,7 +301,6 @@ def default_julia_translator() -> Translator:
         A translator which may be used to translate PyThia code into general
         Julia code.
     """
-
     return Translator(
         {
             # Statements.
@@ -347,7 +340,6 @@ def default_gen_translator() -> Translator:
         A translator which may be used to translate PyThia code into the Gen
         framework.
     """
-
     julia_translator = default_julia_translator()
     julia_translator.preamble = gen_mappings.preamble
     julia_translator.mappings = dict(julia_translator.mappings) | {
@@ -368,7 +360,6 @@ def default_turing_translator() -> Translator:
         A translator which may be used to translate PyThia code into the Turing
         framework.
     """
-
     julia_translator = default_julia_translator()
     julia_translator.preamble = turing_mappings.preamble
     julia_translator.mappings = dict(julia_translator.mappings) | {
@@ -392,7 +383,6 @@ def default_python_translator() -> Translator:
         A translator which may be used to translate PyThia code into general
         Python code.
     """
-
     return Translator(
         {
             # Statements.
@@ -435,7 +425,6 @@ def default_pyro_translator() -> Translator:
         A translator which may be used to translate PyThia code into the Pyro
         framework.
     """
-
     python_translator = default_python_translator()
     python_translator.preamble = pyro_mappings.preamble
     python_translator.mappings = dict(python_translator.mappings) | {

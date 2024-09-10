@@ -1,3 +1,10 @@
+"""`Context` class and any of its dependencies.
+
+The `Context` class is intended to store all the necessary context needed
+during the translation process. See their respective documentation for further
+details.
+"""
+
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from itertools import chain
@@ -68,7 +75,6 @@ class Context:
         Returns:
             A unique address compared to previous calls.
         """
-
         Context._unique_address_counter += 1
         return f"__context__unique_address_{Context._unique_address_counter}"
 
@@ -80,7 +86,6 @@ class Context:
         Returns:
             Consolidated code of this `Context` instance.
         """
-
         return "\n".join(
             chain(
                 self._preamble,
@@ -95,7 +100,6 @@ class Context:
         Args:
             line: The line of code to append to the body.
         """
-
         self._lines.append(_Line(self._indentation, line))
 
     @contextmanager
@@ -118,7 +122,6 @@ class Context:
         Yields:
             A `Context` variable which represents the preamble.
         """
-
         context = Context(self.translator)
         try:
             yield context
@@ -140,7 +143,6 @@ class Context:
         Yields:
             A `Context` variable which represents the postamble.
         """
-
         context = Context(self.translator)
         try:
             yield context

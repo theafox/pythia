@@ -187,8 +187,6 @@ class CallMapping(BaseCallMapping):
             + ']"'
         )
 
-    # FIXME: assuming `Distributions` for `Turing`
-
     @staticmethod
     def _exponential(node: ast.Call, context: Context) -> str:
         if len(node.args) >= 1:
@@ -226,7 +224,6 @@ class CallMapping(BaseCallMapping):
         "Uniform": get_function_call_mapping(),
         "Bernoulli": get_function_call_mapping(),
         "Binomial": get_function_call_mapping(),
-        # FIXME: "inclusivity", i.e. [a, b), a problem? what is probros?
         "DiscreteUniform": get_function_call_mapping(),
         "Geometric": get_function_call_mapping(),
         "HyperGeometric": get_function_call_mapping(
