@@ -9,7 +9,7 @@ additions.
 """
 
 import ast
-from typing import Callable
+from typing import Callable, ClassVar
 
 from translator.context import Context
 from translator.mappings import MappingError
@@ -36,12 +36,12 @@ class CallMapping(BaseCallMapping):
     def _get_mapping_with_import(
         imqort: str, mapping: Callable[[ast.Call, Context], str]
     ) -> Callable[[ast.Call, Context], str]:
-        def map(node: ast.Call, context: Context) -> str:
+        def _mapping(node: ast.Call, context: Context) -> str:
             with context.in_preamble(discard_if_present=True) as preamble:
                 preamble.line(imqort)
             return mapping(node, context)
 
-        return map
+        return _mapping
 
     @staticmethod
     def _unsupported(node: ast.Call, _: Context) -> str:
@@ -135,9 +135,7 @@ class CallMapping(BaseCallMapping):
                 node.args,
                 node.keywords,
                 argument_defaults=[
-                    lambda: ast.Call(
-                        ast.Name("Dirac"), [ast.Constant(True)], []
-                    ),
+                    ast.Call(ast.Name("Dirac"), [ast.Constant(True)], []),
                     ast.Constant(1),
                 ],
             )
@@ -185,7 +183,7 @@ class CallMapping(BaseCallMapping):
         )
         return mapping(node, context)
 
-    mappings: dict[str, Callable[[ast.Call, Context], str]] = {
+    mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": get_function_call_mapping(
             function_name=f"{FUNCTION_PREFIX}sample"
         ),

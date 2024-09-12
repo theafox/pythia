@@ -145,8 +145,7 @@ def organize_arguments(
         for default in keyword_argument_defaults
         if isinstance(default, str)
     ]
-    for default in positional_defaults:
-        position, name, default = default
+    for position, name, default in positional_defaults:
         if len(arguments) == position - 1:
             arguments.append(
                 keyword_dictionary.pop(name, default)
@@ -195,7 +194,7 @@ def get_function_call_mapping(
         A function which maps nodes according to the given parameters.
     """
 
-    def map(node: ast.Call, context: Context) -> str:
+    def _mapping(node: ast.Call, context: Context) -> str:
         # Reassign variables which may be written to and do _not_ use
         # `nonlocal` or similar since those writes may carry over to the next
         # call of `get_function_call_mapping`.
@@ -243,4 +242,4 @@ def get_function_call_mapping(
             + parentheses[1]
         )
 
-    return map
+    return _mapping

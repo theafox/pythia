@@ -15,6 +15,7 @@ import ast
 import logging
 import sys
 from enum import IntEnum
+from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, override
 
 import translator.mappings.julia as julia_mappings
@@ -143,8 +144,8 @@ class Translator:
             if mapping := self.mappings.get(type(node)):
                 try:
                     mapped = mapping.map(node, self.context)
-                except MappingError as error:
-                    raise error
+                except MappingError:
+                    raise
                 except MappingWarning as warning:
                     cause = warning.message.removesuffix(".")
                     log.warning(
@@ -173,7 +174,7 @@ class Translator:
             [ast.AST], bool | str | Iterable[str]
         ] = lambda _: True,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.mappings = mappings
         self.preamble = preamble
@@ -240,7 +241,7 @@ class Translator:
             node = ast.parse(code)
         except (SyntaxError, ValueError):
             log.fatal("Could not parse code: %s.", _display(code))
-            exit(ExitCode.PARSE_ERROR)
+            sys.exit(ExitCode.PARSE_ERROR)
         return self.translate(node)
 
     def translate_file(self, path: str) -> str | None:
@@ -262,11 +263,12 @@ class Translator:
         """
         log.debug("Reading file: %s.", _display(path))
         try:
-            with open(path, "r") as file:
-                code = file.read()
-        except IOError:
+            file = Path(path)
+            with file.open() as stream:
+                code = stream.read()
+        except OSError:
             log.fatal("Could not read the file: %s.", _display(path))
-            exit(ExitCode.READ_ERROR)
+            sys.exit(ExitCode.READ_ERROR)
         return self.translate_code(code)
 
     def translate_stdin(self) -> str | None:
@@ -285,9 +287,9 @@ class Translator:
         log.debug("Reading from `stdin`.")
         try:
             code = sys.stdin.read()
-        except IOError:
+        except OSError:
             log.fatal("Could not read from stdin.")
-            exit(ExitCode.READ_ERROR)
+            sys.exit(ExitCode.READ_ERROR)
         return self.translate_code(code)
 
 

@@ -9,7 +9,7 @@ additions.
 """
 
 import ast
-from typing import Callable, Iterable
+from typing import Callable, ClassVar, Iterable
 
 from translator.context import Context
 from translator.mappings import MappingError
@@ -112,10 +112,9 @@ class CallMapping(BaseCallMapping):
         fill = context.translator.visit(fill)
         if len(arguments) <= 2:
             return f"fill({fill}, {size})"
-        else:
-            datatype = arguments[2]
-            datatype = map_datatype(datatype)
-            return f"fill!(Array{{{datatype}}}(undef, {size}), {fill})"
+        datatype = arguments[2]
+        datatype = map_datatype(datatype)
+        return f"fill!(Array{{{datatype}}}(undef, {size}), {fill})"
 
     @staticmethod
     def _indexed_address(node: ast.Call, context: Context) -> str:
@@ -141,7 +140,7 @@ class CallMapping(BaseCallMapping):
         mapping = get_function_call_mapping(function_name="gamma")
         return mapping(node, context)
 
-    mappings: dict[str, Callable[[ast.Call, Context], str]] = {
+    mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": _sample,
         "observe": _observe,
         "factor": _unsupported,

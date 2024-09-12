@@ -11,7 +11,7 @@ additions.
 
 import ast
 from itertools import chain
-from typing import Callable, Iterable, override
+from typing import Callable, ClassVar, Iterable, override
 
 from translator.context import Context
 from translator.mappings import BaseMapping, MappingWarning
@@ -318,7 +318,9 @@ class IndexingMapping(BaseMapping):
 
 
 class CallMapping(BaseMapping):
-    _default_mappings: dict[str, Callable[[ast.Call, Context], str]] = {
+    _default_mappings: ClassVar[
+        dict[str, Callable[[ast.Call, Context], str]]
+    ] = {
         "abs": get_function_call_mapping(must_be_flat=True),
         "max": get_function_call_mapping(must_be_flat=True),
         "min": get_function_call_mapping(must_be_flat=True),
@@ -336,7 +338,7 @@ class CallMapping(BaseMapping):
             function_name="println", must_be_flat=True
         ),
     }
-    mappings: dict[str, Callable[[ast.Call, Context], str]] = {}
+    mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {}
 
     @override
     @classmethod
@@ -358,7 +360,7 @@ class CallMapping(BaseMapping):
 
 
 class BinaryOperatorsMapping(BaseMapping):
-    mappings: dict[type[ast.AST], str] = {
+    mappings: ClassVar[dict[type[ast.AST], str]] = {
         # Simple binary.
         ast.Add: "+",
         ast.Sub: "-",
@@ -421,7 +423,7 @@ class BinaryOperatorsMapping(BaseMapping):
 
 
 class UnaryOperatorsMapping(BaseMapping):
-    mappings: dict[type[ast.AST], str] = {
+    mappings: ClassVar[dict[type[ast.AST], str]] = {
         ast.UAdd: "+",
         ast.USub: "-",
         ast.Not: "!",

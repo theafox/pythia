@@ -9,7 +9,7 @@ additions.
 """
 
 import ast
-from typing import Callable, Iterable, override
+from typing import Callable, ClassVar, Iterable, override
 
 from translator.context import Context
 from translator.mappings import MappingError
@@ -24,7 +24,7 @@ from .syntax import CallMapping as BaseCallMapping
 from .syntax import FunctionMapping as BaseFunctionMapping
 
 
-def _compare_target_address_depth(target: ast.expr, address: ast.expr):
+def _compare_target_address_depth(target: ast.expr, address: ast.expr) -> None:
     # FIXME: possibly improve? e.g. correlate used subscripts
     depth = 0
     while (
@@ -89,6 +89,7 @@ class AssignmentMapping(BaseAssignmentMapping):
                 target = context.translator.visit(target)
                 distribution = context.translator.visit(distribution)
                 context.line(f"{target} ~ {distribution}")
+                return None
             case _:
                 return super().map(node, context)
 
@@ -165,10 +166,9 @@ class CallMapping(BaseCallMapping):
         fill = context.translator.visit(fill)
         if len(arguments) <= 2:
             return f"fill({fill}, {size})"
-        else:
-            datatype = arguments[2]
-            datatype = map_datatype(datatype)
-            return f"fill!(Array{{{datatype}}}(undef, {size}), {fill})"
+        datatype = arguments[2]
+        datatype = map_datatype(datatype)
+        return f"fill!(Array{{{datatype}}}(undef, {size}), {fill})"
 
     @staticmethod
     def _indexed_address(node: ast.Call, context: Context) -> str:
@@ -201,7 +201,7 @@ class CallMapping(BaseCallMapping):
         mapping = get_function_call_mapping()
         return mapping(node, context)
 
-    mappings: dict[str, Callable[[ast.Call, Context], str]] = {
+    mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": _sample,
         "observe": _observe,
         "factor": _unsupported,

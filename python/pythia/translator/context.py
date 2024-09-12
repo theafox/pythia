@@ -8,7 +8,7 @@ details.
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, Iterator, override
 
 # Import `Translator` only for the language-server and any linters since
 # circular imports would become a problem otherwise. For this reason, use
@@ -103,7 +103,7 @@ class Context:
         self._lines.append(_Line(self._indentation, line))
 
     @contextmanager
-    def indented(self):
+    def indented(self) -> Iterator[None]:
         """A context manager to create an indented context."""
         try:
             self._indentation += 1
@@ -112,7 +112,9 @@ class Context:
             self._indentation -= 1
 
     @contextmanager
-    def in_preamble(self, /, discard_if_present: bool = False):
+    def in_preamble(
+        self, /, discard_if_present: bool = False
+    ) -> Iterator["Context"]:
         """Add code to the preamble.
 
         Args:
@@ -133,7 +135,9 @@ class Context:
                 self._preamble.append(lines)
 
     @contextmanager
-    def in_postamble(self, /, discard_if_present: bool = False):
+    def in_postamble(
+        self, /, discard_if_present: bool = False
+    ) -> Iterator["Context"]:
         """Add code to the postamble.
 
         Args:

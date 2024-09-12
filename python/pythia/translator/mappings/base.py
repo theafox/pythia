@@ -84,6 +84,6 @@ class MappingError(Exception):
         message: str = "An error occured during translation.",
         *args: Any,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(message, *args, **kwargs)
         self.message = message
