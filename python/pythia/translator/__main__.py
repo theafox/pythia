@@ -48,7 +48,7 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 """
 
 import argparse
-import logging as log
+import logging
 import sys
 from enum import IntEnum
 from pathlib import Path
@@ -66,6 +66,8 @@ TRANSLATORS = {
     "gen": default_gen_translator(),
     "turing": default_turing_translator(),
 }
+
+log = logging.getLogger(__name__)
 
 
 class Verbosity(IntEnum):
@@ -146,24 +148,21 @@ def _parse_arguments(arguments: Sequence[str] | None = None) -> _Arguments:
     code_origin.add_argument(
         "--stdin", action="store_true", help="read the code from stdin"
     )
-    code_origin.add_argument("-c", "--code", type=str, help="the code to lint")
+    code_origin.add_argument("-c", "--code", help="the code to lint")
 
     code_destination = parser.add_mutually_exclusive_group()
     code_destination.add_argument(
         "-o",
         "--output",
-        type=str,
         help="file to write the output to (error if it already exists)",
     )
     code_destination.add_argument(
         "--output-overwrite",
-        type=str,
         help="file to write the output to (overwriting if it already exists)",
         dest="output_overwrite",
     )
     code_destination.add_argument(
         "--output-append",
-        type=str,
         help="file to write the output to (appending if it already exists)",
         dest="output_append",
     )
@@ -188,35 +187,37 @@ def configure_logger(verbosity: Verbosity) -> None:
 
     Use multiple handlers, to allow redirecting the output if required and
     prepending messages with indicators of logging or warning messages. Prepend
-    debugging messages with `* ` and errors with `! `.
+    debugging messages with ` * ` and errors with ` ! `.
 
     Args:
         verbosity: The verbosity of the logger.
     """
-    warning = log.StreamHandler(sys.stdout)
-    warning.addFilter(lambda record: log.ERROR <= record.levelno)
-    warning.setFormatter(log.Formatter("! %(message)s"))
+    warning = logging.StreamHandler(sys.stdout)
+    warning.addFilter(lambda record: logging.ERROR <= record.levelno)
+    warning.setFormatter(logging.Formatter(" ! %(message)s"))
 
-    standard = log.StreamHandler(sys.stdout)
-    standard.addFilter(lambda record: log.DEBUG < record.levelno < log.ERROR)
-    standard.setFormatter(log.Formatter("%(message)s"))
+    standard = logging.StreamHandler(sys.stdout)
+    standard.addFilter(
+        lambda record: logging.DEBUG < record.levelno < logging.ERROR
+    )
+    standard.setFormatter(logging.Formatter("%(message)s"))
 
-    verbose = log.StreamHandler(sys.stdout)
-    verbose.addFilter(lambda record: record.levelno <= log.DEBUG)
-    verbose.setFormatter(log.Formatter("* %(message)s"))
+    verbose = logging.StreamHandler(sys.stdout)
+    verbose.addFilter(lambda record: record.levelno <= logging.DEBUG)
+    verbose.setFormatter(logging.Formatter(" * %(message)s"))
 
     match verbosity:
         case Verbosity.QUIET:
-            level = log.FATAL
+            level = logging.FATAL
             handlers = (warning,)
         case Verbosity.NORMAL:
-            level = log.INFO
+            level = logging.INFO
             handlers = (warning, standard)
         case Verbosity.VERBOSE:
-            level = log.DEBUG
+            level = logging.DEBUG
             handlers = (warning, standard, verbose)
 
-    log.basicConfig(level=level, handlers=handlers)
+    logging.basicConfig(level=level, handlers=handlers)
 
 
 def _validate_input(

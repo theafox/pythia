@@ -12,7 +12,7 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 """
 
 import ast
-import logging as log
+import logging
 import sys
 from enum import IntEnum
 from typing import Any, Callable, Iterable, Mapping, override
@@ -24,6 +24,8 @@ import translator.mappings.python as python_mappings
 import translator.mappings.python.pyro as pyro_mappings
 from translator.context import Context
 from translator.mappings import BaseMapping, MappingError, MappingWarning
+
+log = logging.getLogger(__name__)
 
 
 class ExitCode(IntEnum):
@@ -146,8 +148,9 @@ class Translator:
                 except MappingWarning as warning:
                     cause = warning.message.removesuffix(".")
                     log.warning(
-                        "Mapping failed for node-type"
-                        f" `{type(node).__name__}`: {cause}."
+                        "Mapping failed for node-type `%s`: %s.",
+                        type(node).__name__,
+                        cause,
                     )
                 else:
                     if mapped is not None:
@@ -200,7 +203,7 @@ class Translator:
                     if isinstance(diagnosis, str)
                     else list(diagnosis)
                 )
-                log.debug("Validation error(s): " + "; ".join(diagnosis))
+                log.debug("Validation error(s): %s.", "; ".join(diagnosis))
             return None
 
         traverser = self._TranslatingTraverser(self.mappings)
@@ -232,11 +235,11 @@ class Translator:
         Returns:
             The translated code or `None` in case of an error.
         """
-        log.debug(f"Parsing code: {_display(code)}.")
+        log.debug("Parsing code: %s.", _display(code))
         try:
             node = ast.parse(code)
         except (SyntaxError, ValueError):
-            log.fatal(f"Could not parse code: {_display(code)}.")
+            log.fatal("Could not parse code: %s.", _display(code))
             exit(ExitCode.PARSE_ERROR)
         return self.translate(node)
 
@@ -257,12 +260,12 @@ class Translator:
         Returns:
             The translated code or `None` in case of an error.
         """
-        log.debug(f"Reading file: {_display(path)}.")
+        log.debug("Reading file: %s.", _display(path))
         try:
             with open(path, "r") as file:
                 code = file.read()
         except IOError:
-            log.fatal(f"Could not read the file: {_display(path)}.")
+            log.fatal("Could not read the file: %s.", _display(path))
             exit(ExitCode.READ_ERROR)
         return self.translate_code(code)
 
