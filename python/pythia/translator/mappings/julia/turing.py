@@ -220,6 +220,16 @@ class CallMapping(BaseCallMapping):
         mapping = get_function_call_mapping()
         return mapping(node, context)
 
+    @staticmethod
+    def _half_cauchy_half_normal(node: ast.Call, context: Context) -> str:
+        mapping = get_function_call_mapping()
+        node.func = ast.Name(get_name(node).removeprefix("Half"))
+        location = (
+            context.translator.visit(node.args.pop(0)) if node.args else "0"
+        )
+        distribution = mapping(node, context)
+        return f"Truncated({distribution}, {location}, +Inf)"
+
     mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": _sample,
         "observe": _observe,
@@ -234,8 +244,8 @@ class CallMapping(BaseCallMapping):
         "Cauchy": get_function_call_mapping(),
         "Exponential": _exponential,
         "Gamma": _gamma,
-        "HalfCauchy": _unsupported,
-        "HalfNormal": _unsupported,
+        "HalfCauchy": _half_cauchy_half_normal,
+        "HalfNormal": _half_cauchy_half_normal,
         "InverseGamma": get_function_call_mapping(),
         "Normal": get_function_call_mapping(),
         "StudentT": get_function_call_mapping(function_name="TDist"),
