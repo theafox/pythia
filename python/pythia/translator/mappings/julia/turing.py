@@ -24,34 +24,31 @@ from .syntax import CallMapping as BaseCallMapping
 from .syntax import FunctionMapping as BaseFunctionMapping
 
 
-def _compare_target_address_depth(target: ast.expr, address: ast.expr) -> None:
-    # FIXME: possibly improve? e.g. correlate used subscripts
-    depth = 0
-    while (
-        isinstance(address, ast.Call) and get_name(address) == "IndexedAddress"
-    ):
-        current_arguments = list(
-            organize_arguments(
-                address.args,
-                address.keywords,
-                argument_defaults=[ast.Constant(Context.unique_address())],
-            )
-        )
-        depth += len(current_arguments[1:])
-        address = current_arguments[0]
-    while isinstance(target, (ast.Subscript, ast.Attribute)):
-        if isinstance(target, ast.Attribute):
-            target = target.value
-            continue
-        depth -= (
-            len(target.slice.elts)
-            if isinstance(target.slice, ast.Tuple)
-            else 1
-        )  # this does not respect slices.
-        target = target.value
-    if depth != 0:
+def _compare_target_to_address(target: ast.expr, address: ast.expr) -> None:
+    def _extract_identifiers(expression: ast.expr) -> set[str]:
+        identifiers: set[str] = set()
+
+        class IdentifierVisitor(ast.NodeVisitor):
+            def visit_Constant(self, node: ast.Constant) -> None:  # noqa
+                identifiers.add(str(node.value))
+
+            def visit_Name(self, node: ast.Name) -> None:  # noqa
+                identifiers.add(node.id)
+
+            def visit_Attribute(self, node: ast.Attribute) -> None:  # noqa
+                identifiers.add(node.attr)
+                self.generic_visit(node)
+
+        IdentifierVisitor().visit(expression)
+        return identifiers
+
+    target_identifiers = _extract_identifiers(target)
+    address_identifiers = _extract_identifiers(address)
+    address_identifiers.discard("IndexedAddress")
+    if target_identifiers != address_identifiers:
         raise MappingError(
-            "The depth of the address and target do not coincide."
+            "The address' identifiers do not coincide:"
+            f" {*target_identifiers,} versus {*address_identifiers,}"
         )
 
 
@@ -83,7 +80,7 @@ class AssignmentMapping(BaseAssignmentMapping):
                     ],
                 )
                 address, distribution = list(arguments)[:2]
-                _compare_target_address_depth(
+                _compare_target_to_address(
                     target, address
                 )  # pass on `MappingError`.
                 target = context.translator.visit(target)
@@ -129,9 +126,7 @@ class CallMapping(BaseCallMapping):
             ],
         )
         value, address, distribution = list(arguments)[:3]
-        _compare_target_address_depth(
-            value, address
-        )  # pass on `MappingError`.
+        _compare_target_to_address(value, address)  # pass on `MappingError`.
         value = context.translator.visit(value)
         distribution = context.translator.visit(distribution)
         return f"{value} ~ {distribution}"
