@@ -188,6 +188,25 @@ class CallMapping(BaseCallMapping):
         )
 
     @staticmethod
+    def _iid(node: ast.Call, context: Context) -> str:
+        arguments = list(
+            organize_arguments(
+                node.args,
+                node.keywords,
+                argument_defaults=[
+                    ast.Call(ast.Name("Dirac"), [ast.Constant(True)], []),
+                    ast.Constant(1),
+                ],
+            )
+        )
+        distribution, size = arguments[0], arguments[1]
+        if not isinstance(size, (ast.List, ast.Tuple)):
+            size = ast.Tuple([size])
+        distribution = context.translator.visit(distribution)
+        size = ", ".join(context.translator.visit(item) for item in size.elts)
+        return f"filldist({distribution}, {size})"
+
+    @staticmethod
     def _exponential(node: ast.Call, context: Context) -> str:
         if len(node.args) >= 1:
             node.args[0] = ast.BinOp(ast.Constant(1), ast.Div(), node.args[1])
@@ -208,8 +227,7 @@ class CallMapping(BaseCallMapping):
         "Vector": _vector_array,
         "Array": _vector_array,
         "IndexedAddress": _indexed_address,
-        # FIXME: something like `fill(Bernoulli(0.3), 12)` won't work i think
-        "IID": _unsupported,
+        "IID": _iid,
         # Distributions.
         "Dirac": get_function_call_mapping(),
         "Beta": get_function_call_mapping(),
