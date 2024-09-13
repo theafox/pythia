@@ -1,3 +1,9 @@
+"""`Diagnostic` class and any of its dependencies.
+
+The `Diagnostic` class is intended to store all the necessary information of an
+error, warning, etc. See their respective documentation for further details.
+"""
+
 import ast
 from dataclasses import dataclass
 from enum import IntEnum

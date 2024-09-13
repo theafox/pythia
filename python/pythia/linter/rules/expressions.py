@@ -7,7 +7,7 @@ the documentation of that class in case of changes or additions.
 import ast
 from typing import override
 
-from diagnostic import Diagnostic
+from linter import Diagnostic
 
 from .base import BaseRule
 

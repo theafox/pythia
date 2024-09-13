@@ -1,58 +1,45 @@
-"""A linter for probabilistic programs.
+"""The main components of the `linter` module.
 
-TODO: add specifications!
+The `linter` module is designed to provide the ability to lint Python
+code conforming to _PyThia_ specifications. This file provides the main
+components of this functionality.
 
-Example:
-    This script may also be used as a CLI tool to lint files according to the
-    specifications. When used as a CLI tool, a `-q`/`--quiet` or
-    `-v`/`--verbose` flag may be provided to specify the verbosity of the
-    logging output. The former restricts it to fatal messages, while the latter
-    shows everything logged. To format the output as JSON, the `--json` flag
-    may be provided. (This may include more details than the standard output.)
-    Additionally, either (i) one positional argument must be provided, a
-    file-path, (ii) the flag `--stdin`, indicating the code will be passed in
-    through std, or (iii) parse the code directly via the `-c`/`--code` flag.
-    (View these options using the `-h`/`--help` flag.)
-
-        $ python3 linter.py test.py
-        Linter ran successfully, received 3 hints.
-          51:4: ERROR: Nested functions are not allowed
-        …
-
-        $ python3 linter.py -v test.py
-        * Received 'test.py'… as a string, try interpreting it as a file-path.
-        * Identified 'test.py'… as a file, reading the contents.
-        * Parsing 'import probros\n\n\n# This s'… as code.
-        …
-
-Attributes:
-    Linter: This class represents a general purpose linter. By specifying rules
-        and entry-point identifiers, the linter may be suited to the required
-        use-case.
-    default_probabilistic_program_linter: This returns the default linter for
-        probabilistic programs.
-    main: This function includes the setup for the CLI functionality, i.e. the
-        specifications of the CLI flags, parsing of the input and running of
-        the default probabilistic program linter.
+Usage:
+    For usage in a script see the package documentation (`__init__.py`). For
+    usage as a CLI tool see the module documentation (`__main__.py`).
 
 Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
-Version: 0.1.0
-Status: In Development
 """
 
 import ast
 import logging as log
 import sys
+from enum import IntEnum
 from itertools import chain
 from typing import Callable, Iterable, override
 
-import rules
-from diagnostic import Diagnostic, Severity
+from linter import Diagnostic, Severity, rules
 
 # NOTE: extract this dynamically from `probros` to future-proof for changes?
 _DECORATOR_NAME = "probabilistic_program"
-_PARSE_ERROR_CODE = 10
-_READ_ERROR_CODE = 20
+
+
+class ExitCode(IntEnum):
+    """An enumeration which defines exit codes.
+
+    Attributes:
+        INVALID_ARGUMENTS: The user provided invalid arguments.
+        READ_ERROR: An error occurred while reading the input.
+        PARSE_ERROR: An error occurred while parsing the input.
+        LINTING_ERROR: The translation attempt resulted in an error.
+    """
+
+    # User generated and input errors.
+    INVALID_ARGUMENTS = 10
+    READ_ERROR = 11
+    PARSE_ERROR = 12
+    # Runtime errors.
+    LINTING_ERROR = 20
 
 
 class Linter(ast.NodeVisitor):
@@ -201,9 +188,6 @@ class Linter(ast.NodeVisitor):
     def lint_code(self, code: str) -> list[Diagnostic]:
         """Lint the provided code.
 
-        In case of errors while or because of parsing the code, exit the
-        program with code `_PARSE_ERROR_CODE`.
-
         Args:
             code: The code on which to run the linter on.
 
@@ -217,15 +201,11 @@ class Linter(ast.NodeVisitor):
             tree: ast.AST = ast.parse(code)
         except (SyntaxError, ValueError):
             log.fatal(f"Could not parse code {code[:25]!a}….")
-            exit(_PARSE_ERROR_CODE)
+            exit(ExitCode.PARSE_ERROR)
         return self.lint(tree)
 
     def lint_file(self, path: str) -> list[Diagnostic]:
         """Lint the file located at the provided file-path.
-
-        In case of errors while or because of reading the file, exit the
-        program with code `_READ_ERROR_CODE`. And in case of errors while or
-        because of parsing the code, with code `_PARSE_ERROR_CODE`.
 
         Args:
             path: The file-path pointing to the file on which to run the
@@ -242,15 +222,11 @@ class Linter(ast.NodeVisitor):
                 code: str = file.read()
         except IOError:
             log.fatal(f"Could not read file {path[:25]!a}….")
-            exit(_READ_ERROR_CODE)
+            exit(ExitCode.READ_ERROR)
         return self.lint_code(code)
 
     def lint_stdin(self) -> list[Diagnostic]:
         """Lint the input from stdin.
-
-        In case of errors while or because of reading stdin, exit the
-        program with code `_READ_ERROR_CODE`. And in case of errors while or
-        because of parsing the code, with code `_PARSE_ERROR_CODE`.
 
         Returns:
             The diagnostics found by the linter. All diagnostics identified by
@@ -262,7 +238,7 @@ class Linter(ast.NodeVisitor):
             code: str = sys.stdin.read()
         except IOError:
             log.fatal("Could not read from stdin.")
-            exit(_READ_ERROR_CODE)
+            exit(ExitCode.READ_ERROR)
         return self.lint_code(code)
 
     def found_code_outside(self) -> bool:
@@ -477,119 +453,3 @@ def default_probabilistic_program_linter() -> Linter:
         _is_probabilistic_program_entry_point,
         _analyze_probabilistic_program_entry_point,
     )
-
-
-def main() -> None:
-    """Parse CLI arguments and execute the linter.
-
-    This uses `argparse` to decypher any arguments. Valid arguments are:
-    - either `-v` / `--verbose` to print debugging messages or
-    - `-q` / `--quiet` to suppress anyything but fatal errors and the results,
-    - `--json` to format the output as JSON, and
-    - either a filepath as a positional argument,
-    - `--stdin`,
-    - or code usig `-c`/`--code`.
-    """
-
-    import argparse
-    from dataclasses import asdict
-    from json import dumps
-
-    parser = argparse.ArgumentParser()
-    verbosity = parser.add_mutually_exclusive_group()
-    verbosity.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Print verbose messages",
-    )
-    verbosity.add_argument(
-        "-q",
-        "--quiet",
-        action="store_true",
-        help="Only print the results",
-    )
-    parser.add_argument(
-        "-e",
-        "--extensive-diagnosis",
-        action="store_true",
-        help="Continue searching for diagnostics after one was already found",
-        dest="extensive_diagnosis",
-    )
-    code_origin = parser.add_mutually_exclusive_group(required=True)
-    code_origin.add_argument(
-        "filepath",
-        help="File to run the linter on",
-        type=str,
-        nargs="?",
-    )
-    code_origin.add_argument(
-        "--stdin",
-        action="store_true",
-        help="Read the code from stdin",
-    )
-    code_origin.add_argument("-c", "--code", help="The code to lint", type=str)
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output the results in JSON format",
-    )
-    args = parser.parse_args()
-
-    if args.quiet:
-        log.basicConfig(level=log.CRITICAL)
-    elif args.verbose:
-        # Use two different handlers to print the standard / debugging
-        # information. This also allows redirecting the output if required.
-        # Prepend debugging messages with `* ` to differentiate them from
-        # normal outputs.
-
-        standard = log.StreamHandler(sys.stdout)
-        standard.addFilter(lambda record: record.levelno != log.DEBUG)
-
-        verbose = log.StreamHandler(sys.stdout)
-        verbose.addFilter(lambda record: record.levelno == log.DEBUG)
-        verbose.setFormatter(log.Formatter("* %(message)s"))
-
-        log.basicConfig(
-            format="%(message)s",
-            level=log.DEBUG,
-            handlers=(standard, verbose),
-        )
-    else:
-        log.basicConfig(format="%(message)s", level=log.INFO)
-
-    linter: Linter = default_probabilistic_program_linter()
-    linter.extensive_diagnosis = args.extensive_diagnosis
-    diagnostics: list[Diagnostic] = []
-    if args.filepath:
-        diagnostics += linter.lint_file(args.filepath)
-    elif args.stdin:
-        diagnostics += linter.lint_stdin()
-    elif args.code:
-        diagnostics += linter.lint_code(args.code)
-    else:
-        return
-
-    log.info(f"Linter ran successfully, got {len(diagnostics)} diagnostic(s).")
-    if args.json:
-        print(
-            dumps(
-                {
-                    "diagnostics": list(
-                        map(
-                            lambda diagnostic: asdict(diagnostic),
-                            diagnostics,
-                        )
-                    )
-                },
-                default=str,
-            )
-        )
-    elif diagnostics:
-        # Print as one block.
-        print("\n".join(str(diagnostic) for diagnostic in diagnostics))
-
-
-if __name__ == "__main__":
-    main()

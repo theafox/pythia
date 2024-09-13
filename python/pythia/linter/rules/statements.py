@@ -7,7 +7,7 @@ the documentation of that class in case of changes or additions.
 import ast
 from typing import override
 
-from diagnostic import Diagnostic, Severity
+from linter import Diagnostic, Severity
 
 from .base import BaseRule
 from .utils import is_function_called

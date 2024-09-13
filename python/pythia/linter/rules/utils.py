@@ -1,3 +1,9 @@
+"""Utility functions, classes, etc. for defining rules.
+
+The components of this file are written for and intended to be used for the
+definition of rules.
+"""
+
 import ast
 from typing import Callable, override
 

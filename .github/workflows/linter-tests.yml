@@ -23,4 +23,4 @@ jobs:
         pip install numpy scipy tqdm pytest
     - name: Run the tests with pytest
       run: |
-        pytest python/probros/linter/
+        pytest python/pythia/linter/

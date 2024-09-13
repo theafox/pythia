@@ -22,9 +22,13 @@ Fixtures:
 
 # type: ignore
 import pytest
-import rules
-from diagnostic import Severity
-from linter import Linter, default_probabilistic_program_linter
+
+from linter import (
+    Linter,
+    Severity,
+    default_probabilistic_program_linter,
+    rules,
+)
 
 
 @pytest.fixture

@@ -1,4 +1,12 @@
 # type: ignore
+"""A simple demonstration of the linter.
+
+This showcases the linter using the test-cases as examples. This demonstration
+works best with the linter integrated into a development environment.
+
+Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
+"""
+
 import probros
 
 

@@ -1,7 +1,15 @@
+"""Base classes and other overarching components required for rules.
+
+The main component of this file is the base class of rules. It should be
+implemented for defining rules and used by the linter for diagnosis. See the
+documentation of this base class for further information about the other
+components.
+"""
+
 import ast
 from abc import ABC, abstractmethod
 
-from diagnostic import Diagnostic
+from linter import Diagnostic
 
 
 class BaseRule(ABC):
