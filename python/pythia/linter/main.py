@@ -12,7 +12,7 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 """
 
 import ast
-import logging as log
+import logging
 import sys
 from enum import IntEnum
 from itertools import chain
@@ -22,6 +22,29 @@ from linter import Diagnostic, Severity, rules
 
 # NOTE: extract this dynamically from `probros` to future-proof for changes?
 _DECORATOR_NAME = "probabilistic_program"
+
+log = logging.getLogger(__name__)
+
+
+def _display(item: str | ast.AST, maximum_length: int = 25) -> str:
+    r"""Convert the item to a readable representation.
+
+    This is intended to be used for logging. It escapes special characters such
+    as `\t` and limits the maximum length of the string. In case an `ast` node
+    is given, dump it to make it readable.
+
+    Args:
+        item: The item to make readable.
+        maximum_length: The maximum length of the resulting string.
+
+    Returns:
+        A readable representation of the given item.
+    """
+    message = item if isinstance(item, str) else ast.dump(item)
+    message = message.encode("unicode_escape", "backslashreplace").decode()
+    if len(message) > maximum_length:
+        message = f"{message[:maximum_length]}…"
+    return message
 
 
 class ExitCode(IntEnum):
@@ -132,14 +155,15 @@ class Linter(ast.NodeVisitor):
                 diagnostic.severity == Severity.ERROR
                 for diagnostic in entry_point_diagnostics
             ):
-                log.debug(f"Found admissible node {ast.dump(node)[:25]}….")
+                log.debug("Found admissible node: %s.", _display(node))
                 self._entered = True
                 super().generic_visit(node)
                 self._entered = False
             else:
                 log.debug(
-                    "Entry-point analysis found an error"
-                    f", skipping admissible node {ast.dump(node)[:25]}…"
+                    "Entry-point analysis found an error,"
+                    " skipping admissible node: %s.",
+                    _display(node),
                 )
             return
 
@@ -151,8 +175,9 @@ class Linter(ast.NodeVisitor):
         ]
         if diagnostics:
             log.debug(
-                f"Rules ({len(diagnostics)}) were applicable:"
-                f" {*diagnostics, }"
+                "Rules (%d) were applicable: %s",
+                len(diagnostics),
+                "; ".join(map(repr, diagnostics)),
             )
             self.diagnostics += diagnostics
         if not diagnostics or self.extensive_diagnosis:
@@ -171,14 +196,14 @@ class Linter(ast.NodeVisitor):
             the linter and any runtime errors are logged.
         """
 
-        log.debug(f"Linting tree {ast.dump(tree)[:25]!a}….")
+        log.debug("Linting tree: %s.", _display(tree))
 
         self.diagnostics = []
         self._entered = False
         self._found_outside = False
         self.visit(tree)
         log.debug(
-            f"Linting finished, got {len(self.diagnostics)} diagnostic(s)."
+            "Linting finished, got %d diagnostic(s).", len(self.diagnostics)
         )
 
         diagnostics: list[Diagnostic] = self.diagnostics
@@ -196,11 +221,11 @@ class Linter(ast.NodeVisitor):
             the linter and any runtime errors are logged.
         """
 
-        log.debug(f"Parsing code {code[:25]!a}….")
+        log.debug("Parsing code: %s.", _display(code))
         try:
             tree: ast.AST = ast.parse(code)
         except (SyntaxError, ValueError):
-            log.fatal(f"Could not parse code {code[:25]!a}….")
+            log.fatal("Could not parse code: %s.", _display(code))
             exit(ExitCode.PARSE_ERROR)
         return self.lint(tree)
 
@@ -216,12 +241,12 @@ class Linter(ast.NodeVisitor):
             the linter and any runtime errors are logged.
         """
 
-        log.debug(f"Reading file {path[:25]!a}….")
+        log.debug("Reading file: %s.", _display(path))
         try:
             with open(path, "r") as file:
                 code: str = file.read()
         except IOError:
-            log.fatal(f"Could not read file {path[:25]!a}….")
+            log.fatal("Could not read file: %s.", _display(path))
             exit(ExitCode.READ_ERROR)
         return self.lint_code(code)
 
@@ -330,10 +355,10 @@ def _analyze_probabilistic_program_entry_point(
     )
     if unrecognized:
         log.warning(
-            f"Could not verify at least one decorator of '{node.name}'…"
+            "Could not verify at least one decorator of `%s`.", node.name
         )
     for decorator in unrecognized:
-        log.debug(f"Could not verify decorator: {ast.dump(decorator)}")
+        log.debug("Could not verify decorator: %s.", ast.dump(decorator))
         diagnostics.append(
             Diagnostic.from_node(
                 decorator,

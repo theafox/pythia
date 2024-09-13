@@ -39,7 +39,7 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 """
 
 import argparse
-import logging as log
+import logging
 import sys
 from dataclasses import asdict
 from enum import Enum, IntEnum
@@ -49,6 +49,8 @@ from typing import Sequence, TypedDict
 from linter.main import ExitCode, default_probabilistic_program_linter
 
 LINTER = default_probabilistic_program_linter()
+
+log = logging.getLogger(__name__)
 
 
 class Verbosity(IntEnum):
@@ -149,30 +151,32 @@ def configure_logger(verbosity: Verbosity) -> None:
     Args:
         verbosity: The verbosity of the logger.
     """
-    warning = log.StreamHandler(sys.stdout)
-    warning.addFilter(lambda record: log.ERROR <= record.levelno)
-    warning.setFormatter(log.Formatter(" ! %(message)s"))
+    warning = logging.StreamHandler(sys.stdout)
+    warning.addFilter(lambda record: logging.ERROR <= record.levelno)
+    warning.setFormatter(logging.Formatter(" ! %(message)s"))
 
-    standard = log.StreamHandler(sys.stdout)
-    standard.addFilter(lambda record: log.DEBUG < record.levelno < log.ERROR)
-    standard.setFormatter(log.Formatter("%(message)s"))
+    standard = logging.StreamHandler(sys.stdout)
+    standard.addFilter(
+        lambda record: logging.DEBUG < record.levelno < logging.ERROR
+    )
+    standard.setFormatter(logging.Formatter("%(message)s"))
 
-    verbose = log.StreamHandler(sys.stdout)
-    verbose.addFilter(lambda record: record.levelno <= log.DEBUG)
-    verbose.setFormatter(log.Formatter(" * %(message)s"))
+    verbose = logging.StreamHandler(sys.stdout)
+    verbose.addFilter(lambda record: record.levelno <= logging.DEBUG)
+    verbose.setFormatter(logging.Formatter(" * %(message)s"))
 
     match verbosity:
         case Verbosity.QUIET:
-            level = log.FATAL
+            level = logging.FATAL
             handlers = (warning,)
         case Verbosity.NORMAL:
-            level = log.INFO
+            level = logging.INFO
             handlers = (warning, standard)
         case Verbosity.VERBOSE:
-            level = log.DEBUG
+            level = logging.DEBUG
             handlers = (warning, standard, verbose)
 
-    log.basicConfig(level=level, handlers=handlers)
+    logging.basicConfig(level=level, handlers=handlers)
 
 
 def main(arguments: Sequence[str] | None = None) -> None:
@@ -211,7 +215,9 @@ def main(arguments: Sequence[str] | None = None) -> None:
         log.fatal("Did not receive any code or code-source")
         sys.exit(ExitCode.INVALID_ARGUMENTS)
 
-    log.info(f"Linter ran successfully, got {len(diagnostics)} diagnostic(s).")
+    log.info(
+        "Linter ran successfully, got %s diagnostic(s).", len(diagnostics)
+    )
     if not parsed["quiet"]:
         print()  # buffer between logging and results.
     print(
