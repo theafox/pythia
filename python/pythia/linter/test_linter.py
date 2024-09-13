@@ -20,7 +20,6 @@ Fixtures:
         the probabilistic program linter.
 """
 
-# type: ignore
 import pytest
 
 from linter import (

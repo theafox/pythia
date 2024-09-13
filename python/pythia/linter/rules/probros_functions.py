@@ -1,4 +1,4 @@
-"""This module contains rules for validating probros-specific nodes.
+"""This module contains rules for validating PyThia-specific nodes.
 
 Each rule is implemented as a class inheriting from `BaseRule`. Therefore, view
 the documentation of that class in case of changes or additions.

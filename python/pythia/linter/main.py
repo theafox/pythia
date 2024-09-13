@@ -20,7 +20,6 @@ from typing import Callable, Iterable, override
 
 from linter import Diagnostic, Severity, rules
 
-# NOTE: extract this dynamically from `probros` to future-proof for changes?
 _DECORATOR_NAME = "probabilistic_program"
 
 log = logging.getLogger(__name__)
@@ -78,9 +77,9 @@ class Linter(ast.NodeVisitor):
     Note that, the entry-point-node itself is _not_ validated using those
     rules, `analyze_entry_point` may be used for this purpose.
 
-    Analysis on porential entry-points using `analyze_entry_point` checks any
+    Analysis on potential entry-points using `analyze_entry_point` checks any
     node outside code of interest. It is therefore independent of the check for
-    entry-point nodes and does _not_ guarentee that the passed node is a valid
+    entry-point nodes and does _not_ guarantee that the passed node is a valid
     entry-point.
     In  case `analyze_entry_point` returns (at least) one diagnostic of the
     error-level, the node is skipped, even as an entry-point, i.e. no further
@@ -106,18 +105,6 @@ class Linter(ast.NodeVisitor):
         extensive_diagnosis: bool = False,
         **kwargs,
     ):
-        """Initialize the linter.
-
-        Args:
-            rules: The rules to apply to code of interest.
-            is_entry_point: A function to identify entry-points.
-            analyze_entry_point: A function to analyze the entry-point itself.
-            extensive_diagnosis: Whether to continue searching for diagnostics
-                after one was already found.
-            **kwargs: Any additional key-word-arguments will be handed to the
-                super-class initialization.
-        """
-
         super().__init__(**kwargs)
 
         self.rules = rules
@@ -134,14 +121,13 @@ class Linter(ast.NodeVisitor):
         """Identify entry-points and apply rules.
 
         This class is overridden from the parent class. It will be called
-        whenever a node is encountered during the walk throug the tree. For
+        whenever a node is encountered during the walk through the tree. For
         this reason it is not recommended to subclass this and add any
         `visit_*` methods.
 
         Args:
             node: The node to identify or analyze.
         """
-
         # Outside code of interest…
         if not self._entered:
             entry_point_diagnostics = self.analyze_entry_point(node)
@@ -195,7 +181,6 @@ class Linter(ast.NodeVisitor):
             The diagnostics found by the linter. All diagnostics identified by
             the linter and any runtime errors are logged.
         """
-
         log.debug("Linting tree: %s.", _display(tree))
 
         self.diagnostics = []
@@ -220,7 +205,6 @@ class Linter(ast.NodeVisitor):
             The diagnostics found by the linter. All diagnostics identified by
             the linter and any runtime errors are logged.
         """
-
         log.debug("Parsing code: %s.", _display(code))
         try:
             tree: ast.AST = ast.parse(code)
@@ -240,7 +224,6 @@ class Linter(ast.NodeVisitor):
             The diagnostics found by the linter. All diagnostics identified by
             the linter and any runtime errors are logged.
         """
-
         log.debug("Reading file: %s.", _display(path))
         try:
             with open(path, "r") as file:
@@ -251,13 +234,12 @@ class Linter(ast.NodeVisitor):
         return self.lint_code(code)
 
     def lint_stdin(self) -> list[Diagnostic]:
-        """Lint the input from stdin.
+        """Lint the input from standard-input (`stdin`).
 
         Returns:
             The diagnostics found by the linter. All diagnostics identified by
             the linter and any runtime errors are logged.
         """
-
         log.debug("Reading from stdin.")
         try:
             code: str = sys.stdin.read()
@@ -273,7 +255,6 @@ class Linter(ast.NodeVisitor):
             In case any leaf-node was found outside code-of-interest returns
             `True`, `False` otherwise.
         """
-
         return self._found_outside
 
 
@@ -292,7 +273,6 @@ def _is_probabilistic_program_entry_point(node: ast.AST) -> bool:
         True if this could be identified as a probabilistic program, False
         otherwise.
     """
-
     return isinstance(node, ast.FunctionDef) and any(
         isinstance(decorator, ast.Attribute)
         and decorator.attr == _DECORATOR_NAME
@@ -319,7 +299,6 @@ def _analyze_probabilistic_program_entry_point(
     Returns:
         A list of diagnostics for all unrecognized decorators.
     """
-
     if (
         isinstance(node, ast.ClassDef)
         or isinstance(node, ast.AsyncFunctionDef)

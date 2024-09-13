@@ -32,7 +32,6 @@ class Severity(IntEnum):
         Returns:
             The string representation of the severity.
         """
-
         return str(self.name)
 
 

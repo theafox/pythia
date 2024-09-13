@@ -30,7 +30,6 @@ def is_function_called(
         bool: `True` if the node is a call to that specified function, `False`
         otherwise.
     """
-
     match node:
         case ast.Call(
             func=(ast.Name(id=called) | ast.Attribute(attr=called)),
@@ -100,7 +99,6 @@ class Address:
         Returns:
             `True` if the node represents an address, `False` otherwise.
         """
-
         match node:
             case ast.Constant(value=str()):
                 return True
@@ -204,7 +202,6 @@ class Distribution:
         Returns:
             `True` if the node represents a distribution, `False` otherwise.
         """
-
         return cls._is_base_distribution(node) or any(
             is_function_called(
                 node,
@@ -228,7 +225,6 @@ class Distribution:
         Returns:
             `True` if the node represents a distribution, `False` otherwise.
         """
-
         return any(
             is_function_called(node, distribution)
             for distribution in cls._DISTRIBUTIONS
