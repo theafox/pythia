@@ -17,10 +17,8 @@ jobs:
       with:
         python-version: "3.12"
     - name: Install dependencies
-      # TODO: separate into `requirements.txt` file,
-      # the current `python/requirements_core.txt` are outdated.
       run: |
-        pip install numpy scipy tqdm pytest
+        pip install -r python/requirements_core.txt pytest
     - name: Run the tests with pytest
       run: |
         pytest python/pythia/linter/
