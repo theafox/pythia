@@ -25,9 +25,10 @@ class RestrictSampleCallStructureRule(BaseRule):
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not is_function_called(node, cls._NAME):
+        if not isinstance(node, ast.Call) or not is_function_called(
+            node, cls._NAME
+        ):
             return None
-        assert isinstance(node, ast.Call)  # `is_function_called` ensures this
         match node:
             case ast.Call(
                 args=[
@@ -57,9 +58,10 @@ class RestrictObserveCallStructureRule(BaseRule):
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not is_function_called(node, cls._NAME):
+        if not isinstance(node, ast.Call) or not is_function_called(
+            node, cls._NAME
+        ):
             return None
-        assert isinstance(node, ast.Call)  # `is_function_called` ensures this
         match node:
             # Only `data`.
             case ast.Call(args=[_], keywords=[]):  # any expression as data
@@ -148,9 +150,10 @@ class RestrictFactorCallStructureRule(BaseRule):
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not is_function_called(node, cls._NAME):
+        if not isinstance(node, ast.Call) or not is_function_called(
+            node, cls._NAME
+        ):
             return None
-        assert isinstance(node, ast.Call)  # `is_function_called` ensures this
         match node:
             # No address given.
             case ast.Call(args=[_], keywords=[]):
@@ -179,9 +182,10 @@ class RestrictIndexedAddressCallStructureRule(BaseRule):
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not is_function_called(node, cls._NAME):
+        if not isinstance(node, ast.Call) or not is_function_called(
+            node, cls._NAME
+        ):
             return None
-        assert isinstance(node, ast.Call)  # `is_function_called` ensures this
         match node:
             case ast.Call(
                 args=[address, *indices],
@@ -209,9 +213,10 @@ class RestrictVectorConstructorCallStructureRule(BaseRule):
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not is_function_called(node, cls._NAME):
+        if not isinstance(node, ast.Call) or not is_function_called(
+            node, cls._NAME
+        ):
             return None
-        assert isinstance(node, ast.Call)  # `is_function_called` ensures this
         match node:
             case (
                 ast.Call(
@@ -271,9 +276,10 @@ class RestrictArrayConstructorCallStructureRule(BaseRule):
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        if not is_function_called(node, cls._NAME):
+        if not isinstance(node, ast.Call) or not is_function_called(
+            node, cls._NAME
+        ):
             return None
-        assert isinstance(node, ast.Call)  # `is_function_called` ensures this
         match node:
             case (
                 ast.Call(

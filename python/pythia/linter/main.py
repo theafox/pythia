@@ -16,7 +16,8 @@ import logging
 import sys
 from enum import IntEnum
 from itertools import chain
-from typing import Callable, Iterable, override
+from pathlib import Path
+from typing import Any, Callable, Iterable, override
 
 from linter import Diagnostic, Severity, rules
 
@@ -101,9 +102,9 @@ class Linter(ast.NodeVisitor):
         is_entry_point: Callable[[ast.AST], bool],
         analyze_entry_point: Callable[
             [ast.AST], Iterable[Diagnostic]
-        ] = lambda *args, **kwargs: [],
+        ] = lambda _: [],
         extensive_diagnosis: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ):
         super().__init__(**kwargs)
 
@@ -117,7 +118,7 @@ class Linter(ast.NodeVisitor):
         self._found_outside: bool = False
 
     @override
-    def generic_visit(self, node: ast.AST) -> None:
+    def visit(self, node: ast.AST) -> None:
         """Identify entry-points and apply rules.
 
         This class is overridden from the parent class. It will be called
@@ -191,7 +192,7 @@ class Linter(ast.NodeVisitor):
             "Linting finished, got %d diagnostic(s).", len(self.diagnostics)
         )
 
-        diagnostics: list[Diagnostic] = self.diagnostics
+        diagnostics = self.diagnostics
         self.diagnostics = []
         return diagnostics
 
@@ -207,11 +208,11 @@ class Linter(ast.NodeVisitor):
         """
         log.debug("Parsing code: %s.", _display(code))
         try:
-            tree: ast.AST = ast.parse(code)
+            node = ast.parse(code)
         except (SyntaxError, ValueError):
             log.fatal("Could not parse code: %s.", _display(code))
-            exit(ExitCode.PARSE_ERROR)
-        return self.lint(tree)
+            sys.exit(ExitCode.PARSE_ERROR)
+        return self.lint(node)
 
     def lint_file(self, path: str) -> list[Diagnostic]:
         """Lint the file located at the provided file-path.
@@ -226,11 +227,12 @@ class Linter(ast.NodeVisitor):
         """
         log.debug("Reading file: %s.", _display(path))
         try:
-            with open(path, "r") as file:
-                code: str = file.read()
-        except IOError:
+            file = Path(path)
+            with file.open() as stream:
+                code = stream.read()
+        except OSError:
             log.fatal("Could not read file: %s.", _display(path))
-            exit(ExitCode.READ_ERROR)
+            sys.exit(ExitCode.READ_ERROR)
         return self.lint_code(code)
 
     def lint_stdin(self) -> list[Diagnostic]:
@@ -242,10 +244,10 @@ class Linter(ast.NodeVisitor):
         """
         log.debug("Reading from stdin.")
         try:
-            code: str = sys.stdin.read()
-        except IOError:
+            code = sys.stdin.read()
+        except OSError:
             log.fatal("Could not read from stdin.")
-            exit(ExitCode.READ_ERROR)
+            sys.exit(ExitCode.READ_ERROR)
         return self.lint_code(code)
 
     def found_code_outside(self) -> bool:
@@ -299,10 +301,7 @@ def _analyze_probabilistic_program_entry_point(
     Returns:
         A list of diagnostics for all unrecognized decorators.
     """
-    if (
-        isinstance(node, ast.ClassDef)
-        or isinstance(node, ast.AsyncFunctionDef)
-    ) and any(
+    if (isinstance(node, (ast.ClassDef, ast.AsyncFunctionDef))) and any(
         isinstance(decorator, ast.Attribute)
         and decorator.attr == _DECORATOR_NAME
         or isinstance(decorator, ast.Name)
@@ -323,7 +322,7 @@ def _analyze_probabilistic_program_entry_point(
     diagnostics: list[Diagnostic] = []
 
     # In case some decorators could not be verified…
-    unrecognized: list[ast.expr] = list(
+    unrecognized = list(
         filter(
             lambda decorator: not isinstance(
                 decorator,
@@ -347,7 +346,7 @@ def _analyze_probabilistic_program_entry_point(
         )
 
     # In case the entry-point is valid…
-    if isinstance(node, ast.FunctionDef) and any(
+    if any(
         isinstance(decorator, ast.Attribute)
         and decorator.attr == _DECORATOR_NAME
         or isinstance(decorator, ast.Name)
