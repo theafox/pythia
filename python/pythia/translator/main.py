@@ -46,8 +46,8 @@ class ExitCode(IntEnum):
     READ_ERROR = 11
     PARSE_ERROR = 12
     # Runtime errors.
-    TRANSLATION_ERROR = 20
-    NOT_YET_IMPLEMENTED = 21  # TODO: remove me.
+    VALIDATION_ERROR = 20
+    TRANSLATION_ERROR = 21
 
 
 def _display(item: str | ast.AST, maximum_length: int = 25) -> str:

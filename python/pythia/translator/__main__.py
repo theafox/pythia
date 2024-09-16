@@ -52,7 +52,9 @@ import logging
 import sys
 from enum import IntEnum
 from pathlib import Path
-from typing import Optional, Sequence, TypedDict
+from typing import Sequence, TypedDict
+
+from linter import Severity, default_probabilistic_program_linter
 
 from translator.main import (
     ExitCode,
@@ -220,16 +222,6 @@ def configure_logger(verbosity: Verbosity) -> None:
     logging.basicConfig(level=level, handlers=handlers)
 
 
-def _validate_input(
-    filepath: Optional[str] = None,
-    code: Optional[str] = None,
-    stdin: bool = False,
-) -> None:
-    # TODO: Implement me.
-    log.fatal("Validation is not yet supported, please use `-f`/`--force`.")
-    sys.exit(ExitCode.NOT_YET_IMPLEMENTED)
-
-
 def main(arguments: Sequence[str] | None = None) -> None:
     """Parse CLI arguments and execute a translator.
 
@@ -270,15 +262,28 @@ def main(arguments: Sequence[str] | None = None) -> None:
 
     # Validate input.
     if not parsed["force"]:
+        log.debug("Running the linter.")
+        linter = default_probabilistic_program_linter()
         if source := parsed["file"]:
-            _validate_input(filepath=source)
+            diagnostics = linter.lint_file(source)
         elif parsed["stdin"]:  # should be redundant.
-            _validate_input(stdin=True)
+            diagnostics = linter.lint_stdin()
         elif source := parsed["code"]:
-            _validate_input(code=source)
+            diagnostics = linter.lint_code(source)
         else:
             log.fatal("Did not receive any code or code-source")
             sys.exit(ExitCode.INVALID_ARGUMENTS)
+        if linter.found_code_outside():
+            log.error(
+                "Validation before translation failed"
+                ", found additional code besides the model(s)."
+            )
+            sys.exit(ExitCode.VALIDATION_ERROR)
+        elif any(
+            diagnostic.severity >= Severity.ERROR for diagnostic in diagnostics
+        ):
+            log.error("Validation before translation failed.")
+            sys.exit(ExitCode.VALIDATION_ERROR)
 
     # Translate.
     translator = TRANSLATORS.get(parsed["target"])
