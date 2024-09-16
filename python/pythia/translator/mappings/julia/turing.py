@@ -113,7 +113,7 @@ class CallMapping(BaseCallMapping):
 
     @staticmethod
     def _observe(node: ast.Call, context: Context) -> str:
-        # NOTE: since Turing doesn't use explicit addresses, discard the
+        # NOTE: Since Turing doesn't use explicit addresses, discard the
         # address and merely use the assignment target.
         arguments = organize_arguments(
             node.args,

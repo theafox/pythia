@@ -190,7 +190,6 @@ class NoStandaloneExpressionRule(BaseRule):
         if not isinstance(node, ast.Expr):
             return None
         match node:
-            # NOTE: retrieve this elsewhere to future-proof for changes?
             case ast.Expr(value=value) if any(
                 is_function_called(value, name)
                 for name in ("observe", "factor")

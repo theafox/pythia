@@ -201,15 +201,12 @@ class RestrictVectorConstructorCallStructureRule(BaseRule):
     _FILL = "fill"
     _TYPE = "t"
 
-    # TODO: restrict further
     message = (
         f"Usage: `{_NAME}(<data>"
         f"[, [{_FILL}=]<data>"
         f"[, [{_TYPE}=]<data>]])`"
     )
 
-    # TODO: restrict further
-    # NOTE: also check whether `type` is allowed without `fill`
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
@@ -264,15 +261,12 @@ class RestrictArrayConstructorCallStructureRule(BaseRule):
     _FILL = "fill"
     _TYPE = "t"
 
-    # TODO: restrict further
     message = (
         f"Usage: `{_NAME}(<data>"
         f"[, [{_FILL}=]<data>"
         f"[, [{_TYPE}=]<data>]])`"
     )
 
-    # TODO: restrict further
-    # NOTE: also check whether `type` is allowed without `fill`
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:

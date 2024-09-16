@@ -77,7 +77,6 @@ class Address:
     features and should not be instantiated.
     """
 
-    # NOTE: extract this dynamically to future-proof for changes?
     _ADDRESS_CALL = "IndexedAddress"
 
     @override
@@ -126,7 +125,6 @@ class Distribution:
     features and should not be instantiated.
     """
 
-    # NOTE: extract this dynamically to future-proof for changes?
     _DISTRIBUTIONS = [
         "Dirac",
         "Beta",
@@ -149,7 +147,6 @@ class Distribution:
         "MultivariateNormal",
     ]
 
-    # NOTE: extract this dynamically to future-proof for changes?
     @classproperty
     def _WRAPPING_DISTRIBUTIONS(
         cls,
@@ -173,7 +170,6 @@ class Distribution:
         Returns:
             A list of tuples describing the wrapping distributions.
         """
-
         return [
             (
                 "IID",
