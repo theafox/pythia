@@ -1,7 +1,7 @@
 """This file contains mappings specific for the Gen framework.
 
 Note that this builds on top of the more general mapping provided by
-`./syntax.py`.
+`gen/syntax.py`.
 
 Each mapping is implemented as a class inheriting from `BaseMapping`.
 Therefore, view the documentation of that class in case of changes or
@@ -13,14 +13,15 @@ from typing import Callable, ClassVar, Iterable
 
 from translator.context import Context
 from translator.mappings import MappingError
+from translator.mappings.julia.syntax import CallMapping as BaseCallMapping
+from translator.mappings.julia.syntax import (
+    FunctionMapping as BaseFunctionMapping,
+)
 from translator.mappings.utils import (
     get_function_call_mapping,
     get_name,
     organize_arguments,
 )
-
-from .syntax import CallMapping as BaseCallMapping
-from .syntax import FunctionMapping as BaseFunctionMapping
 
 
 def preamble(context: Context) -> None:

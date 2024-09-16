@@ -13,13 +13,12 @@ from typing import Callable, ClassVar
 
 from translator.context import Context
 from translator.mappings import MappingError
+from translator.mappings.python.syntax import CallMapping as BaseCallMapping
 from translator.mappings.utils import (
     get_function_call_mapping,
     get_name,
     organize_arguments,
 )
-
-from .syntax import CallMapping as BaseCallMapping
 
 FUNCTION_PREFIX = "pyro."
 DISTRIBUTION_PREFIX = "dist."

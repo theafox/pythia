@@ -20,6 +20,7 @@ from typing import Any, Callable, Iterable, Mapping, override
 
 import translator.mappings.julia as julia_mappings
 import translator.mappings.julia.gen as gen_mappings
+import translator.mappings.julia.gen.choicemap as gen_choicemap_mappings
 import translator.mappings.julia.turing as turing_mappings
 import translator.mappings.python as python_mappings
 import translator.mappings.python.pyro as pyro_mappings
@@ -345,13 +346,43 @@ def default_gen_translator() -> Translator:
         A translator which may be used to translate PyThia code into the Gen
         framework.
     """
+
+    class _GenTranslator(Translator):
+        @override
+        def __init__(
+            self,
+            default_translator: Translator,
+            choicemap_translator: Translator,
+        ) -> None:
+            self.default_translator = default_translator
+            self.choicemap_translator = choicemap_translator
+
+        def translate(self, node: ast.AST) -> str | None:
+            translation = self.default_translator.translate(node)
+            if translation is None:
+                return translation
+            choicemap_translation = self.choicemap_translator.translate(node)
+            if choicemap_translation is None:
+                log.error("Failed `choicemap`-aggregation translation.")
+                return choicemap_translation
+            return translation.rstrip(r"\n") + "\n" + choicemap_translation
+
     julia_translator = default_julia_translator()
     julia_translator.preamble = gen_mappings.preamble
     julia_translator.mappings = dict(julia_translator.mappings) | {
         ast.FunctionDef: gen_mappings.FunctionMapping,
         ast.Call: gen_mappings.CallMapping,
     }
-    return julia_translator
+    choicemap_translator = default_julia_translator()
+    choicemap_translator.preamble = gen_choicemap_mappings.preamble
+    choicemap_translator.mappings = dict(julia_translator.mappings) | {
+        ast.FunctionDef: gen_choicemap_mappings.FunctionMapping,
+        ast.Assign: gen_choicemap_mappings.AssignmentMapping,
+        ast.Expr: gen_choicemap_mappings.StandaloneExpressionMapping,
+        ast.Return: gen_choicemap_mappings.ReturnMapping,
+        ast.Call: gen_choicemap_mappings.CallMapping,
+    }
+    return _GenTranslator(julia_translator, choicemap_translator)
 
 
 def default_turing_translator() -> Translator:

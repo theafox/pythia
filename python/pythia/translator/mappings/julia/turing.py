@@ -13,15 +13,18 @@ from typing import Callable, ClassVar, Iterable, override
 
 from translator.context import Context
 from translator.mappings import MappingError
+from translator.mappings.julia.syntax import (
+    AssignmentMapping as BaseAssignmentMapping,
+)
+from translator.mappings.julia.syntax import CallMapping as BaseCallMapping
+from translator.mappings.julia.syntax import (
+    FunctionMapping as BaseFunctionMapping,
+)
 from translator.mappings.utils import (
     get_function_call_mapping,
     get_name,
     organize_arguments,
 )
-
-from .syntax import AssignmentMapping as BaseAssignmentMapping
-from .syntax import CallMapping as BaseCallMapping
-from .syntax import FunctionMapping as BaseFunctionMapping
 
 
 def _compare_target_to_address(target: ast.expr, address: ast.expr) -> None:

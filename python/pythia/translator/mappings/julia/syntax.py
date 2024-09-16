@@ -11,7 +11,7 @@ additions.
 
 import ast
 from itertools import chain
-from typing import Callable, ClassVar, Iterable, override
+from typing import Callable, ClassVar, Iterable, Optional, override
 
 from translator.context import Context
 from translator.mappings import BaseMapping, MappingWarning
@@ -19,6 +19,7 @@ from translator.mappings.utils import get_function_call_mapping, get_name
 
 
 class FunctionMapping(BaseMapping):
+    name: Optional[str] = None
     macros: Iterable[str] = []
 
     @override
@@ -33,6 +34,8 @@ class FunctionMapping(BaseMapping):
                 ),
                 body=body,
             ):
+                if cls.name is not None:
+                    name = cls.name
                 macros = [
                     f"@{macro.removeprefix("@")}"
                     for macro in cls.macros
