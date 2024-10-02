@@ -245,6 +245,10 @@ class ConstantMapping(BaseMapping):
                 value = value.replace('"', r"\"")
                 value = value.replace("$", r"\$")
                 return f'"{value[1:-1]}"'
+            case ast.Constant(value=True):
+                return "true"
+            case ast.Constant(value=False):
+                return "false"
             case ast.Constant(value=value):
                 return str(value)
             case _:
