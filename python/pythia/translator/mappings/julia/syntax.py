@@ -131,7 +131,7 @@ class ForLoopMapping(BaseMapping):
                         stepsize = context.translator.visit(arguments[2])
                     case _:
                         return
-                context.line(f"for {target} = {start}:{stepsize}:{end}")
+                context.line(f"for {target} = {start}:{stepsize}:({end})-1")
                 with context.indented():
                     for statement in body:
                         context.translator.visit(statement)
