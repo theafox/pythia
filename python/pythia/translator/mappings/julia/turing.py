@@ -228,6 +228,21 @@ class CallMapping(BaseCallMapping):
         distribution = mapping(node, context)
         return f"Truncated({distribution}, {location}, +Inf)"
 
+    @staticmethod
+    def _dirichlet(node: ast.Call, context: Context) -> str:
+        arguments = list(
+            organize_arguments(
+                node.args,
+                node.keywords,
+                argument_defaults=[ast.Constant(1)],
+                keyword_argument_defaults=[(2, "size", ast.Constant(1))],
+            )
+        )
+        arguments[0], arguments[1] = arguments[1], arguments[0]
+        node.args = arguments
+        mapping = get_function_call_mapping()
+        return mapping(node, context)
+
     mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": _sample,
         "observe": _observe,
@@ -256,7 +271,7 @@ class CallMapping(BaseCallMapping):
             function_name="Hypergeometric"
         ),
         "Poisson": get_function_call_mapping(),
-        "Dirichlet": get_function_call_mapping(),
+        "Dirichlet": _dirichlet,
         "MultivariateNormal": get_function_call_mapping(
             function_name="MvNormal"
         ),
