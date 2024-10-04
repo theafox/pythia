@@ -28,30 +28,43 @@ from translator.mappings.utils import (
 
 
 def _compare_target_to_address(target: ast.expr, address: ast.expr) -> None:
-    def _extract_identifiers(expression: ast.expr) -> set[str]:
-        identifiers: set[str] = set()
+    def _extract_identifiers(expression: ast.expr) -> tuple[int, list[str]]:
+        constant_count = 0
+        variables: list[str] = []
 
         class IdentifierVisitor(ast.NodeVisitor):
             def visit_Constant(self, node: ast.Constant) -> None:  # noqa
-                identifiers.add(str(node.value))
+                nonlocal constant_count
+                constant_count += 1
 
             def visit_Name(self, node: ast.Name) -> None:  # noqa
-                identifiers.add(node.id)
-
-            def visit_Attribute(self, node: ast.Attribute) -> None:  # noqa
-                identifiers.add(node.attr)
-                self.generic_visit(node)
+                if node.id == "IndexedAddress":
+                    return
+                variables.append(node.id)
 
         IdentifierVisitor().visit(expression)
-        return identifiers
+        return constant_count, variables
 
-    target_identifiers = _extract_identifiers(target)
-    address_identifiers = _extract_identifiers(address)
-    address_identifiers.discard("IndexedAddress")
-    if target_identifiers != address_identifiers:
+    target_constant_count, target_variables = _extract_identifiers(target)
+    address_constant_count, address_variables = _extract_identifiers(address)
+
+    # The "initial" variable of the target may be counted as a constant since
+    # it is not variable in the complexity sense regarding the address.
+    if len(target_variables) >= 1:
+        target_variables.pop(0)
+        target_constant_count += 1
+
+    target_variables.sort()
+    address_variables.sort()
+    if target_constant_count != address_constant_count:
         raise MappingError(
-            "The address' identifiers do not coincide:"
-            f" {*target_identifiers,} versus {*address_identifiers,}"
+            "The number of constants do not coincide between the"
+            " assignment variable and used address."
+        )
+    elif target_variables != address_variables:
+        raise MappingError(
+            "The assignment variable's and address' complexity do not"
+            f" coincide: {*target_variables,} versus {*address_variables,}."
         )
 
 
