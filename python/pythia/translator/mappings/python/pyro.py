@@ -74,6 +74,29 @@ class CallMapping(BaseCallMapping):
         return mapping(node, context)
 
     @staticmethod
+    def _factor(node: ast.Call, context: Context) -> str:
+        arguments = list(
+            organize_arguments(
+                node.args,
+                node.keywords,
+                argument_defaults=[ast.Constant(0)],
+                keyword_argument_defaults=[
+                    (
+                        2,
+                        "address",
+                        lambda: ast.Constant(Context.unique_address()),
+                    )
+                ],
+            )
+        )
+        arguments[0], arguments[1] = arguments[1], arguments[0]
+        mapping = get_function_call_mapping(
+            function_name=f"{FUNCTION_PREFIX}factor",
+            arguments=arguments,
+        )
+        return mapping(node, context)
+
+    @staticmethod
     def _vector_array(node: ast.Call, context: Context) -> str:
         def map_datatype(datatype: ast.expr) -> str:
             match datatype:
@@ -187,21 +210,7 @@ class CallMapping(BaseCallMapping):
             function_name=f"{FUNCTION_PREFIX}sample"
         ),
         "observe": _observe,
-        "factor": get_function_call_mapping(
-            function_name=f"{FUNCTION_PREFIX}factor",
-            arguments=lambda arguments, keyword_arguments: organize_arguments(
-                arguments,
-                keyword_arguments,
-                argument_defaults=[ast.Constant(0)],
-                keyword_argument_defaults=[
-                    (
-                        2,
-                        "address",
-                        lambda: ast.Constant(Context.unique_address()),
-                    )
-                ],
-            ),
-        ),
+        "factor": _factor,
         "Vector": _vector_array,
         "Array": _vector_array,
         "IndexedAddress": _indexed_address,
