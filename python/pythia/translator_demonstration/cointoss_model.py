@@ -1,5 +1,5 @@
 @probabilistic_program
-def coinflip(data):
+def cointoss_model(data):
     probability = sample("probability", Uniform(0, 1))
     for i in range(0, len(data)):
         if data[i] != 0 and data[i] != 1:
