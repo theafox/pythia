@@ -18,7 +18,7 @@ jobs:
         python-version: "3.12"
     - name: Install dependencies
       run: |
-        pip install -r python/requirements_core.txt pytest
+        pip install -r requirements.txt pytest
     - name: Run the tests with pytest
       run: |
-        pytest python/pythia/linter/
+        pytest src/linter/

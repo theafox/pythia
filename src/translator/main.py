@@ -14,10 +14,9 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 import ast
 import logging
 import sys
-from collections.abc import Iterable, Mapping
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable, override
+from typing import Any, Callable, Iterable, Mapping, override
 
 import translator.mappings.julia as julia_mappings
 import translator.mappings.julia.gen as gen_mappings
@@ -325,7 +324,6 @@ def default_julia_translator() -> Translator:
             ast.List: julia_mappings.ListMapping,
             ast.Attribute: julia_mappings.AttributeMapping,
             ast.Subscript: julia_mappings.IndexingMapping,
-            ast.Slice: julia_mappings.SlicingMapping,
             ast.Call: julia_mappings.CallMapping,
             ast.BinOp: julia_mappings.BinaryOperatorsMapping,
             ast.Compare: julia_mappings.BinaryOperatorsMapping,
@@ -440,7 +438,6 @@ def default_python_translator() -> Translator:
             ast.List: python_mappings.ListMapping,
             ast.Attribute: python_mappings.AttributeMapping,
             ast.Subscript: python_mappings.IndexingMapping,
-            ast.Slice: python_mappings.SlicingMapping,
             ast.BinOp: python_mappings.BinaryOperatorsMapping,
             ast.Compare: python_mappings.BinaryOperatorsMapping,
             ast.BoolOp: python_mappings.BinaryOperatorsMapping,
