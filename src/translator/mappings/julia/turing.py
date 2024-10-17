@@ -236,7 +236,9 @@ class CallMapping(BaseCallMapping):
         mapping = get_function_call_mapping()
         node.func = ast.Name(get_name(node).removeprefix("Half"))
         location = (
-            context.translator.visit(node.args.pop(0)) if node.args else "0"
+            context.translator.visit(node.args.pop(0))
+            if len(node.args) >= 2
+            else "0"
         )
         distribution = mapping(node, context)
         return f"Truncated({distribution}, {location}, +Inf)"
