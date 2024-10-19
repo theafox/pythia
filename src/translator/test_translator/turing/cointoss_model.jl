@@ -10,7 +10,18 @@ using Turing
     end
 end
 # Translated code end.
-# Test data generated with:
-#   p~0.7
-data = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1]
-display(sample(cointoss_model(data), NUTS(), 1000))
+# Test data.
+data = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+model = cointoss_model
+arguments = (data,)
+addresses = ("probability",)
+# Inference.
+Turing.Random.seed!(0)
+inferred = sample(model(arguments...), IS(), 10_000, progress=false)
+println("Inferred:")
+weights = exp.(inferred[:lp])
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum(inferred[address] .* weights)
+    println(" - $address=$mean")
+end

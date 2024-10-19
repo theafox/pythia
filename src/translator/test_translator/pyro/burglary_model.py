@@ -17,15 +17,18 @@ def burglary_model(data):
         else:
             mary_wakes = pyro.sample('mary_wakes', dist.Bernoulli(0.1))
     called = ((mary_wakes) == (1)) and ((phone_working) == (1))
-    pyro.sample('observed', dist.Delta(torch.tensor(called)), obs=data)
+    pyro.sample('observed', dist.Delta(called), obs=data)
 # Translated code end.
-data = torch.tensor(True)
-kernel = pyro.infer.NUTS(burglary_model)
-mcmc = pyro.infer.MCMC(kernel, num_samples=1000, warmup_steps=100)
-mcmc.run(data)
+# Test data.
+data = torch.tensor(False)
+model = burglary_model
+arguments = (data,)
+addresses = ["earthquake", "burglary", "phone_working", "mary_wakes"]
+# Inference.
+pyro.set_rng_seed(0)
+importance = pyro.infer.Importance(model, num_samples=10_000)
+posterior = importance.run(*arguments)
+inferred = pyro.infer.EmpiricalMarginal(posterior, sites=addresses)
 print("Inferred:")
-samples = mcmc.get_samples()
-print(f"\tearthquake={samples["earthquake"].mean(0)}")
-print(f"\tburglary={samples["burglary"].mean(0)}")
-print(f"\tphone_working={samples["phone_working"].mean(0)}")
-print(f"\tmary_wakes={samples["mary_wakes"].mean(0)}")
+for i, address in enumerate(addresses):
+    print(f" - {address}={inferred.mean[i]}")

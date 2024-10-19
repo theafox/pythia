@@ -9,15 +9,20 @@ def rate_5_model(n1, n2, k1, k2):
     postpredk2 = pyro.sample('postpredk2', dist.Binomial(n2, theta))
     return (postpredk1, postpredk2)
 # Translated code end.
-# Test data generated with:
-#   theta~0.6
 import torch
+# Test data.
 n1 = torch.tensor(10)
 n2 = torch.tensor(15)
 k1 = torch.tensor(7)
 k2 = torch.tensor(8)
-kernel = pyro.infer.NUTS(rate_5_model)
-mcmc = pyro.infer.MCMC(kernel, num_samples=1000, warmup_steps=100)
-mcmc.run(n1, n2, k1, k2)
+model = rate_5_model
+arguments = (n1, n2, k1, k2)
+addresses = ["theta"]
+# Inference.
+pyro.set_rng_seed(0)
+importance = pyro.infer.Importance(model, num_samples=10_000)
+posterior = importance.run(*arguments)
+inferred = pyro.infer.EmpiricalMarginal(posterior, sites=addresses)
 print("Inferred:")
-print(f"\ttheta={mcmc.get_samples()["theta"].mean(0)}")
+for i, address in enumerate(addresses):
+    print(f" - {address}={inferred.mean[i]}")

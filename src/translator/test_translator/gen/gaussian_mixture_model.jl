@@ -27,17 +27,27 @@ function __choicemap_aggregation(data)
     end
 end
 # Translated code end.
-# Test data generated with:
-#   probability~0.6
-#   mu~[-2.4,1.2]
-#   z~[0,1,0,1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0]
-data = [
-    -1.64, 1.01, 0.01, 2.26, 0.40, -0.54, -2.15, -2.08, 1.31, 0.64,
-    -3.30, -2.19, 2.90, 0.36, 1.16, 1.28, 1.67, 0.18, -2.25, -2.36
-]
-__choicemap_aggregation(data)
-(trace,) = importance_resampling(gaussian_mixture_model, (data,), __observe_constraints, 1000)
+using Random
+# Test data.
+data = [ -0.6359476540323359,  1.6001572083672233, -1.4212620158942606,
+          3.440893199201458,   3.067557990149967,   0.22272212012358894,
+         -1.4499115824744107, -2.5513572082976976,  1.096781148206442,
+          1.6105985019383722, -2.255956428839122,  -0.9457264930370248,
+          1.9610377251469933,  1.3216750164928284,  1.6438632327454257,
+          1.5336743273742668,  2.694079073157606,   0.994841736234199,
+         -2.0869322983490983, -3.2540957393017247 ]
+model = gaussian_mixture_model
+arguments = (data,)
+addresses = ("probability", "mu[0]", "mu[1]")
+# Inference.
+Random.seed!(0)
+__choicemap_aggregation(arguments...)
+(traces, log_weights) = importance_sampling(model, arguments,
+                                            __observe_constraints, 10_000)
 println("Inferred:")
-println("\tprobability=$(trace["probability"])")
-println("\tmu=[$(trace["mu[0]"]), $(trace["mu[1]"])]")
-println("\tz=[$(trace["z[0]"]), $(trace["z[1]"]), $(trace["z[2]"]), $(trace["z[3]"]), $(trace["z[4]"]), $(trace["z[5]"]), $(trace["z[6]"]), $(trace["z[7]"]), $(trace["z[8]"]), $(trace["z[9]"]), $(trace["z[10]"]), $(trace["z[11]"]), $(trace["z[12]"]), $(trace["z[13]"]), $(trace["z[14]"]), $(trace["z[15]"]), $(trace["z[16]"]), $(trace["z[17]"]), $(trace["z[18]"]), $(trace["z[19]"])]")
+weights = exp.(log_weights)
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum([trace[address] for trace in traces] .* weights)
+    println(" - $address=$mean")
+end

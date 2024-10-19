@@ -14,19 +14,25 @@ def gaussian_mixture_model(data):
         # pyro.sample(f"{'data'}[{i}]", dist.Normal(mu[z[i]], 1), obs=data[i])  # indexing with a tensor is not allowed.
         pyro.sample(f"{'data'}[{i}]", dist.Normal(mu[int(z[i])], 1), obs=data[i])
 # Translated code end.
-# Test data generated with:
-#   probability~0.6
-#   mu~[-2.4,1.2]
-#   z~[0,1,0,1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0]
-data = torch.tensor([
-    -1.64, 1.01, 0.01, 2.26, 0.40, -0.54, -2.15, -2.08, 1.31, 0.64,
-    -3.30, -2.19, 2.90, 0.36, 1.16, 1.28, 1.67, 0.18, -2.25, -2.36
-])
-kernel = pyro.infer.NUTS(gaussian_mixture_model)
-mcmc = pyro.infer.MCMC(kernel, num_samples=50, warmup_steps=5)
-mcmc.run(data)
+# Test data.
+data = torch.tensor([ -0.6359476540323359,  1.6001572083672233,
+                      -1.4212620158942606,  3.440893199201458,
+                       3.067557990149967,   0.22272212012358894,
+                      -1.4499115824744107, -2.5513572082976976,
+                       1.096781148206442,   1.6105985019383722,
+                      -2.255956428839122,  -0.9457264930370248,
+                       1.9610377251469933,  1.3216750164928284,
+                       1.6438632327454257,  1.5336743273742668,
+                       2.694079073157606,   0.994841736234199,
+                      -2.0869322983490983, -3.2540957393017247 ])
+model = gaussian_mixture_model
+arguments = (data,)
+addresses = ["probability", "mu[0]", "mu[1]"]
+# Inference.
+pyro.set_rng_seed(0)
+importance = pyro.infer.Importance(model, num_samples=5_000)
+posterior = importance.run(*arguments)
+inferred = pyro.infer.EmpiricalMarginal(posterior, sites=addresses)
 print("Inferred:")
-samples = mcmc.get_samples()
-print(f"\tprobability={samples["probability"].mean(0)}")
-print(f"\tmu={samples["mu"].mean(0)}")
-print(f"\tz={samples["z"].mean(0)}")
+for i, address in enumerate(addresses):
+    print(f" - {address}={inferred.mean[i]}")

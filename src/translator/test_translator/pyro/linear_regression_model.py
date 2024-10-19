@@ -7,16 +7,19 @@ def linear_regression_model(xs, ys):
     for i in range(0, min(len(xs), len(ys)), 1):
         pyro.sample(f"{'ys'}[{i}]", dist.Normal(((gradient) * (xs[i])) + (intercept), 1), obs=ys[i])
 # Translated code end.
-# Test data generated with:
-#   intercept~1
-#   slope~0.5
 import torch
-xs = torch.tensor([0.93, 1.71, 2.61, 3.62, 4.12])
-ys = torch.tensor([1.32, 2.00, 2.55, 2.39, 3.14])
-kernel = pyro.infer.NUTS(linear_regression_model)
-mcmc = pyro.infer.MCMC(kernel, num_samples=1000, warmup_steps=100)
-mcmc.run(xs, ys)
+# Test data.
+xs = torch.tensor([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ])
+ys = torch.tensor([ 1.8528, 2.0800, 2.6957, 3.4482, 3.8735, 3.8045, 4.6900,
+                    4.9697, 5.4794, 6.0821 ])
+model = linear_regression_model
+arguments = (xs, ys)
+addresses = ["intercept", "gradient"]
+# Inference.
+pyro.set_rng_seed(0)
+importance = pyro.infer.Importance(model, num_samples=10_000)
+posterior = importance.run(*arguments)
+inferred = pyro.infer.EmpiricalMarginal(posterior, sites=addresses)
 print("Inferred:")
-samples = mcmc.get_samples()
-print(f"\tgradient={samples["gradient"].mean(0)}")
-print(f"\tintercept={samples["intercept"].mean(0)}")
+for i, address in enumerate(addresses):
+    print(f" - {address}={inferred.mean[i]}")

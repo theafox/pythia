@@ -9,10 +9,21 @@ using Turing
     return (postpredk1, postpredk2)
 end
 # Translated code end.
-# Test data generated with:
-#   theta~0.6
-n1 = 10
-n2 = 15
-k1 = 7
-k2 = 8
-display(sample(rate_5_model(n1, n2, k1, k2), NUTS(), 1000))
+# Test data.
+n1 = 50
+n2 = 75
+k1 = 30
+k2 = 43
+model = rate_5_model
+arguments = (n1, n2, k1, k2)
+addresses = ("theta",)
+# Inference.
+Turing.Random.seed!(0)
+inferred = sample(model(arguments...), IS(), 10_000, progress=false)
+println("Inferred:")
+weights = exp.(inferred[:lp])
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum(inferred[address] .* weights)
+    println(" - $address=$mean")
+end

@@ -10,4 +10,4 @@ def number_of_heads_model(data):
         if cointoss == 1:
             break
         count = count + 1
-    observe(data, "count", Dirac(count))
+    observe(count, "count", Dirac(data))

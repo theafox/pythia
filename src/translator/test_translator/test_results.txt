@@ -1,0 +1,116 @@
+$ for file in src/translator/test_translator/{gen,pyro,turing}/*.(jl|py); do echo "$file"; [[ $file == *.py ]] && python3 "$file" 2>/dev/null || julia "$file" 2>/dev/null; echo ""; done 
+src/translator/test_translator/gen/bayes_hidden_markov_model.jl
+
+src/translator/test_translator/gen/cointoss_model.jl
+Inferred:
+ - probability=0.6819501559636951
+
+src/translator/test_translator/gen/gaussian_mixture_model.jl
+Inferred:
+ - probability=0.689282393551297
+ - mu[0]=-0.7280452796061503
+ - mu[1]=0.4864878265660417
+
+src/translator/test_translator/gen/linear_regression_model.jl
+Inferred:
+ - gradient=0.4814464668747155
+ - intercept=1.234414170791596
+
+src/translator/test_translator/gen/rate_5_model.jl
+Inferred:
+ - theta=0.5822026747746276
+
+src/translator/test_translator/pyro/autoregressive_moving_average_model.py
+Inferred:
+ - mu=-4.613774299621582
+ - phi=12.784608840942383
+ - theta=-0.14711622893810272
+ - sigma=15721.498046875
+
+src/translator/test_translator/pyro/autoregressive_order_K_model.py
+Inferred:
+ - alpha=19.619794845581055
+ - sigma=1485.5443115234375
+
+src/translator/test_translator/pyro/burglary_model.py
+Inferred:
+ - earthquake=0.008465137332677841
+ - burglary=0.004232568666338921
+ - phone_working=0.8903987407684326
+ - mary_wakes=0.01559367310255766
+
+src/translator/test_translator/pyro/cointoss_model.py
+Inferred:
+ - probability=0.13548780977725983
+
+src/translator/test_translator/pyro/cointoss_with_factor_model.py
+Inferred:
+ - probability=0.13599002361297607
+
+src/translator/test_translator/pyro/gaussian_mixture_model.py
+Inferred:
+ - probability=0.42869240045547485
+ - mu[0]=0.34947219491004944
+ - mu[1]=0.031038476154208183
+
+src/translator/test_translator/pyro/linear_regression_model.py
+Inferred:
+ - intercept=1.3977701663970947
+ - gradient=0.4515383541584015
+
+src/translator/test_translator/pyro/number_of_heads_model.py
+
+src/translator/test_translator/pyro/rate_5_model.py
+Inferred:
+ - theta=0.591934084892273
+
+src/translator/test_translator/turing/autoregressive_moving_average_model.jl
+Inferred:
+ - mu=0.12192412287668855
+ - phi=-0.08144019685250346
+ - theta=-0.060370160496692256
+ - sigma=5.348205017631312
+
+src/translator/test_translator/turing/autoregressive_order_K_model.jl
+Inferred:
+ - alpha=NaN
+ - sigma=NaN
+
+src/translator/test_translator/turing/bayes_hidden_markov_model.jl
+Inferred:
+ - s[1]=5.0
+ - s[2]=8.0
+ - s[3]=7.0
+ - s[4]=7.0
+ - s[5]=6.0
+ - s[6]=0.0
+ - s[7]=7.0
+ - s[8]=1.0
+ - s[9]=5.0
+ - s[10]=6.0
+
+src/translator/test_translator/turing/burglary_model.jl
+Inferred:
+ - earthquake=0.007091400270148582
+ - burglary=0.0034894191805493018
+ - phone_working=0.8855245384961723
+ - mary_wakes=0.015646105357946867
+
+src/translator/test_translator/turing/cointoss_model.jl
+Inferred:
+ - probability=0.13568266933834947
+
+src/translator/test_translator/turing/gaussian_mixture_model.jl
+Inferred:
+ - probability=0.6892823935624316
+ - mu[1]=-0.7280452796403886
+ - mu[2]=0.4864878265249583
+
+src/translator/test_translator/turing/linear_regression_model.jl
+Inferred:
+ - gradient=0.4814464668747155
+ - intercept=1.2344141707915963
+
+src/translator/test_translator/turing/rate_5_model.jl
+Inferred:
+ - theta=0.5822026747746273

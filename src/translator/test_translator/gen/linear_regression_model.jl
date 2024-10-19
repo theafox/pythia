@@ -15,13 +15,23 @@ function __choicemap_aggregation(xs, ys)
     end
 end
 # Translated code end.
-# Test data generated with:
-#   intercept~1
-#   slope~0.5
-xs = [0.93, 1.71, 2.61, 3.62, 4.12]
-ys = [1.32, 2.00, 2.55, 2.39, 3.14]
-__choicemap_aggregation(xs, ys)
-(trace,) = importance_resampling(linear_regression_model, (xs, ys), __observe_constraints, 100000)
+using Random
+# Test data.
+xs = [ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ]
+ys = [ 1.8528, 2.0800, 2.6957, 3.4482, 3.8735, 3.8045, 4.6900, 4.9697, 5.4794,
+       6.0821 ]
+model = linear_regression_model
+arguments = (xs, ys)
+addresses = ("gradient", "intercept")
+# Inference.
+Random.seed!(0)
+__choicemap_aggregation(arguments...)
+(traces, log_weights) = importance_sampling(model, arguments,
+                                            __observe_constraints, 10_000)
 println("Inferred:")
-println("\tgradient=$(trace["gradient"])")
-println("\tintercept=$(trace["intercept"])")
+weights = exp.(log_weights)
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum([trace[address] for trace in traces] .* weights)
+    println(" - $address=$mean")
+end

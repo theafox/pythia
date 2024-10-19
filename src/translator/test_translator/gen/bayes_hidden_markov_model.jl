@@ -6,7 +6,8 @@ using Distributions
     m = fill(0, K)
     T = fill(0, (K, K))
     for i = 0:1:(K)-1
-        T[(i) + 1] = {"$("T")[$(i)]"} ~ dirichlet((1) / (K), K)
+        # T[(i) + 1] = {"$("T")[$(i)]"} ~ dirichlet((1) / (K), K)
+        T[(i) + 1] = {"$("T")[$(i)]"} ~ dirichlet((1) / (K) * ones(K))
         m[(i) + 1] = {"$("m")[$(i)]"} ~ normal((i) + (1), 0.5)
     end
     s[(0) + 1] = {"$("s")[$(0)]"} ~ uniform_discrete(0, (K) - (1))
@@ -29,12 +30,26 @@ function __choicemap_aggregation(y, K)
     end
 end
 # Translated code end.
-# Test data generated with:
-#   s~[2,5,9,5,6,4,9,4,3,0]
-#   m~[1.17,2.30,2.44,4.63,4.73,4.99,6.01,7.80,9.74,11.03]
-y = [2.49, 4.99, 10.95, 5.00, 5.88, 4.66, 10.97, 4.68, 4.44, 1.07]
+using Random
+# Test data.
+y = [ 6.500169164315597, 7.936579509333255, 9.317801661471384,
+      8.077189678856062, 6.647212557828355, 1.8866898228924214,
+      6.6439487634103465, 2.0341088048097773, 6.441242417801613,
+      5.201439088726868 ]
 K = 10
-__choicemap_aggregation(y, K)
-(trace,) = importance_resampling(bayes_hidden_markov_model, (y, K), __observe_constraints, 1000)
+model = bayes_hidden_markov_model
+arguments = (y, K)
+addresses = ( "s[0]", "s[1]", "s[2]", "s[3]", "s[4]", "s[5]", "s[6]", "s[7]",
+              "s[8]", "s[9]" )
+# Inference.
+Random.seed!(0)
+__choicemap_aggregation(arguments...)
+(traces, log_weights) = importance_sampling(model, arguments,
+                                            __observe_constraints, 10_000)
 println("Inferred:")
-println("\ts=[$(trace["s[0]"]), $(trace["s[1]"]), $(trace["s[2]"]), $(trace["s[3]"]), $(trace["s[4]"]), $(trace["s[5]"]), $(trace["s[6]"]), $(trace["s[7]"]), $(trace["s[8]"]), $(trace["s[9]"])]")
+weights = exp.(log_weights)
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum([trace[address] for trace in traces] .* weights)
+    println(" - $address=$mean")
+end

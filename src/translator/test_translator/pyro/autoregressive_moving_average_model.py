@@ -16,15 +16,19 @@ def autoregressive_moving_average_model(y):
         err[t] = (y[t]) - (nu[t])
     pyro.sample('err', dist.Normal(0, sigma).expand((len(y),)), obs=err)
 # Translated code end.
-# Test data generated with:
-#   y was generated with Normal(0, 3)
-y = torch.tensor([-1.35, -3.5, -3.84, 0.71, -0.75, -0.12, 0.48, -0.7, 2.62, 6.95])
-kernel = pyro.infer.NUTS(autoregressive_moving_average_model)
-mcmc = pyro.infer.MCMC(kernel, num_samples=1000, warmup_steps=100)
-mcmc.run(y)
+# Test data.
+y = [ 1.1882e+02, 4.2169e+02, 1.3230e+03, 4.0375e+03, 1.2189e+04, 3.6625e+04,
+      1.0992e+05, 3.2982e+05, 9.8951e+05, 2.9686e+06, 8.9058e+06, 2.6717e+07,
+      8.0152e+07, 2.4046e+08, 7.2137e+08, 2.1641e+09, 6.4924e+09, 1.9477e+10,
+      5.8431e+10, 1.7529e+11 ]
+model = autoregressive_moving_average_model
+arguments = (y,)
+addresses = ["mu", "phi", "theta", "sigma"]
+# Inference.
+pyro.set_rng_seed(0)
+importance = pyro.infer.Importance(model, num_samples=10_000)
+posterior = importance.run(*arguments)
+inferred = pyro.infer.EmpiricalMarginal(posterior, sites=addresses)
 print("Inferred:")
-samples = mcmc.get_samples()
-print(f"\tmu={samples["mu"].mean(0)}")
-print(f"\tphi={samples["phi"].mean(0)}")
-print(f"\ttheta={samples["theta"].mean(0)}")
-print(f"\tsigma={samples["sigma"].mean(0)}")
+for i, address in enumerate(addresses):
+    print(f" - {address}={inferred.mean[i]}")

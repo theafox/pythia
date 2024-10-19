@@ -15,12 +15,24 @@ using Turing
     end
 end
 # Translated code end.
-# Test data generated with:
-#   probability~0.6
-#   mu~[-2.4,1.2]
-#   z~[0,1,0,1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,0,0]
-data = [
-    -1.64, 1.01, 0.01, 2.26, 0.40, -0.54, -2.15, -2.08, 1.31, 0.64,
-    -3.30, -2.19, 2.90, 0.36, 1.16, 1.28, 1.67, 0.18, -2.25, -2.36
-]
-display(sample(gaussian_mixture_model(data), NUTS(), 1000))
+# Test data.
+data = [ -0.6359476540323359,  1.6001572083672233, -1.4212620158942606,
+          3.440893199201458,   3.067557990149967,   0.22272212012358894,
+         -1.4499115824744107, -2.5513572082976976,  1.096781148206442,
+          1.6105985019383722, -2.255956428839122,  -0.9457264930370248,
+          1.9610377251469933,  1.3216750164928284,  1.6438632327454257,
+          1.5336743273742668,  2.694079073157606,   0.994841736234199,
+         -2.0869322983490983, -3.2540957393017247 ]
+model = gaussian_mixture_model
+arguments = (data,)
+addresses = ("probability", "mu[1]", "mu[2]")
+# Inference.
+Turing.Random.seed!(0)
+inferred = sample(model(arguments...), IS(), 10_000, progress=false)
+println("Inferred:")
+weights = exp.(inferred[:lp])
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum(inferred[address] .* weights)
+    println(" - $address=$mean")
+end

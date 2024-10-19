@@ -10,14 +10,19 @@ def number_of_heads_model(data):
         if (cointoss) == (1):
             break
         count = (count) + (1)
-    pyro.sample('count', dist.Delta(torch.tensor(count)), obs=data)
+    # pyro.sample('count', dist.Delta(torch.tensor(data)), obs=count)
+    pyro.sample('count', dist.Delta(torch.tensor(data)), obs=torch.tensor(count))
 # Translated code end.
-# Test data generated with:
-#   probability~0.01
-data = 100
-kernel = pyro.infer.NUTS(number_of_heads_model)
-mcmc = pyro.infer.MCMC(kernel, num_samples=1000, warmup_steps=100)
-mcmc.run(data)
+# Test data.
+data = 149
+model = number_of_heads_model
+arguments = (data,)
+addresses = ["probability"]
+# Inference.
+pyro.set_rng_seed(0)
+importance = pyro.infer.Importance(model, num_samples=1_000)
+posterior = importance.run(*arguments)
+inferred = pyro.infer.EmpiricalMarginal(posterior, sites=addresses)
 print("Inferred:")
-samples = mcmc.get_samples()
-print(f"\tprobability={samples["probability"].mean(0)}")
+for i, address in enumerate(addresses):
+    print(f" - {address}={inferred.mean[i]}")

@@ -20,10 +20,21 @@ function __choicemap_aggregation(data)
     end
 end
 # Translated code end.
-# Test data generated with:
-#   p~0.7
+using Random
+# Test data.
 data = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1]
-__choicemap_aggregation(data)
-(trace,) = importance_resampling(cointoss_model, (data,), __observe_constraints, 100000)
+model = cointoss_model
+arguments = (data,)
+addresses = ("probability",)
+# Inference.
+Random.seed!(0)
+__choicemap_aggregation(arguments...)
+(traces, log_weights) = importance_sampling(model, arguments,
+                                            __observe_constraints, 10_000)
 println("Inferred:")
-println("\tprobability=$(trace["probability"])")
+weights = exp.(log_weights)
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum([trace[address] for trace in traces] .* weights)
+    println(" - $address=$mean")
+end

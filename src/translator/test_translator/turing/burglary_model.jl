@@ -21,5 +21,18 @@ using Turing
     data ~ Dirac(called)
 end
 # Translated code end.
-observed = true
-display(sample(burglary_model(observed), NUTS(), 1000))
+# Test data.
+data = false
+model = burglary_model
+arguments = (data,)
+addresses = ("earthquake", "burglary", "phone_working", "mary_wakes")
+# Inference.
+Turing.Random.seed!(0)
+inferred = sample(model(arguments...), IS(), 10_000, progress=false)
+println("Inferred:")
+weights = exp.(inferred[:lp])
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum(inferred[address] .* weights)
+    println(" - $address=$mean")
+end

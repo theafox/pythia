@@ -8,9 +8,20 @@ using Turing
     end
 end
 # Translated code end.
-# Test data generated with:
-#   intercept~1
-#   slope~0.5
-xs = [0.93, 1.71, 2.61, 3.62, 4.12]
-ys = [1.32, 2.00, 2.55, 2.39, 3.14]
-display(sample(linear_regression_model(xs, ys), NUTS(), 1000))
+# Test data.
+xs = [ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ]
+ys = [ 1.8528, 2.0800, 2.6957, 3.4482, 3.8735, 3.8045, 4.6900, 4.9697, 5.4794,
+       6.0821 ]
+model = linear_regression_model
+arguments = (xs, ys)
+addresses = ("gradient", "intercept")
+# Inference.
+Turing.Random.seed!(0)
+inferred = sample(model(arguments...), IS(), 10_000, progress=false)
+println("Inferred:")
+weights = exp.(inferred[:lp])
+weights = weights / sum(weights)
+for address in addresses
+    mean = sum(inferred[address] .* weights)
+    println(" - $address=$mean")
+end
