@@ -28,40 +28,29 @@ from translator.mappings.utils import (
 
 
 def _compare_target_to_address(target: ast.expr, address: ast.expr) -> None:
-    def _extract_identifiers(expression: ast.expr) -> tuple[int, list[str]]:
-        constant_count = 0
+    def _extract_identifiers(expression: ast.expr) -> list[str]:
         variables: list[str] = []
 
         class IdentifierVisitor(ast.NodeVisitor):
-            def visit_Constant(self, node: ast.Constant) -> None:  # noqa
-                nonlocal constant_count
-                constant_count += 1
-
             def visit_Name(self, node: ast.Name) -> None:  # noqa
                 if node.id == "IndexedAddress":
                     return
                 variables.append(node.id)
 
         IdentifierVisitor().visit(expression)
-        return constant_count, variables
+        return variables
 
-    target_constant_count, target_variables = _extract_identifiers(target)
-    address_constant_count, address_variables = _extract_identifiers(address)
+    target_variables = _extract_identifiers(target)
+    address_variables = _extract_identifiers(address)
 
     # The "initial" variable of the target may be counted as a constant since
     # it is not variable in the complexity sense regarding the address.
     if len(target_variables) >= 1:
         target_variables.pop(0)
-        target_constant_count += 1
 
     target_variables.sort()
     address_variables.sort()
-    if target_constant_count != address_constant_count:
-        raise MappingError(
-            "The number of constants do not coincide between the"
-            " assignment variable and used address."
-        )
-    elif target_variables != address_variables:
+    if target_variables != address_variables:
         raise MappingError(
             "The assignment variable's and address' complexity do not"
             f" coincide: {*target_variables,} versus {*address_variables,}."
