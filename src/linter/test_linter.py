@@ -1413,7 +1413,7 @@ def test_prohibited_type_parameters_alias(data):
             """
             default_linter.extensive_diagnosis = True
             diagnostics = default_linter.lint_code(code)
-            assert len(diagnostics) == 4
+            assert len(diagnostics) == 3
             assert all(
                 diagnostic.severity == Severity.ERROR
                 for diagnostic in diagnostics
@@ -1421,7 +1421,6 @@ def test_prohibited_type_parameters_alias(data):
             messages = [diagnostic.message for diagnostic in diagnostics]
             assert rules.NoTypeAliasRule.message in messages
             assert rules.NoStarredRule.message in messages
-            assert rules.NoMultipleSubscriptRule.message in messages
             assert rules.NoTypeParameterRule.message in messages
 
         @staticmethod
@@ -1444,49 +1443,6 @@ def test_prohibited_type_parameters_function(data):
             messages = [diagnostic.message for diagnostic in diagnostics]
             assert rules.NoNestedFunctionsRule.message in messages
             assert rules.NoTypeParameterRule.message in messages
-
-    class TestRestrictedDataStructureManipulation:
-        @staticmethod
-        def test_prohibited_slice(default_linter: Linter) -> None:
-            code = """
-@probabilistic_program
-def test_prohibited_slice(data):
-    data = data[0:100]
-    for i in range(0, len(data)):
-        observe(
-            data[i],
-            IndexedAddress("data", i),
-            Dirac(0.25),
-        )
-    return sample(
-        IndexedAddress("data", len(data)),
-        Dirac(0.25),
-    )
-            """
-            diagnostics = default_linter.lint_code(code)
-            assert len(diagnostics) == 1
-            assert diagnostics[0].severity == Severity.ERROR
-            assert diagnostics[0].message == rules.NoSliceRule.message
-
-        @staticmethod
-        def test_prohibited_multiple_subscript(default_linter: Linter) -> None:
-            code = """
-@probabilistic_program
-def test_prohibited_multiple_subscript(data):
-    data[0, -1] = data[-1], data[0]
-    for i in range(0, len(data)):
-        observe(
-            data[i],
-            IndexedAddress("data", i),
-            Dirac(0.25),
-        )
-            """
-            diagnostics = default_linter.lint_code(code)
-            assert len(diagnostics) == 1
-            assert diagnostics[0].severity == Severity.ERROR
-            assert (
-                diagnostics[0].message == rules.NoMultipleSubscriptRule.message
-            )
 
 
 class TestPythiaSpecificLinting:

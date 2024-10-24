@@ -313,14 +313,57 @@ class IndexingMapping(BaseMapping):
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
-            case ast.Subscript(value=target, slice=index):
+            case ast.Subscript(value=target, slice=slices):
                 target = context.translator.visit(target)
-                index = context.translator.visit(index)
-                return f"{target}[({index}) + 1]"
+                slices = [
+                    (
+                        context.translator.visit(slicing)
+                        if isinstance(slicing, ast.Slice)
+                        else f"({context.translator.visit(slicing)})+1"
+                    )
+                    for slicing in (
+                        slices.elts
+                        if isinstance(slices, ast.Tuple)
+                        else (slices,)
+                    )
+                ]
+                return f"{target}[{", ".join(slices)}]"
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for `{cls.__name__}`."
+                )
+
+
+class SlicingMapping(BaseMapping):
+    @override
+    @classmethod
+    def map(cls, node: ast.AST, context: Context) -> str | None:
+        # WARN: This currently allows translation of negative elements of
+        # slices, which is not supported in Julia. Prevention of this requires
+        # execution of the code to evaluate the elements. Therefore, it is
+        # recommended to restrict the set of possible slicing operations before
+        # attempting translation.
+        match node:
+            case ast.Slice(lower=lower, upper=upper, step=step):
+                lower = (
+                    f"({context.translator.visit(lower)})+1"
+                    if lower is not None
+                    else "begin"
+                )
+                upper = (
+                    f"({context.translator.visit(upper)})+1"
+                    if upper is not None
+                    else "end"
+                )
+                step = (
+                    context.translator.visit(step) if step is not None else "1"
+                )
+                return f"{lower}:{step}:{upper}"
+            case _:
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
                 )
 
 

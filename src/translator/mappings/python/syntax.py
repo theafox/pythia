@@ -260,10 +260,35 @@ class IndexingMapping(BaseMapping):
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
-            case ast.Subscript(value=target, slice=index):
+            case ast.Subscript(value=target, slice=slices):
                 target = context.translator.visit(target)
-                index = context.translator.visit(index)
-                return f"{target}[{index}]"
+                slices = [
+                    context.translator.visit(slicing)
+                    for slicing in (
+                        slices.elts
+                        if isinstance(slices, ast.Tuple)
+                        else (slices,)
+                    )
+                ]
+                return f"{target}[{", ".join(slices)}]"
+            case _:
+                raise MappingWarning(
+                    f"Mismatching node-type `{type(node).__name__}`"
+                    f" for `{cls.__name__}`."
+                )
+
+
+class SlicingMapping(BaseMapping):
+    @override
+    @classmethod
+    def map(cls, node: ast.AST, context: Context) -> str | None:
+        match node:
+            case ast.Slice(lower=lower, upper=upper, step=step):
+                lower, upper, step = (
+                    context.translator.visit(item) if item is not None else ""
+                    for item in (lower, upper, step)
+                )
+                return f"{lower}:{upper}:{step}"
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"

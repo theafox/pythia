@@ -251,28 +251,16 @@ class NoTypeParameterRule(BaseRule):
 # Restrict data-structure manipulation. #######################################
 
 
-class NoSliceRule(BaseRule):
-    message = "Slices are prohibited"
+class RestrictSlicesRule(BaseRule):
+    message = "Slices may only be of the form `:`"
 
     @override
     @classmethod
     def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.Slice)
-            else None
-        )
-
-
-class NoMultipleSubscriptRule(BaseRule):
-    message = "Multi-subscripts are prohibited"
-
-    @override
-    @classmethod
-    def check(cls, node: ast.AST) -> Diagnostic | None:
-        return (
-            Diagnostic.from_node(node, message=cls.message)
-            if isinstance(node, ast.Subscript)
-            and isinstance(node.slice, (ast.List, ast.Tuple))
-            else None
-        )
+        match node:
+            case ast.Slice(lower=None, upper=None, step=None):
+                return None
+            case ast.Slice():
+                return Diagnostic.from_node(node, message=cls.message)
+            case _:
+                return None

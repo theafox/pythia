@@ -443,8 +443,7 @@ def default_probabilistic_program_linter() -> Linter:
             rules.NoFstringRule,
             rules.NoStarredRule,
             rules.NoTypeParameterRule,
-            rules.NoSliceRule,
-            rules.NoMultipleSubscriptRule,
+            rules.RestrictSlicesRule,
             # Probabilistic-programming-specific rules.
             rules.RestrictSampleCallStructureRule,
             rules.RestrictObserveCallStructureRule,
