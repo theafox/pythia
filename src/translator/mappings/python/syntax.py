@@ -159,7 +159,11 @@ class ReturnMapping(BaseMapping):
     def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
             case ast.Return(value=value):
-                value = context.translator.visit(value) if value else None
+                value = (
+                    context.translator.visit(value)
+                    if value is not None
+                    else None
+                )
                 context.line(f"return {value}")
             case _:
                 raise MappingWarning(
