@@ -145,6 +145,7 @@ class Distribution:
         "Poisson",
         "Dirichlet",
         "MultivariateNormal",
+        "Categorical",
     ]
 
     @classproperty

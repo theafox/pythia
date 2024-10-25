@@ -292,4 +292,7 @@ class CallMapping(BaseCallMapping):
                 ),
             ),
         ),
+        "Categorical": get_function_call_mapping(
+            function_name=f"{DISTRIBUTION_PREFIX}Categorical"
+        ),
     }

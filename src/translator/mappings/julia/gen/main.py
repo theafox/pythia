@@ -160,6 +160,39 @@ class CallMapping(BaseCallMapping):
         )
         return mapping(node, context)
 
+    @staticmethod
+    def _categorical(node: ast.Call, context: Context) -> str:
+        # Special mapping is required since the default `Categorical` provided
+        # in Turing returns indices according to Julia's standard, 1-based.
+        # Additionally, this needs to be translated using a placeholder. The
+        # reason being, the contents of the argument are needed twice and using
+        # them as is may introduce bugs in case the expression has
+        # side-effects.
+        with context.in_preamble(discard_if_present=True) as preamble:
+            preamble.line(
+                "@dist labeled_categorical(labels, probs)"
+                " = labels[categorical(probs)]"
+            )
+        arguments = organize_arguments(
+            node.args, node.keywords, argument_defaults=[ast.List]
+        )
+        argument_strings = [
+            context.translator.visit(argument) for argument in arguments
+        ]
+        if len(argument_strings) >= 1:
+            argument_placeholder = "__categorical" + context.unique_address()
+            probabilities = argument_strings.pop(0)
+            context.line(f"{argument_placeholder} = {probabilities}")
+            argument_strings = [
+                f"0:length({argument_placeholder})-1",
+                argument_placeholder,
+                *argument_strings,
+            ]
+        mapping = get_function_call_mapping(
+            function_name="labeled_categorical", arguments=argument_strings
+        )
+        return mapping(node, context)
+
     mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": _sample,
         "observe": _observe,
@@ -192,4 +225,5 @@ class CallMapping(BaseCallMapping):
         "MultivariateNormal": get_function_call_mapping(
             function_name="mvnormal"
         ),
+        "Categorical": _categorical,
     }
