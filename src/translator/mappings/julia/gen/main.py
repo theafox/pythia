@@ -141,6 +141,25 @@ class CallMapping(BaseCallMapping):
         mapping = get_function_call_mapping(function_name="gamma")
         return mapping(node, context)
 
+    @staticmethod
+    def _dirichlet(node: ast.Call, context: Context) -> str:
+        arguments = organize_arguments(
+            node.args,
+            node.keywords,
+            argument_defaults=[ast.Constant(1), ast.Constant(1)],
+        )
+        argument_strings = [
+            context.translator.visit(argument) for argument in arguments
+        ]
+        if len(argument_strings) >= 2:
+            fill = argument_strings.pop(0)
+            length = argument_strings.pop(0)
+            argument_strings.insert(0, f"ones({length}) * ({fill})")
+        mapping = get_function_call_mapping(
+            function_name="dirichlet", arguments=argument_strings
+        )
+        return mapping(node, context)
+
     mappings: ClassVar[dict[str, Callable[[ast.Call, Context], str]]] = {
         "sample": _sample,
         "observe": _observe,
@@ -169,7 +188,7 @@ class CallMapping(BaseCallMapping):
         "Geometric": get_function_call_mapping(function_name="geometric"),
         "HyperGeometric": _unsupported,
         "Poisson": get_function_call_mapping(function_name="poisson"),
-        "Dirichlet": get_function_call_mapping(function_name="dirichlet"),
+        "Dirichlet": _dirichlet,
         "MultivariateNormal": get_function_call_mapping(
             function_name="mvnormal"
         ),
