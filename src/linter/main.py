@@ -65,7 +65,7 @@ class ExitCode(IntEnum):
     LINTING_ERROR = 20
 
 
-class Linter(ast.NodeVisitor):
+class Linter:
     """A general purpose linter to validate python code.
 
     This linter allows to specify entry-points to code of interest. This
@@ -95,6 +95,97 @@ class Linter(ast.NodeVisitor):
         diagnostics: The list of currently found diagnostics.
     """
 
+    # Hide the traversal mechanism from the public eye. Moreover, this prevents
+    # confusion between `lint(_file|_code|_stdin)?` and `visit` by the user.
+    class _LintingTraverser(ast.NodeVisitor):
+        """A node traverser used for linting.
+
+        Note that this class is intended to be used for one singular traversal
+        of a node tree. It is not intended for rerunning on a new tree, use a
+        new instance in that case.
+
+        Attributes:
+            mappings: The mapping rules to use for translation.
+            context: `Context` object used during the traversal.
+        """
+
+        @override
+        def __init__(
+            self,
+            rules: Iterable[type[rules.BaseRule]],
+            is_entry_point: Callable[[ast.AST], bool],
+            analyze_entry_point: Callable[
+                [ast.AST], Iterable[Diagnostic]
+            ] = lambda _: [],
+            extensive_diagnosis: bool = False,
+            **kwargs: Any,
+        ):
+            super().__init__(**kwargs)
+
+            self.rules = rules
+            self.is_entry_point = is_entry_point
+            self.analyze_entry_point = analyze_entry_point
+            self.extensive_diagnosis = extensive_diagnosis
+
+            self.diagnostics: list[Diagnostic] = []
+            self.entered: bool = False
+            self.found_outside: bool = False
+
+        @override
+        def visit(self, node: ast.AST) -> None:
+            """Identify entry-points and apply rules.
+
+            This class is overridden from the parent class. It will be called
+            whenever a node is encountered during the walk through the tree.
+            For this reason it is not recommended to subclass this and/or add
+            any `visit_*` methods.
+
+            Args:
+                node: The node to identify or analyze.
+            """
+            # Outside code of interest…
+            if not self.entered:
+                entry_point_diagnostics = self.analyze_entry_point(node)
+                self.diagnostics += entry_point_diagnostics
+                if not self.is_entry_point(node):
+                    if not list(ast.iter_child_nodes(node)):
+                        # Found a leaf node outside code-of-interest.
+                        self.found_outside = True
+                    super().generic_visit(node)
+                elif not any(
+                    diagnostic.severity == Severity.ERROR
+                    for diagnostic in entry_point_diagnostics
+                ):
+                    log.debug("Found admissible node: %s.", _display(node))
+                    self.entered = True
+                    super().generic_visit(node)
+                    self.entered = False
+                else:
+                    log.debug(
+                        "Entry-point analysis found an error,"
+                        " skipping admissible node: %s.",
+                        _display(node),
+                    )
+                return
+
+            # Inside code of interest…
+            diagnostics: list[Diagnostic] = [
+                diagnostic
+                for diagnostic in [rule.check(node) for rule in self.rules]
+                if diagnostic
+            ]
+            if diagnostics:
+                log.debug(
+                    "Rules (%d) were applicable: %s",
+                    len(diagnostics),
+                    "; ".join(map(repr, diagnostics)),
+                )
+                self.diagnostics += diagnostics
+            if not diagnostics or self.extensive_diagnosis:
+                # Only enter further into nodes which do _not_ violate any
+                # rules (or in case extensive diagnosis is requested).
+                super().generic_visit(node)
+
     @override
     def __init__(
         self,
@@ -113,64 +204,7 @@ class Linter(ast.NodeVisitor):
         self.analyze_entry_point = analyze_entry_point
         self.extensive_diagnosis = extensive_diagnosis
 
-        self.diagnostics: list[Diagnostic] = []
-        self._entered: bool = False
         self._found_outside: bool = False
-
-    @override
-    def visit(self, node: ast.AST) -> None:
-        """Identify entry-points and apply rules.
-
-        This class is overridden from the parent class. It will be called
-        whenever a node is encountered during the walk through the tree. For
-        this reason it is not recommended to subclass this and add any
-        `visit_*` methods.
-
-        Args:
-            node: The node to identify or analyze.
-        """
-        # Outside code of interest…
-        if not self._entered:
-            entry_point_diagnostics = self.analyze_entry_point(node)
-            self.diagnostics += entry_point_diagnostics
-            if not self.is_entry_point(node):
-                if not list(ast.iter_child_nodes(node)):
-                    # Found a leaf node outside code-of-interest.
-                    self._found_outside = True
-                super().generic_visit(node)
-            elif not any(
-                diagnostic.severity == Severity.ERROR
-                for diagnostic in entry_point_diagnostics
-            ):
-                log.debug("Found admissible node: %s.", _display(node))
-                self._entered = True
-                super().generic_visit(node)
-                self._entered = False
-            else:
-                log.debug(
-                    "Entry-point analysis found an error,"
-                    " skipping admissible node: %s.",
-                    _display(node),
-                )
-            return
-
-        # Inside code of interest…
-        diagnostics: list[Diagnostic] = [
-            diagnostic
-            for diagnostic in [rule.check(node) for rule in self.rules]
-            if diagnostic
-        ]
-        if diagnostics:
-            log.debug(
-                "Rules (%d) were applicable: %s",
-                len(diagnostics),
-                "; ".join(map(repr, diagnostics)),
-            )
-            self.diagnostics += diagnostics
-        if not diagnostics or self.extensive_diagnosis:
-            # Only enter further into nodes which do _not_ violate any rules
-            # (or in case extensive diagnosis is requested).
-            super().generic_visit(node)
 
     def lint(self, tree: ast.AST) -> list[Diagnostic]:
         """Lint the provided node.
@@ -184,17 +218,19 @@ class Linter(ast.NodeVisitor):
         """
         log.debug("Linting tree: %s.", _display(tree))
 
-        self.diagnostics = []
-        self._entered = False
-        self._found_outside = False
-        self.visit(tree)
-        log.debug(
-            "Linting finished, got %d diagnostic(s).", len(self.diagnostics)
+        traverser = self._LintingTraverser(
+            self.rules,
+            self.is_entry_point,
+            self.analyze_entry_point,
+            self.extensive_diagnosis,
         )
-
-        diagnostics = self.diagnostics
-        self.diagnostics = []
-        return diagnostics
+        traverser.visit(tree)
+        log.debug(
+            "Linting finished, got %d diagnostic(s).",
+            len(traverser.diagnostics),
+        )
+        self._found_outside = traverser.found_outside
+        return traverser.diagnostics
 
     def lint_code(self, code: str) -> list[Diagnostic]:
         """Lint the provided code.
