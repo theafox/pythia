@@ -136,8 +136,17 @@ class ForLoopMapping(BaseMapping):
                     for statement in body:
                         context.translator.visit(statement)
                 context.line("end")
-            case ast.For():
-                raise MappingWarning("Invalid for-loop format.")
+            case ast.For(target=target, iter=iterator, body=body):
+                # WARN: Arbitrary mapping of iterators to Julia comes with risk
+                # Therefore, it is recommended to restrict the set of iterators
+                # before attempting translation.
+                target = context.translator.visit(target)
+                iterator = context.translator.visit(iterator)
+                context.line(f"for {target} in {iterator}")
+                with context.indented():
+                    for statement in body:
+                        context.translator.visit(statement)
+                context.line("end")
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"

@@ -144,8 +144,13 @@ class ForLoopMapping(BaseMapping):
                 with context.indented():
                     for statement in body:
                         context.translator.visit(statement)
-            case ast.For():
-                raise MappingWarning("Invalid for-loop format.")
+            case ast.For(target=target, iter=iterator, body=body):
+                target = context.translator.visit(target)
+                iterator = context.translator.visit(iterator)
+                context.line(f"for {target} in {iterator}:")
+                with context.indented():
+                    for statement in body:
+                        context.translator.visit(statement)
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
