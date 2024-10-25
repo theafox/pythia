@@ -4,14 +4,14 @@ using Turing
     nu = fill!(Array{Float64}(undef, length(y)), 0)
     err = fill!(Array{Float64}(undef, length(y)), 0)
     mu ~ Normal(0, 10)
-    phi ~ Normal(0, 10)
-    theta ~ Normal(0, 10)
+    phi ~ Normal(0, 2)
+    theta ~ Normal(0, 2)
     sigma ~ Truncated(Cauchy(2.5), 0, +Inf)
-    nu[(0) + 1] = (mu) + ((phi) * (mu))
-    err[(0) + 1] = (y[(0) + 1]) - (nu[(0) + 1])
+    nu[(0)+1] = (mu) + ((phi) * (mu))
+    err[(0)+1] = (y[(0)+1]) - (nu[(0)+1])
     for t = 1:1:(length(y))-1
-        nu[(t) + 1] = ((mu) + ((phi) * (y[((t) - (1)) + 1]))) + ((theta) * (err[((t) - (1)) + 1]))
-        err[(t) + 1] = (y[(t) + 1]) - (nu[(t) + 1])
+        nu[(t)+1] = ((mu) + ((phi) * (y[((t) - (1))+1]))) + ((theta) * (err[((t) - (1))+1]))
+        err[(t)+1] = (y[(t)+1]) - (nu[(t)+1])
     end
     err ~ filldist(Normal(0, sigma), length(y))
 end

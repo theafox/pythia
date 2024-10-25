@@ -2,30 +2,30 @@
 using Gen
 using Distributions
 @gen function cointoss_model(data)
-    probability = {"probability"} ~ uniform(0, 1)
+    p = {"p"} ~ uniform(0, 1)
     for i = 0:1:(length(data))-1
-        if ((data[(i) + 1]) != (0)) && ((data[(i) + 1]) != (1))
+        if ((data[(i)+1]) != (0)) && ((data[(i)+1]) != (1))
             continue
         end
-        {"$("data")[$(i)]"} ~ bernoulli(probability)
+        {"$("data")[$(i)]"} ~ bernoulli(p)
     end
 end
 __observe_constraints = Gen.choicemap()
 function __choicemap_aggregation(data)
     for i = 0:1:(length(data))-1
-        if ((data[(i) + 1]) != (0)) && ((data[(i) + 1]) != (1))
+        if ((data[(i)+1]) != (0)) && ((data[(i)+1]) != (1))
             continue
         end
-        __observe_constraints["$("data")[$(i)]"] = data[(i) + 1]
+        __observe_constraints["$("data")[$(i)]"] = data[(i)+1]
     end
 end
 # Translated code end.
 using Random
 # Test data.
-data = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1]
+data = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
 model = cointoss_model
 arguments = (data,)
-addresses = ("probability",)
+addresses = ("p",)
 # Inference.
 Random.seed!(0)
 __choicemap_aggregation(arguments...)

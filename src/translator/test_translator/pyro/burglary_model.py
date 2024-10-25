@@ -17,7 +17,7 @@ def burglary_model(data):
         else:
             mary_wakes = pyro.sample('mary_wakes', dist.Bernoulli(0.1))
     called = ((mary_wakes) == (1)) and ((phone_working) == (1))
-    pyro.sample('observed', dist.Delta(called), obs=data)
+    pyro.sample('observed', dist.Delta(torch.tensor(called)), obs=data)
 # Translated code end.
 # Test data.
 data = torch.tensor(False)

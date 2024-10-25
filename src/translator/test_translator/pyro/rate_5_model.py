@@ -11,10 +11,10 @@ def rate_5_model(n1, n2, k1, k2):
 # Translated code end.
 import torch
 # Test data.
-n1 = torch.tensor(10)
-n2 = torch.tensor(15)
-k1 = torch.tensor(7)
-k2 = torch.tensor(8)
+n1 = torch.tensor(50)
+n2 = torch.tensor(75)
+k1 = torch.tensor(30)
+k2 = torch.tensor(43)
 model = rate_5_model
 arguments = (n1, n2, k1, k2)
 addresses = ["theta"]

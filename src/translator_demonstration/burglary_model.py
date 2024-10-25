@@ -1,3 +1,4 @@
+# Own model.
 @probabilistic_program
 def burglary_model(data):
     earthquake = sample("earthquake", Bernoulli(0.02))

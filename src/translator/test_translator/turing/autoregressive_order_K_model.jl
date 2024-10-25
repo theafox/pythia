@@ -7,9 +7,9 @@ using Turing
     for t = K:1:(length(y))-1
         mu = alpha
         for k = 0:1:(K)-1
-            mu = (mu) + ((beta[(k) + 1]) * (y[((t) - (k)) + 1]))
+            mu = (mu) + ((beta[(k)+1]) * (y[((t) - (k))+1]))
         end
-        y[(t) + 1] ~ Normal(mu, sigma)
+        y[(t)+1] ~ Normal(mu, sigma)
     end
 end
 # Translated code end.

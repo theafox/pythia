@@ -1,32 +1,33 @@
 # Translated code start.
 using Gen
 using Distributions
+@dist labeled_categorical(labels, probs) = labels[categorical(probs)]
 @gen function bayes_hidden_markov_model(y, K)
-    s = fill(0, length(y))
-    m = fill(0, K)
-    T = fill(0, (K, K))
+    s = fill!(Array{Int}(undef, length(y)), 0)
+    m = fill!(Array{Float64}(undef, K), 0)
+    T = fill!(Array{Float64}(undef, (K, K)), 0)
     for i = 0:1:(K)-1
-        # T[(i) + 1] = {"$("T")[$(i)]"} ~ dirichlet((1) / (K), K)
-        T[(i) + 1] = {"$("T")[$(i)]"} ~ dirichlet((1) / (K) * ones(K))
-        m[(i) + 1] = {"$("m")[$(i)]"} ~ normal((i) + (1), 0.5)
+        T[(i)+1, begin:1:end] = {"$("T")[$(i)]"} ~ dirichlet(ones(K) * ((1) / (K)))
+        m[(i)+1] = {"$("m")[$(i)]"} ~ normal((i) + (1), 0.5)
     end
-    s[(0) + 1] = {"$("s")[$(0)]"} ~ uniform_discrete(0, (K) - (1))
-    {"$("y")[$(0)]"} ~ normal(m[(s[(0) + 1]) + 1], 0.1)
+    s[(0)+1] = {"$("s")[$(0)]"} ~ uniform_discrete(0, (K) - (1))
+    {"$("y")[$(0)]"} ~ normal(m[(s[(0)+1])+1], 0.1)
     for i = 1:1:(length(y))-1
-        s[(i) + 1] = {"$("s")[$(i)]"} ~ uniform_discrete(0, (K) - (1))
-        {"$("y")[$(i)]"} ~ normal(m[(s[(i) + 1]) + 1], 0.1)
+        __categorical__context__unique_address_1 = T[(s[((i) - (1))+1])+1, begin:1:end]
+        s[(i)+1] = {"$("s")[$(i)]"} ~ labeled_categorical(0:length(__categorical__context__unique_address_1)-1, __categorical__context__unique_address_1)
+        {"$("y")[$(i)]"} ~ normal(m[(s[(i)+1])+1], 0.1)
     end
 end
 __observe_constraints = Gen.choicemap()
 function __choicemap_aggregation(y, K)
-    s = fill(0, length(y))
-    m = fill(0, K)
-    T = fill(0, (K, K))
+    s = fill!(Array{Int}(undef, length(y)), 0)
+    m = fill!(Array{Float64}(undef, K), 0)
+    T = fill!(Array{Float64}(undef, (K, K)), 0)
     for i = 0:1:(K)-1
     end
-    __observe_constraints["$("y")[$(0)]"] = y[(0) + 1]
+    __observe_constraints["$("y")[$(0)]"] = y[(0)+1]
     for i = 1:1:(length(y))-1
-        __observe_constraints["$("y")[$(i)]"] = y[(i) + 1]
+        __observe_constraints["$("y")[$(i)]"] = y[(i)+1]
     end
 end
 # Translated code end.

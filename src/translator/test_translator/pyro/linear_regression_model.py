@@ -2,10 +2,10 @@
 import pyro
 import pyro.distributions as dist
 def linear_regression_model(xs, ys):
-    gradient = pyro.sample('gradient', dist.Normal(0, 10))
+    slope = pyro.sample('slope', dist.Normal(0, 10))
     intercept = pyro.sample('intercept', dist.Normal(0, 10))
     for i in range(0, min(len(xs), len(ys)), 1):
-        pyro.sample(f"{'ys'}[{i}]", dist.Normal(((gradient) * (xs[i])) + (intercept), 1), obs=ys[i])
+        pyro.sample(f"{'ys'}[{i}]", dist.Normal(((slope) * (xs[i])) + (intercept), 1), obs=ys[i])
 # Translated code end.
 import torch
 # Test data.
@@ -14,7 +14,7 @@ ys = torch.tensor([ 1.8528, 2.0800, 2.6957, 3.4482, 3.8735, 3.8045, 4.6900,
                     4.9697, 5.4794, 6.0821 ])
 model = linear_regression_model
 arguments = (xs, ys)
-addresses = ["intercept", "gradient"]
+addresses = ["slope", "intercept"]
 # Inference.
 pyro.set_rng_seed(0)
 importance = pyro.infer.Importance(model, num_samples=10_000)

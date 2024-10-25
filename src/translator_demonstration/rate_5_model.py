@@ -1,3 +1,4 @@
+# See: https://github.com/stan-dev/posteriordb/blob/master/posterior_database/models/stan/Rate_5_model.stan
 @probabilistic_program
 def rate_5_model(n1, n2, k1, k2):
     theta = sample("theta", Beta(1, 1))

@@ -1,20 +1,19 @@
 # Translated code start.
 using Turing
 @model function bayes_hidden_markov_model(y, K)
-    s = fill(0, length(y))
-    m = fill(0, K)
-    T = fill(0, (K, K))
+    s = fill!(Array{Int}(undef, length(y)), 0)
+    m = fill!(Array{Float64}(undef, K), 0)
+    T = fill!(Array{Float64}(undef, (K, K)), 0)
     for i = 0:1:(K)-1
-        T[(i) + 1] ~ Dirichlet(K, (1) / (K))
-        m[(i) + 1] ~ Normal((i) + (1), 0.5)
+        T[(i)+1, begin:1:end] ~ Dirichlet(K, (1) / (K))
+        m[(i)+1] ~ Normal((i) + (1), 0.5)
     end
-    s[(0) + 1] ~ DiscreteUniform(0, (K) - (1))
-    # y[(0) + 1] ~ Normal(m[(s[(0) + 1]) + 1], 0.1)  # float indexing is not allowed.
-    y[(0) + 1] ~ Normal(m[(trunc(Int, s[(0) + 1])) + 1], 0.1)
+    s[(0)+1] ~ DiscreteUniform(0, (K) - (1))
+    y[(0)+1] ~ Normal(m[(s[(0)+1])+1], 0.1)
     for i = 1:1:(length(y))-1
-        s[(i) + 1] ~ DiscreteUniform(0, (K) - (1))
-        # y[(i) + 1] ~ Normal(m[(s[(i) + 1]) + 1], 0.1)  # float indexing is not allowed.
-        y[(i) + 1] ~ Normal(m[(trunc(Int, s[(i) + 1])) + 1], 0.1)
+        __categorical__context__unique_address_1 = T[(s[((i) - (1))+1])+1, begin:1:end]
+        s[(i)+1] ~ DiscreteNonParametric(0:length(__categorical__context__unique_address_1)-1, __categorical__context__unique_address_1)
+        y[(i)+1] ~ Normal(m[(s[(i)+1])+1], 0.1)
     end
 end
 # Translated code end.
