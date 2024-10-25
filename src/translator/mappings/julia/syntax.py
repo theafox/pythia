@@ -56,7 +56,7 @@ class FunctionMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -83,7 +83,7 @@ class IfMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -101,7 +101,7 @@ class WhileLoopMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -150,7 +150,7 @@ class ForLoopMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -164,7 +164,7 @@ class ContinueMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -178,7 +178,7 @@ class BreakMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -193,7 +193,7 @@ class ReturnMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -212,7 +212,7 @@ class AssignmentMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -226,7 +226,7 @@ class StandaloneExpressionMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -240,7 +240,7 @@ class NameMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -263,7 +263,7 @@ class ConstantMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -282,7 +282,7 @@ class TupleMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -299,7 +299,7 @@ class ListMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -313,7 +313,7 @@ class AttributeMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -414,7 +414,7 @@ class CallMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -477,7 +477,7 @@ class BinaryOperatorsMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
 
 
@@ -499,5 +499,5 @@ class UnaryOperatorsMapping(BaseMapping):
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
-                    f"{cls.__name__}`."
+                    f" for {cls.__name__}`."
                 )
