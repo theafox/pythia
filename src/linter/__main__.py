@@ -41,10 +41,11 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 import argparse
 import logging
 import sys
+from collections.abc import Sequence
 from dataclasses import asdict
 from enum import Enum, IntEnum
 from json import dumps
-from typing import Sequence, TypedDict
+from typing import TypedDict
 
 from linter.main import ExitCode, default_probabilistic_program_linter
 

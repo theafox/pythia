@@ -5,10 +5,11 @@ during the translation process. See their respective documentation for further
 details.
 """
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import TYPE_CHECKING, ClassVar, Iterator, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 # Import `Translator` only for the language-server and any linters since
 # circular imports would become a problem otherwise. For this reason, use

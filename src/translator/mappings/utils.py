@@ -6,7 +6,8 @@ definition of mappings.
 
 import ast
 import inspect
-from typing import Any, Callable, Iterable
+from collections.abc import Iterable
+from typing import Any, Callable
 
 from translator.context import Context
 from translator.mappings import MappingWarning

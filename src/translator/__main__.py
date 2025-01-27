@@ -50,12 +50,12 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 import argparse
 import logging
 import sys
+from collections.abc import Sequence
 from enum import IntEnum
 from pathlib import Path
-from typing import Sequence, TypedDict
+from typing import TypedDict
 
 from linter import Severity, default_probabilistic_program_linter
-
 from translator.main import (
     ExitCode,
     default_gen_translator,
@@ -288,7 +288,7 @@ def main(arguments: Sequence[str] | None = None) -> None:
     # Translate.
     translator = TRANSLATORS.get(parsed["target"])
     if translator is None:
-        log.fatal(f"Unknown translation target specified: {parsed["target"]}.")
+        log.fatal(f"Unknown translation target specified: {parsed['target']}.")
         sys.exit(ExitCode.INVALID_ARGUMENTS)
     if source := parsed["file"]:
         translation = translator.translate_file(source)

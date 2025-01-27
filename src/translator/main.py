@@ -14,9 +14,10 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 import ast
 import logging
 import sys
+from collections.abc import Iterable, Mapping
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, override
+from typing import Any, Callable, override
 
 import translator.mappings.julia as julia_mappings
 import translator.mappings.julia.gen as gen_mappings

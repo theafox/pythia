@@ -10,8 +10,9 @@ additions.
 """
 
 import ast
+from collections.abc import Iterable
 from itertools import chain
-from typing import Callable, ClassVar, Iterable, Optional, override
+from typing import Callable, ClassVar, Optional, override
 
 from translator.context import Context
 from translator.mappings import BaseMapping, MappingWarning
@@ -37,7 +38,7 @@ class FunctionMapping(BaseMapping):
                 if cls.name is not None:
                     name = cls.name
                 macros = [
-                    f"@{macro.removeprefix("@")}"
+                    f"@{macro.removeprefix('@')}"
                     for macro in cls.macros
                     if macro
                 ]
@@ -278,7 +279,7 @@ class TupleMapping(BaseMapping):
                 return f"({context.translator.visit(element)},)"
             case ast.Tuple(elts=[*elements]):
                 evaluated = map(context.translator.visit, elements)
-                return f"({", ".join(evaluated)})"
+                return f"({', '.join(evaluated)})"
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -295,7 +296,7 @@ class ListMapping(BaseMapping):
                 return "[]"
             case ast.List(elts=[*elements]):
                 evaluated = map(context.translator.visit, elements)
-                return f"[{", ".join(evaluated)}]"
+                return f"[{', '.join(evaluated)}]"
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"
@@ -336,7 +337,7 @@ class IndexingMapping(BaseMapping):
                         else (slices,)
                     )
                 ]
-                return f"{target}[{", ".join(slices)}]"
+                return f"{target}[{', '.join(slices)}]"
             case _:
                 raise MappingWarning(
                     f"Mismatching node-type `{type(node).__name__}`"

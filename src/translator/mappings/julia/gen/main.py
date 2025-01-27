@@ -9,7 +9,8 @@ additions.
 """
 
 import ast
-from typing import Callable, ClassVar, Iterable
+from collections.abc import Iterable
+from typing import Callable, ClassVar
 
 from translator.context import Context
 from translator.mappings import MappingError

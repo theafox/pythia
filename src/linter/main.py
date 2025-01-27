@@ -14,10 +14,11 @@ Author: T. Kaufmann <e12002221@student.tuwien.ac.at>
 import ast
 import logging
 import sys
+from collections.abc import Iterable
 from enum import IntEnum
 from itertools import chain
 from pathlib import Path
-from typing import Any, Callable, Iterable, override
+from typing import Any, Callable, override
 
 from linter import Diagnostic, Severity, rules
 
@@ -312,10 +313,13 @@ def _is_probabilistic_program_entry_point(node: ast.AST) -> bool:
         otherwise.
     """
     return isinstance(node, ast.FunctionDef) and any(
-        isinstance(decorator, ast.Attribute)
-        and decorator.attr == _DECORATOR_NAME
-        or isinstance(decorator, ast.Name)
-        and decorator.id == _DECORATOR_NAME
+        (
+            isinstance(decorator, ast.Attribute)
+            and decorator.attr == _DECORATOR_NAME
+        )
+        or (
+            isinstance(decorator, ast.Name) and decorator.id == _DECORATOR_NAME
+        )
         for decorator in node.decorator_list
     )
 
@@ -338,10 +342,13 @@ def _analyze_probabilistic_program_entry_point(
         A list of diagnostics for all unrecognized decorators.
     """
     if (isinstance(node, (ast.ClassDef, ast.AsyncFunctionDef))) and any(
-        isinstance(decorator, ast.Attribute)
-        and decorator.attr == _DECORATOR_NAME
-        or isinstance(decorator, ast.Name)
-        and decorator.id == _DECORATOR_NAME
+        (
+            isinstance(decorator, ast.Attribute)
+            and decorator.attr == _DECORATOR_NAME
+        )
+        or (
+            isinstance(decorator, ast.Name) and decorator.id == _DECORATOR_NAME
+        )
         for decorator in node.decorator_list
     ):
         return [
@@ -383,10 +390,13 @@ def _analyze_probabilistic_program_entry_point(
 
     # In case the entry-point is valid…
     if any(
-        isinstance(decorator, ast.Attribute)
-        and decorator.attr == _DECORATOR_NAME
-        or isinstance(decorator, ast.Name)
-        and decorator.id == _DECORATOR_NAME
+        (
+            isinstance(decorator, ast.Attribute)
+            and decorator.attr == _DECORATOR_NAME
+        )
+        or (
+            isinstance(decorator, ast.Name) and decorator.id == _DECORATOR_NAME
+        )
         for decorator in node.decorator_list
     ):
         # warn about discouraged argument-types.

@@ -142,10 +142,12 @@ class RestrictFactorCallStructureRule(BaseRule):
     _NAME = "factor"
     _ADDRESS = "address"
 
+    # fmt: off
     message = (
         f"Usage: `{_NAME}(<data>"
         f"[, [{_ADDRESS}=]<{Address.representation()}>])"
     )
+    # fmt: on
 
     @override
     @classmethod
@@ -201,11 +203,13 @@ class RestrictVectorConstructorCallStructureRule(BaseRule):
     _FILL = "fill"
     _TYPE = "t"
 
+    # fmt: off
     message = (
         f"Usage: `{_NAME}(<data>"
         f"[, [{_FILL}=]<data>"
         f"[, [{_TYPE}=]<data>]])`"
     )
+    # fmt: on
 
     @override
     @classmethod
@@ -261,11 +265,13 @@ class RestrictArrayConstructorCallStructureRule(BaseRule):
     _FILL = "fill"
     _TYPE = "t"
 
+    # fmt: off
     message = (
         f"Usage: `{_NAME}(<data>"
         f"[, [{_FILL}=]<data>"
         f"[, [{_TYPE}=]<data>]])`"
     )
+    # fmt: on
 
     @override
     @classmethod

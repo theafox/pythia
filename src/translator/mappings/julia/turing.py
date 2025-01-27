@@ -9,7 +9,8 @@ additions.
 """
 
 import ast
-from typing import Callable, ClassVar, Iterable, override
+from collections.abc import Iterable
+from typing import Callable, ClassVar, override
 
 from translator.context import Context
 from translator.mappings import MappingError
@@ -53,7 +54,7 @@ def _compare_target_to_address(target: ast.expr, address: ast.expr) -> None:
     if target_variables != address_variables:
         raise MappingError(
             "The assignment variable's and address' complexity do not"
-            f" coincide: {*target_variables,} versus {*address_variables,}."
+            f" coincide: {(*target_variables,)} versus {(*address_variables,)}."
         )
 
 

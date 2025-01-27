@@ -51,10 +51,10 @@ def _display_translation(
     header_character: str = "=",
     subheader_character: str = "-",
 ) -> None:
-    print(f"\n{" Original Code ":{header_character}^{width}}")
+    print(f"\n{' Original Code ':{header_character}^{width}}")
     print(code, end="")
     for name, translator in translators:
-        print(f"\n{f" Translated: {name} ":{subheader_character}^{width}}")
+        print(f"\n{f' Translated: {name} ':{subheader_character}^{width}}")
         if translation := translator.translate_code(code):
             print(translation, end="")
     print("\n" + header_character * width)

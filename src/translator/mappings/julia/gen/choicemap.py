@@ -49,9 +49,9 @@ class StandaloneExpressionMapping(BaseStandaloneExpressionMapping):
     @classmethod
     def map(cls, node: ast.AST, context: Context) -> str | None:
         match node:
-            case ast.Expr(value=ast.Call() as function) if get_name(
-                function
-            ) != "observe":
+            case ast.Expr(value=ast.Call() as function) if (
+                get_name(function) != "observe"
+            ):
                 return None
             case _:
                 return super().map(node, context)
