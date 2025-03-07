@@ -1,8 +1,8 @@
 # Testing of the translator
 
-The tests are done according to Chapter 6 of the thesis _Specifications and Translations of the Meta Probabilistic Programming Language PyThia_.
+The tests are done according to Chapter 6 of the thesis _Specification and Translations of the Meta Probabilistic Programming Language PyThia_.
 
-> The practical applicability of _PyThia_, as a meta-language, can be effectively demonstrated, and serve as a proof-of-concept of its practicability, through some translations.
+> The practical applicability of _PyThia_ as a meta-language, can be effectively demonstrated through some translations.
 > This chapter will present the results of translating and attempting inference with those translations for ten distinct models, curated to showcase the whole range of _PyThia_'s syntax.
 > A comprehensive list of these models is provided in Appendix A.
 
