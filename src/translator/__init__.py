@@ -3,7 +3,7 @@ r"""A translator for probabilistic programs.
 This module provides a general purpose translator class which may be used with
 custom mappings for a spectrum of use-cases. Default implementations and a
 CLI-interface are provided which may be used to translate code conforming to
-the specifications of the PyThia Meta-Probabilistic-Programming-Language into
+the specifications of the _PyThia_ Meta-Probabilistic-Programming-Language into
 the frameworks Gen, Turing, and Pyro.
 
 Usage:

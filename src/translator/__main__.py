@@ -4,8 +4,8 @@ This provides a translator for mapping code conforming to the PyThia
 Meta-Probabilistic-Programming-Language syntax into different languages and/or
 frameworks.
 
-Any given input is first validated against the syntax of PyThia before
-attempting translation using the PyThia linter. In case any error-level (or
+Any given input is first validated against the syntax of _PyThia_ before
+attempting translation using the _PyThia_ linter. In case any error-level (or
 higher) is found, no translation is attempted.
 
 Usage:
@@ -111,7 +111,7 @@ def _parse_arguments(arguments: Sequence[str] | None = None) -> _Arguments:
         A dictionary containing the parsed results of the input.
     """
     parser = argparse.ArgumentParser(
-        description="Translate probabilistic programms from PyThia into "
+        description="Translate probabilistic programs from _PyThia_ into "
         + ", ".join(TRANSLATORS.keys())[::-1].replace(",", "ro ,", 1)[::-1]
         + "."
     )
@@ -233,7 +233,7 @@ def main(arguments: Sequence[str] | None = None) -> None:
 
     1. Parse the command-line arguments.
     2. Configure the logger for this package.
-    3. Validate the provided input using the PyThia linter, in case any
+    3. Validate the provided input using the _PyThia_ linter, in case any
        error-level (or higher) diagnostics is found, abort.
     4. Translate the code to the given target language/framework.
     5. Output the results according to the instructions.

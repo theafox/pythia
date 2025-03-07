@@ -299,13 +299,13 @@ def default_julia_translator() -> Translator:
     """Construct a default translator for Julia.
 
     This includes all general mappings for the Julia programming language to
-    conform to the specifications of PyThia. However, since more specific
-    aspects of PyThia may not be translated without knowledge about the
+    conform to the specifications of _PyThia_. However, since more specific
+    aspects of _PyThia_ may not be translated without knowledge about the
     specific target framework, some mappings are missing. Therefore, this is
     akin to a abstract base for different frameworks inside Julia.
 
     Returns:
-        A translator which may be used to translate PyThia code into general
+        A translator which may be used to translate _PyThia_ code into general
         Julia code.
     """
     return Translator(
@@ -345,7 +345,7 @@ def default_gen_translator() -> Translator:
     mappings specific to Gen.
 
     Returns:
-        A translator which may be used to translate PyThia code into the Gen
+        A translator which may be used to translate _PyThia_ code into the Gen
         framework.
     """
 
@@ -395,8 +395,8 @@ def default_turing_translator() -> Translator:
     mappings specific to Turing.
 
     Returns:
-        A translator which may be used to translate PyThia code into the Turing
-        framework.
+        A translator which may be used to translate _PyThia_ code into the
+        Turing framework.
     """
     julia_translator = default_julia_translator()
     julia_translator.preamble = turing_mappings.preamble
@@ -412,13 +412,13 @@ def default_python_translator() -> Translator:
     """Construct a default translator for Python.
 
     This includes all general mappings for the Python programming language to
-    conform to the specifications of PyThia. However, since more specific
-    aspects of PyThia may not be translated without knowledge about the
+    conform to the specifications of _PyThia_. However, since more specific
+    aspects of _PyThia_ may not be translated without knowledge about the
     specific target framework, some mappings are missing. Therefore, this is
     akin to a abstract base for different frameworks inside Python.
 
     Returns:
-        A translator which may be used to translate PyThia code into general
+        A translator which may be used to translate _PyThia_ code into general
         Python code.
     """
     return Translator(
@@ -461,7 +461,7 @@ def default_pyro_translator() -> Translator:
     mappings specific to Pyro.
 
     Returns:
-        A translator which may be used to translate PyThia code into the Pyro
+        A translator which may be used to translate _PyThia_ code into the Pyro
         framework.
     """
     python_translator = default_python_translator()

@@ -90,7 +90,7 @@ def _parse_arguments(arguments: Sequence[str] | None = None) -> _Arguments:
         A dictionary containing the parsed results of the input.
     """
     parser = argparse.ArgumentParser(
-        description="Lint probabilistic programms conforming to"
+        description="Lint probabilistic programs conforming to"
         " the _PyThia_ syntax."
     )
 
